@@ -53,7 +53,7 @@ and copy the file to /etc/udev/rules.d :
 
 
 ## 4. Configure your Teensy Board
-The default board used in this demo is Teensy 3.6 but you can uncomment the Teensy board you're using
+The default board used in this demo is Teensy 3.1/3.2 but you can uncomment the Teensy board you're using
 
     [env:teensy36]
     board = teensy36
