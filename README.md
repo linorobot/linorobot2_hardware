@@ -73,6 +73,21 @@ Go to lib/config and open lino_base_config.h and uncomment the base, motor drive
     #define USE_L298_DRIVER
     #define USE_GY85_IMU
 
+Next, fill the robot settings accordingly:
+
+    #define K_P 0.6 // P constant
+    #define K_I 0.8 // I constant
+    #define K_D 0.5 // D constant
+
+    //define your robot' specs here
+    #define MAX_RPM 100               // motor's maximum RPM
+    #define COUNTS_PER_REV 2200       // wheel encoder's no of ticks per rev
+    #define WHEEL_DIAMETER 0.09       // wheel's diameter in meters
+    #define LR_WHEELS_DISTANCE 0.2  // distance between left and right wheels
+    #define FR_WHEELS_DISTANCE 0.30   // distance between front and rear wheels. Ignore this if you're on 2WD/ACKERMANN
+    #define MAX_STEERING_ANGLE 0.415  // max steering angle. This only applies to Ackermann steering
+    #define PWM_BITS 8                // PWM Resolution of the microcontroller
+
 ## 5. Upload the firmware
 
 Upload the firmware by running:
