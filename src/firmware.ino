@@ -103,7 +103,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
             twist_msg.linear.y = 0.0;
             twist_msg.angular.z = 0.0;
 
-			digitalWrite(LED_PIN, HIGH);
+            digitalWrite(LED_PIN, HIGH);
         }
 
         // get the required rpm for each motor based on required velocities, and base used
@@ -122,9 +122,9 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
         motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
 
-		Kinematics::velocities current_vel = kinematics.getVelocities(current_rpm1, current_rpm2, current_rpm3, current_rpm4);
-		
-		odometry.update(current_vel.linear_x, current_vel.linear_y, current_vel.angular_z);
+        Kinematics::velocities current_vel = kinematics.getVelocities(current_rpm1, current_rpm2, current_rpm3, current_rpm4);
+
+        odometry.update(current_vel.linear_x, current_vel.linear_y, current_vel.angular_z);
     }
 }
 
@@ -150,38 +150,38 @@ void createEntities()
 
     // create odometry publisher
     RCCHECK(rclc_publisher_init_best_effort( 
-		&odom_publisher, 
-		&node,
+        &odom_publisher, 
+        &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
         "odom"))
 
     // create IMU publisher
     RCCHECK(rclc_publisher_init_best_effort( 
-		&imu_publisher, 
-		&node,
+        &imu_publisher, 
+        &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
         "imu/data"));
 
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_best_effort( 
-		&twist_subscriber, 
-		&node,
+        &twist_subscriber, 
+        &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "cmd_vel"));
 
     // create timer for publishing data at 20 Hz (1000/50)
     const unsigned int publish_timeout = 50;
     RCCHECK(rclc_timer_init_default( 
-		&publish_timer, 
-		&support,
+        &publish_timer, 
+        &support,
         RCL_MS_TO_NS(publish_timeout),
         publishCallback));
 
 	// create timer for actuating the motors at 200 Hz (1000/5)
     const unsigned int control_timeout = 5;
     RCCHECK(rclc_timer_init_default( 
-		&control_timer, 
-		&support,
+        &control_timer, 
+        &support,
         RCL_MS_TO_NS(control_timeout),
         controlCallback));
 
@@ -193,7 +193,7 @@ void createEntities()
 
     digitalWrite(LED_PIN, HIGH);
 
-	micro_ros_init_successful = true;
+    micro_ros_init_successful = true;
 }
 
 void destroyEntities()
@@ -214,16 +214,16 @@ void destroyEntities()
 
 void setup() 
 {
-	pinMode(LED_PIN, OUTPUT);
+    pinMode(LED_PIN, OUTPUT);
 
-	bool imu_ok = imu.init();
-	if(!imu_ok)
-	{
-		while(1)
-		{
-			flashLED(3);
-		}
-	}
+    bool imu_ok = imu.init();
+    if(!imu_ok)
+    {
+        while(1)
+        {
+            flashLED(3);
+        }
+    }
 
     set_microros_transports();
 
@@ -231,7 +231,7 @@ void setup()
     delay(2000);
 
     allocator = rcl_get_default_allocator();
-	createEntities();
+    createEntities();
 }
 
 void loop() 
