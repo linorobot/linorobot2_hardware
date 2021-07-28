@@ -82,12 +82,12 @@ void publishCallback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
-	{
-		odom_msg = odometry.getData();
-		imu_msg = imu.getData();
+    {
+        odom_msg = odometry.getData();
+        imu_msg = imu.getData();
 
         RCSOFTCHECK(rcl_publish( &imu_publisher, &imu_msg, NULL));
-		RCSOFTCHECK(rcl_publish( &odom_publisher, &odom_msg, NULL));
+        RCSOFTCHECK(rcl_publish( &odom_publisher, &odom_msg, NULL));
     }
 }
 
@@ -95,10 +95,10 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
-	{
-		// brake, if there's no command received
+    {
+        // brake, if there's no command received
         if ((millis() - prev_cmd_time) >= 400) 
-		{
+        {
             twist_msg.linear.x = 0.0;
             twist_msg.linear.y = 0.0;
             twist_msg.angular.z = 0.0;
@@ -142,7 +142,7 @@ void twistCallback(const void * msgin)
 
 void createEntities()
 {
-	//create init_options
+    //create init_options
     RCCHECK(rclc_support_init( &support, 0, NULL, &allocator));
 
     // create node
@@ -198,18 +198,18 @@ void createEntities()
 
 void destroyEntities()
 {
-	rcl_publisher_fini(&odom_publisher, &node);
-	rcl_publisher_fini(&imu_publisher, &node);
-	rcl_subscription_fini(&twist_subscriber, &node);
+    rcl_publisher_fini(&odom_publisher, &node);
+    rcl_publisher_fini(&imu_publisher, &node);
+    rcl_subscription_fini(&twist_subscriber, &node);
 
-	rcl_node_fini(&node);
-	rcl_timer_fini(&publish_timer);
-	rcl_timer_fini(&control_timer);
-	rclc_executor_fini(&executor);
-	rclc_support_fini(&support);
+    rcl_node_fini(&node);
+    rcl_timer_fini(&publish_timer);
+    rcl_timer_fini(&control_timer);
+    rclc_executor_fini(&executor);
+    rclc_support_fini(&support);
 
-	digitalWrite(LED_PIN, LOW);
-	micro_ros_init_successful = false;
+    digitalWrite(LED_PIN, LOW);
+    micro_ros_init_successful = false;
 }
 
 void setup() 
@@ -227,7 +227,6 @@ void setup()
 
     set_microros_transports();
 
-
     delay(2000);
 
     allocator = rcl_get_default_allocator();
@@ -236,25 +235,25 @@ void setup()
 
 void loop() 
 {
-	RCSOFTCHECK(rclc_executor_spin_some( &executor, RCL_MS_TO_NS(5)));
+    RCSOFTCHECK(rclc_executor_spin_some( &executor, RCL_MS_TO_NS(5)));
 }
 
 void rclErrorLoop() 
 {
-	while(true)
-	{
-		flashLED(2);
-	}
+    while(true)
+    {
+        flashLED(2);
+    }
 }
 
 void flashLED(int n_times)
 {
-	for(int i=0; i<n_times; i++)
-	{
-		digitalWrite(LED_PIN, HIGH);
-		delay(150);
-		digitalWrite(LED_PIN, LOW);
-		delay(150);
-	}
-	delay(1000);
+    for(int i=0; i<n_times; i++)
+    {
+        digitalWrite(LED_PIN, HIGH);
+        delay(150);
+        digitalWrite(LED_PIN, LOW);
+        delay(150);
+    }
+    delay(1000);
 }
