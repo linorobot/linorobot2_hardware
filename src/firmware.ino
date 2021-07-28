@@ -177,7 +177,7 @@ void createEntities()
         RCL_MS_TO_NS(publish_timeout),
         publishCallback));
 
-	// create timer for actuating the motors at 200 Hz (1000/5)
+    // create timer for actuating the motors at 200 Hz (1000/5)
     const unsigned int control_timeout = 5;
     RCCHECK(rclc_timer_init_default( 
         &control_timer, 
