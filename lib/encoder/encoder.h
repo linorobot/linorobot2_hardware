@@ -76,7 +76,7 @@ typedef struct {
 class Encoder
 {
 public:
-	Encoder(uint8_t pin1, uint8_t pin2, int counts_per_rev) {
+	Encoder(uint8_t pin1, uint8_t pin2, int counts_per_rev, bool invert=false) {
 		#ifdef INPUT_PULLUP
 		pinMode(pin1, INPUT_PULLUP);
 		pinMode(pin2, INPUT_PULLUP);
@@ -87,6 +87,7 @@ public:
 		digitalWrite(pin2, HIGH);
 		#endif
 		counts_per_rev_ = counts_per_rev;
+		invert_ = invert;
 		encoder.pin1_register = PIN_TO_BASEREG(pin1);
 		encoder.pin1_bitmask = PIN_TO_BITMASK(pin1);
 		encoder.pin2_register = PIN_TO_BASEREG(pin2);
@@ -166,11 +167,15 @@ public:
 		prev_update_time_ = current_time;
 		prev_encoder_ticks_ = encoder_ticks;
 		
-		return (delta_ticks / counts_per_rev_) / dtm;
+		int inverter = 1;
+		if(invert_)
+			inverter = -1;
+		return inverter * ((delta_ticks / counts_per_rev_) / dtm);
 	}
 
 private:
 	int counts_per_rev_;
+	bool invert_;
 	unsigned long prev_update_time_;
     long prev_encoder_ticks_;
 	Encoder_internal_state_t encoder;
