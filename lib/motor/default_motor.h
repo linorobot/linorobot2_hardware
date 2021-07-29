@@ -42,13 +42,8 @@ class Generic2: public MotorInterface
             analogWrite(pwm_pin_, abs(pwm));
         }
 
-        void brake(int pwm) override
-        {
-            analogWrite(pwm_pin_, 0);
-        }
-
     public:
-        Generic2( bool invert, int pwm_pin, int in_a_pin, int in_b_pin): 
+        Generic2(bool invert, int pwm_pin, int in_a_pin, int in_b_pin): 
             MotorInterface(invert),
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin),
@@ -60,6 +55,11 @@ class Generic2: public MotorInterface
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(pwm_pin_, abs(0));
+        }
+
+        void brake() override
+        {
+            analogWrite(pwm_pin_, 0);
         }
 };
 
@@ -82,13 +82,8 @@ class Generic1: public MotorInterface
             analogWrite(pwm_pin_, abs(pwm));
         }
 
-        void brake(int pwm) override
-        {
-            analogWrite(pwm_pin_, 0);
-        }
-
     public:
-        Generic1( bool invert, int pwm_pin, int in_pin, int unused=-1): 
+        Generic1(bool invert, int pwm_pin, int in_pin, int unused=-1): 
             MotorInterface(invert),
             in_pin_(in_pin),
             pwm_pin_(pwm_pin)
@@ -98,6 +93,11 @@ class Generic1: public MotorInterface
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(pwm_pin_, abs(0));
+        }
+
+        void brake() override
+        {
+            analogWrite(pwm_pin_, 0);
         }
 };
 
@@ -120,14 +120,8 @@ class BTS7960: public MotorInterface
             analogWrite(in_a_pin_, abs(pwm));
         }
 
-        void brake(int pwm) override
-        {
-            analogWrite(in_b_pin_, 0);
-            analogWrite(in_a_pin_, 0);            
-        }
-
     public:
-        BTS7960( bool invert, int unused, int in_a_pin, int in_b_pin): 
+        BTS7960(bool invert, int unused, int in_a_pin, int in_b_pin): 
             MotorInterface(invert),
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin)
@@ -140,7 +134,7 @@ class BTS7960: public MotorInterface
             analogWrite(in_b_pin_, 0);
         }
     
-        BTS7960( bool invert, int in_a_pin, int in_b_pin): 
+        BTS7960(bool invert, int in_a_pin, int in_b_pin): 
             MotorInterface(invert),
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin)
@@ -151,6 +145,12 @@ class BTS7960: public MotorInterface
             //ensure that the motor is in neutral state during bootup
             analogWrite(in_a_pin_, 0);
             analogWrite(in_b_pin_, 0);
+        }
+
+        void brake() override
+        {
+            analogWrite(in_b_pin_, 0);
+            analogWrite(in_a_pin_, 0);            
         }
 };
 
@@ -171,11 +171,6 @@ class ESC: public MotorInterface
             motor_.writeMicroseconds(1500 + pwm);
         }
 
-        void brake(int pwm) override
-        {
-            motor_.writeMicroseconds(1500);         
-        }
-
     public:
         ESC( bool invert, int pwm_pin, int unused=-1, int unused2=-1): 
             MotorInterface(invert),
@@ -185,6 +180,11 @@ class ESC: public MotorInterface
             
             //ensure that the motor is in neutral state during bootup
             motor_.writeMicroseconds(1500);
+        }
+
+        void brake() override
+        {
+            motor_.writeMicroseconds(1500);         
         }
 };
 
