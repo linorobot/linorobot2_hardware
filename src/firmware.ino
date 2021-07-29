@@ -139,6 +139,8 @@ void twistCallback(const void * msgin)
 
 void createEntities()
 {
+    allocator = rcl_get_default_allocator();
+
     //create init_options
     RCCHECK(rclc_support_init( &support, 0, NULL, &allocator));
 
@@ -174,8 +176,8 @@ void createEntities()
         RCL_MS_TO_NS(publish_timeout),
         publishCallback));
 
-    // create timer for actuating the motors at 200 Hz (1000/5)
-    const unsigned int control_timeout = 5;
+    // create timer for actuating the motors at 100 Hz (1000/10)
+    const unsigned int control_timeout = 10;
     RCCHECK(rclc_timer_init_default( 
         &control_timer, 
         &support,
@@ -194,6 +196,8 @@ void createEntities()
 
 void destroyEntities()
 {
+    digitalWrite(LED_PIN, LOW);
+
     rcl_publisher_fini(&odom_publisher, &node);
     rcl_publisher_fini(&imu_publisher, &node);
     rcl_subscription_fini(&twist_subscriber, &node);
@@ -204,7 +208,6 @@ void destroyEntities()
     rclc_executor_fini(&executor);
     rclc_support_fini(&support);
 
-    digitalWrite(LED_PIN, LOW);
     micro_ros_init_successful = false;
 }
 
@@ -220,18 +223,39 @@ void setup()
             flashLED(3);
         }
     }
+    micro_ros_init_successful = false;
 
     set_microros_transports();
-
-    delay(2000);
-
-    allocator = rcl_get_default_allocator();
     createEntities();
 }
 
 void loop() 
 {
-    RCSOFTCHECK(rclc_executor_spin_some( &executor, RCL_MS_TO_NS(5)));
+    static unsigned long prev_connect_test_time;
+
+    // check if the agent got disconnected at 10Hz
+    if(micros() - prev_connect_test_time > 100000)
+    {
+        prev_connect_test_time = micros();
+        // check if the agent is connected
+        if(RMW_RET_OK == rmw_uros_ping_agent(10, 2))
+        {
+            // reconnect if agent got disconnected or haven't at all
+            if (!micro_ros_init_successful) 
+            {
+                createEntities();
+            } 
+        } 
+        else if(micro_ros_init_successful)
+        {
+            // stop the robot when the agent got disconnected
+            fullStop();
+            // clean up micro-ROS components
+            destroyEntities();
+        }
+    }
+   
+    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
 }
 
 void rclErrorLoop() 
@@ -252,4 +276,12 @@ void flashLED(int n_times)
         delay(150);
     }
     delay(1000);
+}
+
+void fullStop()
+{
+    motor1_controller.brake();
+    motor2_controller.brake();
+    motor3_controller.brake();
+    motor4_controller.brake();
 }
