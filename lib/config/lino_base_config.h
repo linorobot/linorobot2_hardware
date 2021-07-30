@@ -28,9 +28,6 @@
 // #define USE_BTS7960_MOTOR_DRIVER        // BTS7970 Motor Driver
 // #define USE_ESC_MOTOR_DRIVER            // Motor ESC for brushless motors
 
-// #define USE_BTS7960_DRIVER
-// #define USE_ESC
-
 //uncomment the IMU you're using
 #define USE_GY85_IMU
 // #define USE_MPU6050_IMU
@@ -46,8 +43,7 @@
 #define COUNTS_PER_REV 2200                 // wheel encoder's no of ticks per rev
 #define WHEEL_DIAMETER 0.090                // wheel's diameter in meters
 #define LR_WHEELS_DISTANCE 0.200            // distance between left and right wheels
-#define FR_WHEELS_DISTANCE 0.300            // distance between front and rear wheels. Ignore this if you're on 2WD/ACKERMANN
-#define MAX_STEERING_ANGLE 0.415            // max steering angle. This only applies to Ackermann steering
+#define FR_WHEELS_DISTANCE 0.300            // distance between front and rear wheels. Ignore this if you're on 2WD
 #define PWM_BITS 8                          // PWM Resolution of the microcontroller
 
 /*
