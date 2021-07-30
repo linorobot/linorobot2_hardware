@@ -34,7 +34,7 @@ class IMUInterface
     public:
         IMUInterface()
         {
-            imu_msg_.header.frame_id = micro_ros_string_utilities_set(imu_msg_.header.frame_id, "imu_frame");
+            imu_msg_.header.frame_id = micro_ros_string_utilities_set(imu_msg_.header.frame_id, "imu_link");
         }
 
         virtual geometry_msgs__msg__Vector3 readAccelerometer() = 0;
