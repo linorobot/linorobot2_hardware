@@ -28,9 +28,10 @@ class IMUInterface
         const float utesla_to_tesla_ = 0.000001;
 
         struct timespec current_time_ = {0};
-        float accel_cov_ = 0.001;
-        float gyro_cov_ = 0.001;
-
+        float accel_cov_ = 0.02;
+        float gyro_cov_ = 0.04;
+        //doesn't get an accurate model but close enough
+        // https://github.com/ENSTABretagneRobotics/razor_imu_9dof/blob/indigo-devel/nodes/imu_node.py
     public:
         IMUInterface()
         {
