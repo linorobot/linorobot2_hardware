@@ -86,8 +86,13 @@ public:
 		pinMode(pin2, INPUT);
 		digitalWrite(pin2, HIGH);
 		#endif
-		counts_per_rev_ = counts_per_rev;
-		invert_ = invert;
+
+		counts_per_rev_ = counts_per_rev;	
+		if(invert)
+			inverter_ = -1;
+		else
+			inverter_ = 1;
+
 		encoder.pin1_register = PIN_TO_BASEREG(pin1);
 		encoder.pin1_bitmask = PIN_TO_BITMASK(pin1);
 		encoder.pin2_register = PIN_TO_BASEREG(pin2);
@@ -119,7 +124,7 @@ public:
 		}
 		int32_t ret = encoder.position;
 		interrupts();
-		return ret;
+		return inverter_ * ret;
 	}
 	inline int32_t readAndReset() {
 		if (interrupts_in_use < 2) {
@@ -131,7 +136,7 @@ public:
 		int32_t ret = encoder.position;
 		encoder.position = 0;
 		interrupts();
-		return ret;
+		return inverter_ * ret;
 	}
 	inline void write(int32_t p) {
 		noInterrupts();
@@ -141,13 +146,13 @@ public:
 #else
 	inline int32_t read() {
 		update(&encoder);
-		return encoder.position;
+		return inverter_ * encoder.position;
 	}
 	inline int32_t readAndReset() {
 		update(&encoder);
 		int32_t ret = encoder.position;
 		encoder.position = 0;
-		return ret;
+		return inverter_ * ret;
 	}
 	inline void write(int32_t p) {
 		encoder.position = p;
@@ -166,16 +171,13 @@ public:
 		//calculate wheel's speed (RPM)
 		prev_update_time_ = current_time;
 		prev_encoder_ticks_ = encoder_ticks;
-		
-		int inverter = 1;
-		if(invert_)
-			inverter = -1;
-		return inverter * ((delta_ticks / counts_per_rev_) / dtm);
+
+		return ((delta_ticks / counts_per_rev_) / dtm);
 	}
 
 private:
 	int counts_per_rev_;
-	bool invert_;
+	int inverter_;
 	unsigned long prev_update_time_;
     long prev_encoder_ticks_;
 	Encoder_internal_state_t encoder;

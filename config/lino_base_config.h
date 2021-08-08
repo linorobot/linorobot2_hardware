@@ -39,11 +39,11 @@
 #define K_D 0.5                             // D constant
 
 //define your robot' specs here
-#define MAX_RPM 100                         // motor's maximum RPM
-#define COUNTS_PER_REV 2200                 // wheel encoder's no of ticks per rev
-#define WHEEL_DIAMETER 0.090                // wheel's diameter in meters
-#define LR_WHEELS_DISTANCE 0.200            // distance between left and right wheels
-#define FR_WHEELS_DISTANCE 0.300            // distance between front and rear wheels. Ignore this if you're on 2WD
+#define MAX_RPM 140                         // motor's maximum RPM
+#define COUNTS_PER_REV 144000                 // wheel encoder's no of ticks per rev
+#define WHEEL_DIAMETER 0.152                // wheel's diameter in meters
+#define LR_WHEELS_DISTANCE 0.271            // distance between left and right wheels
+#define FR_WHEELS_DISTANCE 0.240            // distance between front and rear wheels. Ignore this if you're on 2WD
 #define PWM_BITS 8                          // PWM Resolution of the microcontroller
 
 /*
@@ -73,11 +73,10 @@ ROBOT ORIENTATION
 
 //MOTOR PINS
 #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
-  #define MOTOR_DRIVER L298
 
   #define MOTOR1_PWM 21
-  #define MOTOR1_IN_A 1
-  #define MOTOR1_IN_B 20
+  #define MOTOR1_IN_A 20
+  #define MOTOR1_IN_B 1
   #define MOTOR1_INV false
 
   #define MOTOR2_PWM 5
@@ -91,8 +90,8 @@ ROBOT ORIENTATION
   #define MOTOR3_INV false
 
   #define MOTOR4_PWM 4
-  #define MOTOR4_IN_A 2
-  #define MOTOR4_IN_B 3
+  #define MOTOR4_IN_A 3
+  #define MOTOR4_IN_B 2
   #define MOTOR4_INV false
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
@@ -100,10 +99,9 @@ ROBOT ORIENTATION
 #endif 
 
 #ifdef USE_GENERIC_1_IN_MOTOR_DRIVER
-  #define MOTOR_DRIVER L298
 
   #define MOTOR1_PWM 21
-  #define MOTOR1_IN_A 1
+  #define MOTOR1_IN_A 20
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_INV false
 
@@ -118,7 +116,7 @@ ROBOT ORIENTATION
   #define MOTOR3_INV false
 
   #define MOTOR4_PWM 4
-  #define MOTOR4_IN_A 2
+  #define MOTOR4_IN_A 3
   #define MOTOR4_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR4_INV false
 
@@ -127,26 +125,25 @@ ROBOT ORIENTATION
 #endif 
 
 #ifdef USE_BTS7960_MOTOR_DRIVER
-  #define MOTOR_DRIVER BTS7960  
 
   #define MOTOR1_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR1_IN_A 21
-  #define MOTOR1_IN_B 20
+  #define MOTOR1_IN_A 20
+  #define MOTOR1_IN_B 1
   #define MOTOR1_INV false
 
   #define MOTOR2_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR2_IN_A 5
-  #define MOTOR2_IN_B 6
+  #define MOTOR2_IN_A 6
+  #define MOTOR2_IN_B 8
   #define MOTOR2_INV false
 
   #define MOTOR3_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR3_IN_A 22
-  #define MOTOR3_IN_B 23
+  #define MOTOR3_IN_A 23
+  #define MOTOR3_IN_B 0
   #define MOTOR3_INV false
 
   #define MOTOR4_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR4_IN_A 4
-  #define MOTOR4_IN_B 3
+  #define MOTOR4_IN_A 3
+  #define MOTOR4_IN_B 2
   #define MOTOR4_INV false
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
@@ -156,22 +153,22 @@ ROBOT ORIENTATION
 #ifdef USE_ESC_MOTOR_DRIVER
   #define MOTOR_DRIVER ESC  
 
-  #define MOTOR1_PWM 1 
+  #define MOTOR1_PWM 21
   #define MOTOR1_IN_A -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_INV false
 
-  #define MOTOR2_PWM 8 
+  #define MOTOR2_PWM 5
   #define MOTOR2_IN_A -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR2_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR2_INV false
 
-  #define MOTOR3_PWM 0 
+  #define MOTOR3_PWM 22 
   #define MOTOR3_IN_A -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR3_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR3_INV false
 
-  #define MOTOR4_PWM 2 
+  #define MOTOR4_PWM 4
   #define MOTOR4_IN_A -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR4_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR4_INV false
