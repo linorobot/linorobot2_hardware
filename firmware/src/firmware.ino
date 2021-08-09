@@ -219,7 +219,8 @@ void destroyEntities()
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
-
+    delay(1000);
+    
     bool imu_ok = imu.init();
     if(!imu_ok)
     {
@@ -231,7 +232,6 @@ void setup()
     micro_ros_init_successful = false;
 
     set_microros_transports();
-    createEntities();
 }
 
 void loop() 
