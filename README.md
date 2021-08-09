@@ -58,20 +58,6 @@ and copy the file to /etc/udev/rules.d :
 
     sudo cp 00-teensy.rules /etc/udev/rules.d/
 
-
-## 4. Configure your Teensy Board
-The default board used in this demo is Teensy 3.1/3.2 but you can uncomment the Teensy board you're using in firmware/platformio.ini:
-
-    [env:teensy36]
-    board = teensy36
-
-    ; [env:teensy35]
-    ; board = teensy35
-
-    ; [env:teensy36]
-    ; board = teensy36
-
-
 ## 5. Configure robot settings
 
 Go to config folder and open lino_base_config.h. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
@@ -99,7 +85,15 @@ Next, fill the robot settings accordingly:
 Upload the firmware by running:
 
     cd linorobot2_prototype/firmware
-    pio run --target upload
+    pio run --target upload -e <your_teensy_board>
+
+Available boards:
+- teensy31
+- teensy35
+- teensy36
+- teensy40
+- teensy41
+
 
 * Some Linux machines might encounter a problem related to libusb. If so, install libusb-dev:
 
