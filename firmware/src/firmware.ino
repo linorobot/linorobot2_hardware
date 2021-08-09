@@ -57,6 +57,8 @@ rcl_timer_t control_timer;
 unsigned long prev_cmd_time = 0;
 bool micro_ros_init_successful = false;
 bool new_command = false;
+static int64_t time_ns;
+static time_t time_s;
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV, MOTOR2_ENCODER_INV);
@@ -82,8 +84,19 @@ void publishCallback(rcl_timer_t * timer, int64_t last_call_time)
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
+        
         odom_msg = odometry.getData();
         imu_msg = imu.getData();
+
+        time_ns = rmw_uros_epoch_nanos(); 
+        time_s = time_ns / 1000000000;
+
+        //update time stamps using synchronized time with the agent
+        odom_msg.header.stamp.sec = time_s;
+        odom_msg.header.stamp.nanosec = time_ns;
+
+        imu_msg.header.stamp.sec = time_s;
+        imu_msg.header.stamp.nanosec = time_ns;
 
         RCSOFTCHECK(rcl_publish( &imu_publisher, &imu_msg, NULL));
         RCSOFTCHECK(rcl_publish( &odom_publisher, &odom_msg, NULL));
@@ -194,6 +207,9 @@ void createEntities()
     RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
     RCCHECK(rclc_executor_add_subscription( &executor, &twist_subscriber, &twist_msg, &twistCallback, ON_NEW_DATA));
+
+    //synchronize time with the agent
+    RCCHECK(rmw_uros_sync_session(1000));
 
     digitalWrite(LED_PIN, HIGH);
     micro_ros_init_successful = true;
