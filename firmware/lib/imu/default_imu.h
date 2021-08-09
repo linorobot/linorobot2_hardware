@@ -283,6 +283,33 @@ class MPU9250IMU: public IMUInterface
         }
 };
 
+class FakeIMU: public IMUInterface 
+{
+    private:
+        geometry_msgs__msg__Vector3 accel_;
+        geometry_msgs__msg__Vector3 gyro_;
+
+    public:
+        FakeIMU()
+        {
+        }
+
+        bool init() override
+        {
+            return true;
+        }
+
+        geometry_msgs__msg__Vector3 readAccelerometer() override
+        {
+            return accel_;
+        }
+
+        geometry_msgs__msg__Vector3 readGyroscope() override
+        {
+            return gyro_;
+        }
+};
+
 #endif
 //ADXL345 https://www.sparkfun.com/datasheets/Sensors/Accelerometer/ADXL345.pdf
 //HMC8553L https://cdn-shop.adafruit.com/datasheets/HMC5883L_3-Axis_Digital_Compass_IC.pdf
