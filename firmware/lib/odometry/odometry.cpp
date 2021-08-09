@@ -48,9 +48,6 @@ void Odometry::update(float linear_vel_x, float linear_vel_y, float angular_vel_
     float q[4];
     euler_to_quat(0, 0, heading_, q);
 
-    odom_msg_.header.stamp.nanosec = current_time.tv_nsec;
-    odom_msg_.header.stamp.sec = current_time.tv_sec;
-
     //robot's position in x,y, and z
     odom_msg_.pose.pose.position.x = x_pos_;
     odom_msg_.pose.pose.position.y = y_pos_;

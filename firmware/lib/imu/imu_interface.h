@@ -27,7 +27,6 @@ class IMUInterface
         const float mgauss_to_utesla_ = 0.1;
         const float utesla_to_tesla_ = 0.000001;
 
-        struct timespec current_time_ = {0};
         float accel_cov_ = 0.02;
         float gyro_cov_ = 0.04;
         //doesn't get an accurate model but close enough
@@ -44,11 +43,6 @@ class IMUInterface
 
         sensor_msgs__msg__Imu getData()
         {
-            clock_gettime(0, &current_time_);
-
-            imu_msg_.header.stamp.nanosec = current_time_.tv_nsec;
-            imu_msg_.header.stamp.sec = current_time_.tv_sec;
-
             imu_msg_.angular_velocity = readGyroscope();
             imu_msg_.angular_velocity_covariance[0] = gyro_cov_;
             imu_msg_.angular_velocity_covariance[4] = gyro_cov_;
