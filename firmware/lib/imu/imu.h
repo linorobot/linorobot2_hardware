@@ -36,5 +36,9 @@
     #define IMU MPU9250IMU
 #endif
 
+#ifdef USE_FAKE_IMU
+    #define IMU FakeIMU
+#endif
+
 #endif
 
