@@ -61,7 +61,7 @@ bool new_command = false;
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV, MOTOR2_ENCODER_INV);
 Encoder motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, COUNTS_PER_REV, MOTOR3_ENCODER_INV);
-Encoder motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, COUNTS_PER_REV, MOTOR4_ENCODER_INV);
+Encoder motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, 109200, MOTOR4_ENCODER_INV);
 
 Motor motor1_controller(MOTOR1_INV, MOTOR1_PWM, MOTOR1_IN_A, MOTOR1_IN_B);
 Motor motor2_controller(MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
@@ -181,8 +181,8 @@ void createEntities()
         RCL_MS_TO_NS(publish_timeout),
         publishCallback));
 
-    // create timer for actuating the motors at 100 Hz (1000/10)
-    const unsigned int control_timeout = 10;
+    // create timer for actuating the motors at 50 Hz (1000/20)
+    const unsigned int control_timeout = 20;
     RCCHECK(rclc_timer_init_default( 
         &control_timer, 
         &support,
@@ -220,7 +220,7 @@ void setup()
 {
     pinMode(LED_PIN, OUTPUT);
     delay(1000);
-    
+
     bool imu_ok = imu.init();
     if(!imu_ok)
     {
@@ -260,7 +260,7 @@ void loop()
         }
     }
    
-    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(20));
 }
 
 void rclErrorLoop() 
