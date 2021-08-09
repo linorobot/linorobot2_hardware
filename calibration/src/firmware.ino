@@ -32,6 +32,22 @@ Motor motor4_controller(MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
 void setup()
 {
     Serial.begin(115200);
+    unsigned long start_time = micros();
+    while(true)
+    {
+        if(micros() - start_time >= 10000000)
+        {
+           motor1_controller.spin(0);
+            motor2_controller.spin(0);
+            motor3_controller.spin(0);
+            motor4_controller.spin(0);
+            break;
+        }
+        motor1_controller.spin(PWM_MAX);
+        motor2_controller.spin(PWM_MAX);
+        motor3_controller.spin(PWM_MAX);
+        motor4_controller.spin(PWM_MAX);
+    }
 }
 
 void loop()
@@ -39,17 +55,13 @@ void loop()
     delay(100);
     Serial.print("M1: ");
     Serial.print(motor1_encoder.read());
-    motor1_controller.spin(PWM_MAX);
 
     Serial.print(" M2: ");
     Serial.print(motor2_encoder.read());
-    motor2_controller.spin(PWM_MAX);
 
     Serial.print(" M3: ");
     Serial.print(motor3_encoder.read());
-    motor3_controller.spin(PWM_MAX);
 
     Serial.print(" M4: ");
     Serial.println(motor4_encoder.read());
-    motor4_controller.spin(PWM_MAX);
 }
