@@ -77,6 +77,12 @@ class Encoder
 {
 public:
 	Encoder(uint8_t pin1, uint8_t pin2, int counts_per_rev, bool invert=false) {
+		uint8_t temp_pin = pin1;
+		if(invert)
+		{
+			pin1 = pin2;
+			pin2 = temp_pin;
+		}
 		#ifdef INPUT_PULLUP
 		pinMode(pin1, INPUT_PULLUP);
 		pinMode(pin2, INPUT_PULLUP);
@@ -88,10 +94,6 @@ public:
 		#endif
 
 		counts_per_rev_ = counts_per_rev;	
-		if(invert)
-			inverter_ = -1;
-		else
-			inverter_ = 1;
 
 		encoder.pin1_register = PIN_TO_BASEREG(pin1);
 		encoder.pin1_bitmask = PIN_TO_BITMASK(pin1);
@@ -124,7 +126,7 @@ public:
 		}
 		int32_t ret = encoder.position;
 		interrupts();
-		return inverter_ * ret;
+		return ret;
 	}
 	inline int32_t readAndReset() {
 		if (interrupts_in_use < 2) {
@@ -136,7 +138,7 @@ public:
 		int32_t ret = encoder.position;
 		encoder.position = 0;
 		interrupts();
-		return inverter_ * ret;
+		return ret;
 	}
 	inline void write(int32_t p) {
 		noInterrupts();
@@ -146,13 +148,13 @@ public:
 #else
 	inline int32_t read() {
 		update(&encoder);
-		return inverter_ * encoder.position;
+		return encoder.position;
 	}
 	inline int32_t readAndReset() {
 		update(&encoder);
 		int32_t ret = encoder.position;
 		encoder.position = 0;
-		return inverter_ * ret;
+		return ret;
 	}
 	inline void write(int32_t p) {
 		encoder.position = p;
@@ -177,7 +179,6 @@ public:
 
 private:
 	int counts_per_rev_;
-	int inverter_;
 	unsigned long prev_update_time_;
     long prev_encoder_ticks_;
 	Encoder_internal_state_t encoder;
