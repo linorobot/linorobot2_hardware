@@ -17,8 +17,6 @@
 
 #include <sensor_msgs/msg/imu.h>
 
-extern "C" int clock_gettime(clockid_t unused, struct timespec *tp);
-
 class IMUInterface
 {
     protected:
