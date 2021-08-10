@@ -144,7 +144,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         float vel_dt = (now - prev_odom_update) / 1000000;
         prev_odom_update = now;
 
-        odometry.update(vel_dt, 1, current_vel.linear_y, current_vel.angular_z);
+        odometry.update(vel_dt, current_vel.linear_x, current_vel.linear_y, current_vel.angular_z);
     }
 }
 
