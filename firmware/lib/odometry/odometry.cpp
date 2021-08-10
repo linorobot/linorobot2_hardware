@@ -15,7 +15,6 @@
 #include "odometry.h"
 
 Odometry::Odometry():
-    prev_update_time_({0}),
     x_pos_(0.0),
     y_pos_(0.0),
     heading_(0.0)
@@ -24,14 +23,8 @@ Odometry::Odometry():
     odom_msg_.child_frame_id = micro_ros_string_utilities_set(odom_msg_.child_frame_id, "base_footprint");
 }
 
-void Odometry::update(float linear_vel_x, float linear_vel_y, float angular_vel_z)
+void Odometry::update(float vel_dt, float linear_vel_x, float linear_vel_y, float angular_vel_z)
 {
-    struct timespec current_time = {0};
-    clock_gettime(0, &current_time);
-
-    float vel_dt = current_time.tv_sec - prev_update_time_.tv_sec;
-    prev_update_time_ = current_time;
-
     float delta_heading = angular_vel_z * vel_dt; //radians
     float cos_h = cos(heading_);
     float sin_h = sin(heading_);
