@@ -25,10 +25,31 @@ class IMUInterface
         const float mgauss_to_utesla_ = 0.1;
         const float utesla_to_tesla_ = 0.000001;
 
-        float accel_cov_ = 0.02;
-        float gyro_cov_ = 0.04;
-        //doesn't get an accurate model but close enough
-        // https://github.com/ENSTABretagneRobotics/razor_imu_9dof/blob/indigo-devel/nodes/imu_node.py
+        float accel_cov_ = 0.00005;
+        float gyro_cov_ = 0.00005;
+        const int sample_size_ = 40;
+
+        geometry_msgs__msg__Vector3 gyro_cal_;
+
+        void calibrateGyro()
+        {
+            geometry_msgs__msg__Vector3 gyro;
+
+            for(int i=0; i<sample_size_; i++)
+            {
+                gyro = readGyroscope();
+                gyro_cal_.x += gyro.x;
+                gyro_cal_.y += gyro.y;
+                gyro_cal_.z += gyro.z;
+
+                delay(50);
+            }
+
+            gyro_cal_.x = gyro_cal_.x / (float)sample_size_;
+            gyro_cal_.y = gyro_cal_.y / (float)sample_size_;
+            gyro_cal_.z = gyro_cal_.z / (float)sample_size_;
+        }
+   
     public:
         IMUInterface()
         {
@@ -37,11 +58,23 @@ class IMUInterface
 
         virtual geometry_msgs__msg__Vector3 readAccelerometer() = 0;
         virtual geometry_msgs__msg__Vector3 readGyroscope() = 0;
-        virtual bool init() = 0;
+        virtual bool startSensor() = 0;
+
+        bool init()
+        {
+            bool sensor_ok = startSensor();
+            if(sensor_ok)
+                calibrateGyro();
+
+            return sensor_ok;
+        }
 
         sensor_msgs__msg__Imu getData()
         {
             imu_msg_.angular_velocity = readGyroscope();
+            imu_msg_.angular_velocity.x -= gyro_cal_.x; 
+            imu_msg_.angular_velocity.y -= gyro_cal_.y; 
+            imu_msg_.angular_velocity.z -= gyro_cal_.z;
             imu_msg_.angular_velocity_covariance[0] = gyro_cov_;
             imu_msg_.angular_velocity_covariance[4] = gyro_cov_;
             imu_msg_.angular_velocity_covariance[8] = gyro_cov_;

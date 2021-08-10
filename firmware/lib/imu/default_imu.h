@@ -49,9 +49,9 @@ class GY85IMU: public IMUInterface
             // gyro_cov_ = 0.001; //you can overwrite the convariance values here
         }
 
-        bool init() override
+        bool startSensor() override
         {
-            // here you can override init() function and use the sensor's driver API
+            // here you can override startSensor() function and use the sensor's driver API
             // to initialize and test the sensor's connection during boot time
             Wire.begin();
             bool ret;
@@ -117,7 +117,7 @@ class MPU6050IMU: public IMUInterface
         {
         }
 
-        bool init() override
+        bool startSensor() override
         {
             Wire.begin();
             bool ret;
@@ -178,7 +178,7 @@ class MPU9150IMU: public IMUInterface
         {
         }
 
-        bool init() override
+        bool startSensor() override
         {
             Wire.begin();
             bool ret;
@@ -239,7 +239,7 @@ class MPU9250IMU: public IMUInterface
         {
         }
 
-        bool init() override
+        bool startSensor() override
         {
             Wire.begin();
             bool ret;
@@ -294,7 +294,7 @@ class FakeIMU: public IMUInterface
         {
         }
 
-        bool init() override
+        bool startSensor() override
         {
             return true;
         }
