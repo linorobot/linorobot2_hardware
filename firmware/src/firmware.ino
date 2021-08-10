@@ -38,6 +38,7 @@
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+extern "C" int clock_gettime(clockid_t unused, struct timespec *tp);
 
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
@@ -54,7 +55,10 @@ rcl_node_t node;
 rcl_timer_t publish_timer;
 rcl_timer_t control_timer;
 
+struct timespec time_stamp = {0};
+unsigned long time_offset = 0;
 unsigned long prev_cmd_time = 0;
+unsigned long prev_odom_update = 0;
 bool micro_ros_init_successful = false;
 bool new_command = false;
 
@@ -82,21 +86,16 @@ void publishCallback(rcl_timer_t * timer, int64_t last_call_time)
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
-        int64_t times_stamp_nanosec;
-        time_t time_stamp_sec;
-        
         odom_msg = odometry.getData();
         imu_msg = imu.getData();
 
-        times_stamp_nanosec = rmw_uros_epoch_nanos(); 
-        time_stamp_sec = times_stamp_nanosec / 1000000000;
+        clock_gettime(0, &time_stamp);
 
-        //update time stamps using synchronized time with the agent
-        odom_msg.header.stamp.sec = time_stamp_sec;
-        odom_msg.header.stamp.nanosec = times_stamp_nanosec;
+        odom_msg.header.stamp.sec = time_stamp.tv_sec + time_offset;
+        odom_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
-        imu_msg.header.stamp.sec = time_stamp_sec;
-        imu_msg.header.stamp.nanosec = times_stamp_nanosec;
+        imu_msg.header.stamp.sec = time_stamp.tv_sec + time_offset;
+        imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
         RCSOFTCHECK(rcl_publish( &imu_publisher, &imu_msg, NULL));
         RCSOFTCHECK(rcl_publish( &odom_publisher, &odom_msg, NULL));
@@ -111,7 +110,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         // brake if there's no command received, or when it's only the first command sent
         // first command is ignored if it's less than 5hz to prevent jerky motion. ie, there's a long pause after 
         // the key is pressed in teleop_twist_keyboard
-        if(((millis() - prev_cmd_time) >= 200) || new_command) 
+        if(((micros() - prev_cmd_time) >= 200000) || new_command) 
         {
             new_command = false;
             twist_msg.linear.x = 0.0;
@@ -138,7 +137,14 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
 
         Kinematics::velocities current_vel = kinematics.getVelocities(current_rpm1, current_rpm2, current_rpm3, current_rpm4);
 
-        odometry.update(current_vel.linear_x, current_vel.linear_y, current_vel.angular_z);
+        clock_gettime(0, &time_stamp);
+
+        unsigned long now = micros();
+
+        float vel_dt = (now - prev_odom_update) / 1000000;
+        prev_odom_update = now;
+
+        odometry.update(vel_dt, 1, current_vel.linear_y, current_vel.angular_z);
     }
 }
 
@@ -147,12 +153,12 @@ void twistCallback(const void * msgin)
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
 
     // detect first command (ie. when user just started pressing accelerator)
-    unsigned long now = millis();
-    if((now - prev_cmd_time) > 200)
+    unsigned long now = micros();
+    if((now - prev_cmd_time) > 200000)
     {
         new_command = true;
     }
-    prev_cmd_time = millis();
+    prev_cmd_time = now;
 }
 
 void createEntities()
@@ -208,8 +214,18 @@ void createEntities()
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
     RCCHECK(rclc_executor_add_subscription( &executor, &twist_subscriber, &twist_msg, &twistCallback, ON_NEW_DATA));
 
-    //synchronize time with the agent
+    // synchronize time with the agent
     RCCHECK(rmw_uros_sync_session(1000));
+
+    // get the current time from the agent
+    unsigned long long times_stamp_nanosec = rmw_uros_epoch_millis(); 
+    unsigned long time_stamp_sec = times_stamp_nanosec / 1000;
+
+    // get the running time
+    clock_gettime(0, &time_stamp);
+
+    // now we can find the difference from ROS time and uC time
+    time_offset = time_stamp_sec - time_stamp.tv_sec;
 
     digitalWrite(LED_PIN, HIGH);
     micro_ros_init_successful = true;
