@@ -25,8 +25,8 @@ class IMUInterface
         const float mgauss_to_utesla_ = 0.1;
         const float utesla_to_tesla_ = 0.000001;
 
-        float accel_cov_ = 0.00005;
-        float gyro_cov_ = 0.00005;
+        float accel_cov_ = 0.00008;
+        float gyro_cov_ = 0.00008;
         const int sample_size_ = 40;
 
         geometry_msgs__msg__Vector3 gyro_cal_;
