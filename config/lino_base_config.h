@@ -38,14 +38,6 @@
 #define K_I 0.8                             // I constant
 #define K_D 0.5                             // D constant
 
-//define your robot' specs here
-#define MAX_RPM 140                         // motor's maximum RPM
-#define COUNTS_PER_REV 144000                 // wheel encoder's no of ticks per rev
-#define WHEEL_DIAMETER 0.152                // wheel's diameter in meters
-#define LR_WHEELS_DISTANCE 0.271            // distance between left and right wheels
-#define FR_WHEELS_DISTANCE 0.240            // distance between front and rear wheels. Ignore this if you're on 2WD
-#define PWM_BITS 8                          // PWM Resolution of the microcontroller
-
 /*
 ROBOT ORIENTATION
          FRONT
@@ -53,6 +45,19 @@ ROBOT ORIENTATION
     MOTOR3  MOTOR4  (4WD/MECANUM)  
          BACK
 */
+
+//define your robot' specs here
+#define MOTOR_MAX_RPM 140                   // motor's max RPM                    
+#define MOTOR_OPERATING_VOLTAGE 24          // motor's operating voltage (used for calibration)
+#define MOTOR_POWER_CURRENT_VOLTAGE 12      // current voltage reading of the power connected to the motor (used for calibration)
+#define COUNTS_PER_REV1 144000              // wheel1 encoder's no of ticks per rev
+#define COUNTS_PER_REV2 144000              // wheel1 encoder's no of ticks per rev
+#define COUNTS_PER_REV3 144000              // wheel1 encoder's no of ticks per rev
+#define COUNTS_PER_REV4 144000              // wheel1 encoder's no of ticks per rev
+#define WHEEL_DIAMETER 0.152                // wheel's diameter in meters
+#define LR_WHEELS_DISTANCE 0.271            // distance between left and right wheels
+#define FR_WHEELS_DISTANCE 0.240            // distance between front and rear wheels. Ignore this if you're on 2WD
+#define PWM_BITS 8                          // PWM Resolution of the microcontroller
 
 /// ENCODER PINS
 #define MOTOR1_ENCODER_A 14
