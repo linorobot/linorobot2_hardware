@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <Arduino.h>
-#include "lino_base_config.h"
+#include "config.h"
 #include "motor.h"
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
