@@ -19,6 +19,8 @@
 #include "encoder.h"
 #include "kinematics.h"
 
+#define SAMPLE_TIME 10 //s
+
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, 5, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, 5, MOTOR2_ENCODER_INV);
 Encoder motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, 5, MOTOR3_ENCODER_INV);
@@ -29,13 +31,18 @@ Motor motor2_controller(MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
 Motor motor3_controller(MOTOR3_INV, MOTOR3_PWM, MOTOR3_IN_A, MOTOR3_IN_B);
 Motor motor4_controller(MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
 
+long long int counts_per_rev1;
+long long int counts_per_rev2;
+long long int counts_per_rev3;
+long long int counts_per_rev4;
+
 void setup()
 {
     Serial.begin(115200);
     unsigned long start_time = micros();
     while(true)
     {
-        if(micros() - start_time >= 10000000)
+        if(micros() - start_time >= SAMPLE_TIME * 1000000)
         {
            motor1_controller.spin(0);
             motor2_controller.spin(0);
@@ -48,6 +55,14 @@ void setup()
         motor3_controller.spin(PWM_MAX);
         motor4_controller.spin(PWM_MAX);
     }
+    
+    int scaled_max_rpm = ((MOTOR_POWER_CURRENT_VOLTAGE / MOTOR_OPERATING_VOLTAGE) * MOTOR_MAX_RPM);
+    int total_rev = scaled_max_rpm * (SAMPLE_TIME / 60.0);
+
+    counts_per_rev1 = motor1_encoder.read() / total_rev;
+    counts_per_rev2 = motor2_encoder.read() / total_rev;
+    counts_per_rev3 = motor3_encoder.read() / total_rev;
+    counts_per_rev4 = motor4_encoder.read() / total_rev;
 }
 
 void loop()
@@ -64,4 +79,16 @@ void loop()
 
     Serial.print(" M4: ");
     Serial.println(motor4_encoder.read());
+
+    Serial.print("CPR1: ");
+    Serial.print(counts_per_rev1);
+
+    Serial.print(" CPR2: ");
+    Serial.print(counts_per_rev2);
+
+    Serial.print(" CPR3: ");
+    Serial.print(counts_per_rev3);
+
+    Serial.print(" CPR4: ");
+    Serial.println(counts_per_rev4);
 }
