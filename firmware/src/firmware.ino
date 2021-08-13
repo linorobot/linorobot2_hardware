@@ -26,7 +26,7 @@
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 
-#include "lino_base_config.h"
+#include "config.h"
 #include "motor.h"
 #include "kinematics.h"
 #include "pid.h"
@@ -54,6 +54,7 @@ rcl_allocator_t allocator;
 rcl_node_t node;
 rcl_timer_t publish_timer;
 rcl_timer_t control_timer;
+rcl_timer_t sync_timer;
 
 struct timespec time_stamp = {0};
 unsigned long time_offset = 0;
@@ -81,6 +82,13 @@ Kinematics kinematics(Kinematics::LINO_BASE, MAX_RPM, WHEEL_DIAMETER, FR_WHEELS_
 Odometry odometry;
 IMU imu;
 
+void syncCallback(rcl_timer_t * timer, int64_t last_call_time)
+{
+    RCLC_UNUSED(timer);
+    RCLC_UNUSED(last_call_time);
+    syncTime();
+}
+
 void publishCallback(rcl_timer_t * timer, int64_t last_call_time) 
 {
     RCLC_UNUSED(last_call_time);
@@ -97,8 +105,8 @@ void publishCallback(rcl_timer_t * timer, int64_t last_call_time)
         imu_msg.header.stamp.sec = time_stamp.tv_sec + time_offset;
         imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
-        RCSOFTCHECK(rcl_publish( &imu_publisher, &imu_msg, NULL));
-        RCSOFTCHECK(rcl_publish( &odom_publisher, &odom_msg, NULL));
+        RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
+        RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
     }
 }
 
@@ -166,10 +174,10 @@ void createEntities()
     allocator = rcl_get_default_allocator();
 
     //create init_options
-    RCCHECK(rclc_support_init( &support, 0, NULL, &allocator));
+    RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
 
     // create node
-    RCCHECK(rclc_node_init_default( &node, "linorobot_base_node", "", &support));
+    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
 
     // create odometry publisher
     RCCHECK(rclc_publisher_init_best_effort( 
@@ -208,24 +216,24 @@ void createEntities()
         RCL_MS_TO_NS(control_timeout),
         controlCallback));
 
+    // create timer for synchronizing the time every minute
+    const unsigned int sync_timeout = 60000;
+    RCCHECK(rclc_timer_init_default( 
+        &sync_timer, 
+        &support,
+        RCL_MS_TO_NS(sync_timeout),
+        syncCallback));
+
     // create executor
-    RCCHECK(rclc_executor_init( &executor, &support.context, 3, & allocator));
+    RCCHECK(rclc_executor_init(&executor, &support.context, 4, & allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
-    RCCHECK(rclc_executor_add_subscription( &executor, &twist_subscriber, &twist_msg, &twistCallback, ON_NEW_DATA));
+    RCCHECK(rclc_executor_add_timer(&executor, &sync_timer));
+    RCCHECK(rclc_executor_add_subscription(&executor, &twist_subscriber, &twist_msg, &twistCallback, ON_NEW_DATA));
 
     // synchronize time with the agent
     RCCHECK(rmw_uros_sync_session(1000));
-
-    // get the current time from the agent
-    unsigned long long times_stamp_nanosec = rmw_uros_epoch_millis(); 
-    unsigned long time_stamp_sec = times_stamp_nanosec / 1000;
-
-    // get the running time
-    clock_gettime(0, &time_stamp);
-
-    // now we can find the difference from ROS time and uC time
-    time_offset = time_stamp_sec - time_stamp.tv_sec;
+    syncTime();
 
     digitalWrite(LED_PIN, HIGH);
     micro_ros_init_successful = true;
@@ -262,7 +270,6 @@ void setup()
         }
     }
     micro_ros_init_successful = false;
-
     set_microros_transports();
 }
 
@@ -317,8 +324,25 @@ void flashLED(int n_times)
 
 void fullStop()
 {
+    twist_msg.linear.x = 0.0;
+    twist_msg.linear.y = 0.0;
+    twist_msg.angular.z = 0.0;
+
     motor1_controller.brake();
     motor2_controller.brake();
     motor3_controller.brake();
     motor4_controller.brake();
+}
+
+void syncTime()
+{
+    // get the current time from the agent
+    unsigned long long times_stamp_msec = rmw_uros_epoch_millis(); 
+    unsigned long time_stamp_sec = times_stamp_msec / 1000;
+
+    // get the running time
+    clock_gettime(0, &time_stamp);
+
+    // now we can find the difference from ROS time and uC time
+    time_offset = time_stamp_sec - time_stamp.tv_sec;
 }
