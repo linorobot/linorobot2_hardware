@@ -56,7 +56,7 @@ void setup()
         motor4_controller.spin(PWM_MAX);
     }
     
-    int scaled_max_rpm = ((MOTOR_POWER_CURRENT_VOLTAGE / MOTOR_OPERATING_VOLTAGE) * MOTOR_MAX_RPM);
+    int scaled_max_rpm = ((MOTOR_POWER_MEASURED_VOLTAGE / MOTOR_OPERATING_VOLTAGE) * MOTOR_MAX_RPM);
     int total_rev = scaled_max_rpm * (SAMPLE_TIME / 60.0);
 
     counts_per_rev1 = motor1_encoder.read() / total_rev;
