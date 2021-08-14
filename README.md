@@ -73,7 +73,7 @@ Constants Meaning:
 
 - **SKID_STEER** - 4 wheeled drive robots
 
-- **MECANUM** - 4 wheeled robots using mecanum wheels
+- **MECANUM** - 4 wheeled drive robots using mecanum wheels
 
 *MOTOR DRIVERS*
 - **USE_GENERIC_2_IN_MOTOR_DRIVER** - Motor drivers that has EN (pwm) pin, and 2 direction pins (usually DIRA, DIRB pins).
