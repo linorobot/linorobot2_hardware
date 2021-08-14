@@ -130,7 +130,7 @@ Constants' Meaning:
 
 - **COUNTS_PER_REVX** - The total number of pulses the encoder has to read to be considered as one revolution. You can either use the manufacturer's specification or the calibrated value in the next step. If you're planning to use the calibrated value, ensure that you have defined the correct values for `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`.
 
-- **WHEEL_DIAMETER** - Diameter of the wheels.
+- **WHEEL_DIAMETER** - Diameter of the wheels in meters.
 
 - **LR_WHEELS_DISTANCE** - The distance between the center of left and right wheels in meters.
 
