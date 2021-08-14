@@ -69,11 +69,11 @@ Go to config folder and open lino_base_config.h. Uncomment the base, motor drive
 Constants Meaning:
 
 *ROBOT TYPE (LINO_BASE)*
-- **DIFFERENTIAL_DRIVE** - 2 wheeled drive or tracked robots w/ 2 motors
+- **DIFFERENTIAL_DRIVE** - 2 wheeled drive or tracked robots w/ 2 motors.
 
-- **SKID_STEER** - 4 wheeled drive robots
+- **SKID_STEER** - 4 wheeled drive robots.
 
-- **MECANUM** - 4 wheeled drive robots using mecanum wheels
+- **MECANUM** - 4 wheeled drive robots using mecanum wheels.
 
 *MOTOR DRIVERS*
 - **USE_GENERIC_2_IN_MOTOR_DRIVER** - Motor drivers that has EN (pwm) pin, and 2 direction pins (usually DIRA, DIRB pins).
@@ -85,13 +85,13 @@ Constants Meaning:
 - **USE_ESC_MOTOR_DRIVER** - Bi-directional (forward/reverse) electronic speed controllers.
 
 *INERTIAL MEASUREMENT UNIT (IMU)*
-- **USE_GY85_IMU** - GY-85 IMUs
+- **USE_GY85_IMU** - GY-85 IMUs.
 
-- **USE_MPU6050_IMU** - MPU6060 IMUs
+- **USE_MPU6050_IMU** - MPU6060 IMUs.
 
-- **USE_MPU9150_IMU** - MPU9150 IMUs
+- **USE_MPU9150_IMU** - MPU9150 IMUs.
 
-- **USE_MPU9250_IMU** - MPU9250 IMUs
+- **USE_MPU9250_IMU** - MPU9250 IMUs.
 
 Next, fill in the robot settings accordingly:
 
@@ -128,6 +128,7 @@ Constants Meaning:
 - **MOTOR_POWER_MEASURED_VOLTAGE** - Measured voltage of the motor's power source. This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
 
 - **COUNTS_PER_REVX** - The total number of pulses the encoder has to read to be considered as one revolution. You can either use the manufacturer's specification or the calibrated value in the next step. If you're planning to use the calibrated value, ensurethat you have defined the correct values for `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`.
+
 - **WHEEL_DIAMETER** - Diameter of the wheels.
 
 - **LR_WHEELS_DISTANCE** - The distance between the center of left and right wheels in meters.
@@ -215,7 +216,7 @@ Go to calibration folder and upload the firmware. The robot will start spinning 
     pio run --target upload -e <your_teensy_board>
 
 
-Available boards:
+Available Teensy boards:
 - teensy31
 - teensy35
 - teensy36
@@ -226,7 +227,7 @@ Some Linux machines might encounter a problem related to libusb. If so, install 
 
     sudo apt install libusb-dev
 
-Once the wheels start spinning, check each wheel's direction if it's spinning forward. Take note of the motors that are spinning in the opposite direction and set the MOTORX_INV constant in lino_base_config.h to `true`. Reupload the calibration firmware to check if the wheels have been reconfigured properly:
+Once the wheels start spinning, check if each wheel's direction is spinning forward. Take note of the motors that are spinning in the opposite direction and set the MOTORX_INV constant in lino_base_config.h to `true` to invert the motor's direction. Reupload the calibration firmware to check if the wheels have been reconfigured properly:
 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
@@ -239,7 +240,7 @@ Open your terminal and run:
 
     screen /dev/ttyACM0 115200
 
-Wait for the logs to print and look for the values of M1, M2, M3 and M4. If you see any negative number in one of the motors, set `MOTORX_ENCODER_INV` in lino_base_config.h to true to invert the encoder pin. Reupload the the calibration firmware to check if the encoder pins have been reconfigured properly:
+Wait for the logs to print and look for the values of M1, M2, M3 and M4. If you see any negative number in one of the motors, set `MOTORX_ENCODER_INV` in lino_base_config.h to `true` to invert the encoder pin. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
