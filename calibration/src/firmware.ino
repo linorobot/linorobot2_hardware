@@ -67,29 +67,33 @@ void setup()
 
 void loop()
 {
-    delay(100);
-    Serial.print("M1: ");
+    delay(1500);
+    Serial.println("================MOTOR ENCODER READINGS================");
+
+    Serial.print("FRONT LEFT - M1: ");
     Serial.print(motor1_encoder.read());
 
-    Serial.print(" M2: ");
-    Serial.print(motor2_encoder.read());
+    Serial.print(" FRONT RIGHT - M2: ");
+    Serial.println(motor2_encoder.read());
 
-    Serial.print(" M3: ");
+    Serial.print("BACK LEFT - M3: ");
     Serial.print(motor3_encoder.read());
 
-    Serial.print(" M4: ");
+    Serial.print(" BACK RIGHT - M4: ");
     Serial.println(motor4_encoder.read());
     Serial.println();
 
-    Serial.print("CPR1: ");
+    Serial.println("================COUNTS PER REVOLUTION=================");
+    Serial.print("FRONT LEFT - CPR1: ");
     Serial.print(counts_per_rev1);
 
-    Serial.print(" CPR2: ");
-    Serial.print(counts_per_rev2);
+    Serial.print(" FRONT RIGHT - CPR2: ");
+    Serial.println(counts_per_rev2);
 
-    Serial.print(" CPR3: ");
+    Serial.print("BACK LEFT - CPR3: ");
     Serial.print(counts_per_rev3);
 
-    Serial.print(" CPR4: ");
+    Serial.print(" BACK RIGHT - CPR4: ");
     Serial.println(counts_per_rev4);
+    Serial.println();
 }
