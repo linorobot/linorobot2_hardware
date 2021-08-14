@@ -137,7 +137,7 @@ Constants Meaning:
 
 - **PWM_BITS** - Number of bits in generating the PWM signal. You can leave this value as is unless you have very special use case.
 
-and the microcontroller pins connected to the motors and encoders. Remember to only modify the correct constants under the motor controller macro that you're using ie. USE_GENERIC_2_IN_MOTOR_DRIVER. 
+and the microcontroller pins connected to the motors and encoders. Remember to only modify the correct constants under the motor controller macro that you're using ie. #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER. 
 
 Robot Orientation:
 
