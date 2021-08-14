@@ -60,25 +60,26 @@ and copy the file to /etc/udev/rules.d :
 
 ## 4. Configure robot settings
 
+### 4.1 Robot Parameters
 Go to config folder and open lino_base_config.h. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
 
     #define LINO_BASE DIFFERENTIAL_DRIVE
     #define USE_GENERIC_2_IN_MOTOR_DRIVER
     #define USE_GY85_IMU
 
-Constants Meaning:
+Constants' Meaning:
 
 *ROBOT TYPE (LINO_BASE)*
-- **DIFFERENTIAL_DRIVE** - 2 wheeled drive or tracked robots w/ 2 motors.
+- **DIFFERENTIAL_DRIVE** - 2 wheel drive or tracked robots w/ 2 motors.
 
-- **SKID_STEER** - 4 wheeled drive robots.
+- **SKID_STEER** - 4 wheel drive robots.
 
-- **MECANUM** - 4 wheeled drive robots using mecanum wheels.
+- **MECANUM** - 4 wheel drive robots using mecanum wheels.
 
 *MOTOR DRIVERS*
-- **USE_GENERIC_2_IN_MOTOR_DRIVER** - Motor drivers that has EN (pwm) pin, and 2 direction pins (usually DIRA, DIRB pins).
+- **USE_GENERIC_2_IN_MOTOR_DRIVER** - Motor drivers that have EN (pwm) pin, and 2 direction pins (usually DIRA, DIRB pins).
 
-- **USE_GENERIC_1_IN_MOTOR_DRIVER** - Motor drivers that has EN (pwm) pin, and 1 direction pin (usual DIR pin). These drivers usually have logic gates included to lessen the pins required in controlling the driver.
+- **USE_GENERIC_1_IN_MOTOR_DRIVER** - Motor drivers that have EN (pwm) pin, and 1 direction pin (usual DIR pin). These drivers usually have logic gates included to lessen the pins required in controlling the driver.
 
 - **USE_BTS7960_MOTOR_DRIVER** - BTS7960 motor driver.
 
@@ -117,17 +118,17 @@ Next, fill in the robot settings accordingly:
 
     #define PWM_BITS 8
 
-Constants Meaning:
+Constants' Meaning:
 
 - **K_P, K_I, K_D** - PID constants used to translate the robot's target velocity to motor speed.
 
-- **MOTOR_MAX_RPM** - Maximum number of rotation your motor can do in a minute specified by the manufacturer.
+- **MOTOR_MAX_RPM** - Maximum number of rotations your motor can do in a minute specified by the manufacturer.
 
 - **MOTOR_OPERATING_VOLTAGE** - Operating voltage of the motor specified by the manufacturer. This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
 
 - **MOTOR_POWER_MEASURED_VOLTAGE** - Measured voltage of the motor's power source. This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
 
-- **COUNTS_PER_REVX** - The total number of pulses the encoder has to read to be considered as one revolution. You can either use the manufacturer's specification or the calibrated value in the next step. If you're planning to use the calibrated value, ensurethat you have defined the correct values for `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`.
+- **COUNTS_PER_REVX** - The total number of pulses the encoder has to read to be considered as one revolution. You can either use the manufacturer's specification or the calibrated value in the next step. If you're planning to use the calibrated value, ensure that you have defined the correct values for `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`.
 
 - **WHEEL_DIAMETER** - Diameter of the wheels.
 
@@ -135,13 +136,17 @@ Constants Meaning:
 
 - **FR_WHEELS_DISTANCE** - The distance between the center of front and rear wheels in meters. This only applies to 4wd and mecanum robots. Just use the default value if you're using a 2wd robot.
 
-- **PWM_BITS** - Number of bits in generating the PWM signal. You can leave this value as is unless you have very special use case.
+- **PWM_BITS** - Number of bits in generating the PWM signal. You can leave this value as is unless you have a very special use-case.
 
-and the microcontroller pins connected to the motors and encoders. Remember to only modify the correct constants under the motor controller macro that you're using ie. #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER. 
+
+### 4.2 Hardware Pin Assignments
+Remember to only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can checkout PJRC [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
+
+The pin assignments found in lino_base_config.h are based on Linorobot's PCB board. You can wire up your electronic components based on the default pin assignments but you're also free to modify it depending on your setup. Just ensure that you're connecting MOTORX_PWM pins to a PWM enabled pin on the microcontroller and reserve SCL and SDA pins for the IMU, and pin 13 (built-in LED) for debugging.
 
 Robot Orientation:
 
---------------FRONT--------------
+-------------FRONT-------------
 
 WHEEL1 WHEEL2 (2WD)
 
@@ -190,31 +195,29 @@ WHEEL3 WHEEL4 (4WD)
     #define PWM_MIN -PWM_MAX
     #endif 
 
-Constants Meaning:
-- **MOTORX_ENCODER_A** - First read pin of the motor encoder. This pin is usually labelled as A pin.
+Constants' Meaning:
+- **MOTORX_ENCODER_A** - Microcontroller pin that is connected to the first read pin of the motor encoder. This pin is usually labelled as A pin on the motor encoder board.
 
-- **MOTORX_ENCODER_B** - Second read pin of the motor encoder. This pin is usually labelled as B pin.
+- **MOTORX_ENCODER_B** - Microcontroller pin that is connected to the second read pin of the motor encoder. This pin is usually labelled as B pin on the motor encoder board.
 
 - **MOTORX_ENCODER_INV** - Flag used to change the sign of the encoder value. More on that later.
 
-- **MOTORX_PWM** - Pin used to control the speed of the motor. This pin is usually labelled as EN or ENABLE pin.
+- **MOTORX_PWM** - Microcontroller pin that is connected to the PWM pin of the motor driver. This pin is usually labelled as EN or ENABLE pin on the motor driver board.
 
-- **MOTORX_IN_A** - Pin used to control the direction of the motor.This pin is usually labelled as DIRA or DIR1 pin.
+- **MOTORX_IN_A** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRA or DIR1 pin on the motor driver board.
 
-- **MOTORX_IN_B** - Pin used to control the direction of the motor. This pin is usually labelled as DIRB or DIR2 pin.
+- **MOTORX_IN_B** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRB or DIR2 pin on the motor driver board.
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
 ## 5. Motor and Encoder Checks
+Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 
 ### 5.1 Motor Check
-Before proceeding, **ensure that your robot is elavated and the wheels aren't touching the ground**. 
-
 Go to calibration folder and upload the firmware. The robot will start spinning once the firmware has been uploaded, so **ensure that nothing is obstructing the wheels**.
 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
-
 
 Available Teensy boards:
 - teensy31
@@ -227,12 +230,12 @@ Some Linux machines might encounter a problem related to libusb. If so, install 
 
     sudo apt install libusb-dev
 
-Once the wheels start spinning, check if each wheel's direction is spinning forward. Take note of the motors that are spinning in the opposite direction and set the MOTORX_INV constant in lino_base_config.h to `true` to invert the motor's direction. Reupload the calibration firmware to check if the wheels have been reconfigured properly:
+Once the wheels start spinning, check if each wheel's direction is spinning **forward**. Take note of the motors that are spinning in the opposite direction and set the MOTORX_INV constant in lino_base_config.h to `true` to invert the motor's direction. Reupload the calibration firmware to check if the wheels have been reconfigured properly:
 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
 
-Verify if all the wheels are spinning forward.
+Verify if all the wheels are spinning **forward**. Redo this step if you missed out any.
 
 ### 5.2 Encoder Check
 
@@ -240,13 +243,13 @@ Open your terminal and run:
 
     screen /dev/ttyACM0 115200
 
-Wait for the logs to print and look for the values of M1, M2, M3 and M4. If you see any negative number in one of the motors, set `MOTORX_ENCODER_INV` in lino_base_config.h to `true` to invert the encoder pin. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
+Wait until the terminal starts printing then look for the values of M1, M2, M3 and M4. If you see any negative number in one of the motors, set `MOTORX_ENCODER_INV` in lino_base_config.h to `true` to invert the encoder pin. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
     screen /dev/ttyACM0 115200
 
-Verify if all encoder values are now positive.
+Verify if all encoder values are now **positive**. Redo this step if you missed out any.
 
 ### 5.3 Counts Per Revolution
 
@@ -279,7 +282,7 @@ On the previous instruction where you check the encoder reads for each motor, yo
 
     Remember to restart your computer if you just copied the udev rule.
 
-#### 5.4.4 The firmware uploaded but nothing's happening.
+#### 5.4.4 The firmware was uploaded but nothing's happening.
 - Check if you're assigning the correct Teensy board when uploading the firmware. If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).
 
 
@@ -294,7 +297,7 @@ Upload the firmware by running:
 
 ## 1. Run the micro-ROS agent.
 
-This will allow the robot to receive Twist messages to control the robot, and publish odometry and imu data straight from the microcontroller. Compared to Linorobot's ROS1 version, the odometry and IMU data published from the microcontroller uses standard ROS2 messages and doesn't require any relay nodes to reconstruct the data to full fledge [sensor_msgs/Imu](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Imu.html) and [nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html) messages.
+This will allow the robot to receive Twist messages to control the robot, and publish odometry and IMU data straight from the microcontroller. Compared to Linorobot's ROS1 version, the odometry and IMU data published from the microcontroller use standard ROS2 messages and do not require any relay nodes to reconstruct the data to complete [sensor_msgs/Imu](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Imu.html) and [nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html) messages.
 
 Run the agent:
 
