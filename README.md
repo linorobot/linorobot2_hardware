@@ -68,30 +68,30 @@ Go to config folder and open lino_base_config.h. Uncomment the base, motor drive
 
 Constants Meaning:
 
-**ROBOT TYPE (LINO_BASE)**
-- DIFFERENTIAL_DRIVE - 2 wheeled drive or tracked robots w/ 2 motors
+*ROBOT TYPE (LINO_BASE)*
+- **DIFFERENTIAL_DRIVE** - 2 wheeled drive or tracked robots w/ 2 motors
 
-- SKID_STEER - 4 wheeled drive robots
+- **SKID_STEER** - 4 wheeled drive robots
 
-- MECANUM - 4 wheeled robots using mecanum wheels
+- **MECANUM** - 4 wheeled robots using mecanum wheels
 
-**MOTOR DRIVERS**
-- USE_GENERIC_2_IN_MOTOR_DRIVER - Motor drivers that has EN (pwm) pin, and 2 direction pins (usually DIRA, DIRB pins).
+*MOTOR DRIVERS*
+- **USE_GENERIC_2_IN_MOTOR_DRIVER** - Motor drivers that has EN (pwm) pin, and 2 direction pins (usually DIRA, DIRB pins).
 
-- USE_GENERIC_1_IN_MOTOR_DRIVER - Motor drivers that has EN (pwm) pin, and 1 direction pin (usual DIR pin). These drivers usually have logic gates included to lessen the pins required in controlling the driver.
+- **USE_GENERIC_1_IN_MOTOR_DRIVER** - Motor drivers that has EN (pwm) pin, and 1 direction pin (usual DIR pin). These drivers usually have logic gates included to lessen the pins required in controlling the driver.
 
-- USE_BTS7960_MOTOR_DRIVER - BTS7960 motor driver.
+- **USE_BTS7960_MOTOR_DRIVER** - BTS7960 motor driver.
 
-- USE_ESC_MOTOR_DRIVER - Bi-directional (forward/reverse) electronic speed controllers.
+- **USE_ESC_MOTOR_DRIVER** - Bi-directional (forward/reverse) electronic speed controllers.
 
-**INERTIAL MEASUREMENT UNIT (IMU)**
-- USE_GY85_IMU - GY-85 IMUs
+*INERTIAL MEASUREMENT UNIT (IMU)*
+- **USE_GY85_IMU** - GY-85 IMUs
 
-- USE_MPU6050_IMU - MPU6060 IMUs
+- **USE_MPU6050_IMU** - MPU6060 IMUs
 
-- USE_MPU9150_IMU - MPU9150 IMUs
+- **USE_MPU9150_IMU** - MPU9150 IMUs
 
-- USE_MPU9250_IMU - MPU9250 IMUs
+- **USE_MPU9250_IMU** - MPU9250 IMUs
 
 Next, fill in the robot settings accordingly:
 
@@ -100,7 +100,9 @@ Next, fill in the robot settings accordingly:
     #define K_D 0.5 // D constant
 
     //define your robot' specs here
-    #define MAX_RPM 100             
+    #define MOTOR_MAX_RPM 100             
+    #define MOTOR_OPERATING_VOLTAGE 12
+    #define MOTOR_POWER_MEASURED_VOLTAGE 11.7
 
     #define COUNTS_PER_REV1 2200    
     #define COUNTS_PER_REV2 2200      
@@ -117,22 +119,22 @@ Next, fill in the robot settings accordingly:
 
 Constants Meaning:
 
-- K_P, K_I, K_D - PID constants used to translate the robot's target velocity to motor speed.
+- **K_P, K_I, K_D** - PID constants used to translate the robot's target velocity to motor speed.
 
-- MOTOR_MAX_RPM - Maximum number of rotation your motor can do in a minute specified by the manufacturer.
+- **MOTOR_MAX_RPM** - Maximum number of rotation your motor can do in a minute specified by the manufacturer.
 
-- MOTOR_OPERATING_VOLTAGE - Operating voltage of the motor specified by the manufacturer. This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
+- **MOTOR_OPERATING_VOLTAGE** - Operating voltage of the motor specified by the manufacturer. This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
 
-- MOTOR_POWER_MEASURED_VOLTAGE - Measured voltage of the motor's power source. This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
+- **MOTOR_POWER_MEASURED_VOLTAGE** - Measured voltage of the motor's power source. This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
 
-- COUNTS_PER_REVX - The total number of pulses the encoder has to read to be considered as one revolution. You can either use the manufacturer's specification or the calibrated value in the next step. If you're planning to use the calibrated value, ensurethat you have defined the correct values for `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`.
-- WHEEL_DIAMETER - Diameter of the wheels.
+- **COUNTS_PER_REVX** - The total number of pulses the encoder has to read to be considered as one revolution. You can either use the manufacturer's specification or the calibrated value in the next step. If you're planning to use the calibrated value, ensurethat you have defined the correct values for `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`.
+- **WHEEL_DIAMETER** - Diameter of the wheels.
 
-- LR_WHEELS_DISTANCE - The distance between the center of left and right wheels in meters.
+- **LR_WHEELS_DISTANCE** - The distance between the center of left and right wheels in meters.
 
-- FR_WHEELS_DISTANCE - The distance between the center of front and rear wheels in meters. This only applies to 4wd and mecanum robots. Just use the default value if you're using a 2wd robot.
+- **FR_WHEELS_DISTANCE** - The distance between the center of front and rear wheels in meters. This only applies to 4wd and mecanum robots. Just use the default value if you're using a 2wd robot.
 
-- PWM_BITS 8 - Number of bits in generating the PWM signal. You can leave this value as is unless you have very special use case.
+- **PWM_BITS** - Number of bits in generating the PWM signal. You can leave this value as is unless you have very special use case.
 
 and the microcontroller pins connected to the motors and encoders. Remember to only modify the correct constants under the motor controller macro that you're using ie. USE_GENERIC_2_IN_MOTOR_DRIVER. 
 
@@ -188,19 +190,19 @@ WHEEL3 WHEEL4 (4WD)
     #endif 
 
 Constants Meaning:
-- MOTORX_ENCODER_A - First read pin of the motor encoder. This pin is usually labelled as A pin.
+- **MOTORX_ENCODER_A** - First read pin of the motor encoder. This pin is usually labelled as A pin.
 
-- MOTORX_ENCODER_B - Second read pin of the motor encoder. This pin is usually labelled as B pin.
+- **MOTORX_ENCODER_B** - Second read pin of the motor encoder. This pin is usually labelled as B pin.
 
-- MOTORX_ENCODER_INV - Flag used to change the sign of the encoder value. More on that later.
+- **MOTORX_ENCODER_INV** - Flag used to change the sign of the encoder value. More on that later.
 
-- MOTORX_PWM - Pin used to control the speed of the motor. This pin is usually labelled as EN or ENABLE pin.
+- **MOTORX_PWM** - Pin used to control the speed of the motor. This pin is usually labelled as EN or ENABLE pin.
 
-- MOTORX_IN_A - Pin used to control the direction of the motor.This pin is usually labelled as DIRA or DIR1 pin.
+- **MOTORX_IN_A** - Pin used to control the direction of the motor.This pin is usually labelled as DIRA or DIR1 pin.
 
-- MOTORX_IN_B - Pin used to control the direction of the motor. This pin is usually labelled as DIRB or DIR2 pin.
+- **MOTORX_IN_B** - Pin used to control the direction of the motor. This pin is usually labelled as DIRB or DIR2 pin.
 
-- MOTORX_INV - Flag used to invert the direction of the motor. More on that later.
+- **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
 ## 5. Motor and Encoder Checks
 
