@@ -120,7 +120,7 @@ Next, fill in the robot settings accordingly:
 
 Constants' Meaning:
 
-- **K_P, K_I, K_D** - PID constants used to translate the robot's target velocity to motor speed.
+- **K_P, K_I, K_D** - [PID](https://en.wikipedia.org/wiki/PID_controller) constants used to translate the robot's target velocity to motor speed. These values would likely work on your build, change these only if you experience jittery motions from the robot or you'd want to fine-tune it further.
 
 - **MOTOR_MAX_RPM** - Maximum number of rotations your motor can do in a minute specified by the manufacturer.
 
