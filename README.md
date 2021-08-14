@@ -249,6 +249,33 @@ Verify if all encoder values are now positive.
 
 On the previous instruction where you check the encoder reads for each motor, you'll see that there's also CPR values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in lino_base_config.h to have a more accurate model of the encoder.
 
+### 5.4 Troubleshooting Guide
+
+#### 5.4.1 One of my motor's not spinning.
+- Check if the motors are powered.
+- Check if you have a bad wiring.
+- Check if you have misconfigured the motor's pin assignment in lino_base_config.h.
+- Check if you uncommented the correct motor driver (ie. `USE_GENERIC_2_IN_MOTOR_DRIVER`)
+- Check if you assigned the motor driver pins under the correct motor driver constant. For instance, if you uncommented `USE_GENERIC_2_IN_MOTOR_DRIVER`, all the pins you assigned must be inside the `ifdef USE_GENERIC_2_IN_MOTOR_DRIVER` macro.
+
+#### 5.4.2 One of my encoder has no reading (0 value).
+- Check if the encoders are powered.
+- Check if you have a bad wiring.
+- Check if you have misconfigured the encoder's pin assignment in lino_base_config.h.
+
+#### 5.4.3 Nothing's printing when I run the screen app.
+- Check if you're passing the correct serial port. Run:
+
+        ls /dev/ttyACM*
+    
+    and ensure that the available serial port matches the port you're passing to the screen app.
+
+- Check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_prototype#3-udev-rule). Remember to restart your computer if you just copied the udev rule.
+
+#### 5.4.4 The firmware uploaded but the nothing's happening.
+- Check if you're assigning the correct Teensy board when uploading the firmware. If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).
+
+
 ## 6. Upload the firmware
 
 Upload the firmware by running:
