@@ -273,9 +273,13 @@ On the previous instruction where you check the encoder reads for each motor, yo
     
     and ensure that the available serial port matches the port you're passing to the screen app.
 
-- Check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_prototype#3-udev-rule). Remember to restart your computer if you just copied the udev rule.
+- Check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_prototype#3-udev-rule):
 
-#### 5.4.4 The firmware uploaded but the nothing's happening.
+        ls /etc/udev/rules.d/00-teensy.rules 
+
+    Remember to restart your computer if you just copied the udev rule.
+
+#### 5.4.4 The firmware uploaded but nothing's happening.
 - Check if you're assigning the correct Teensy board when uploading the firmware. If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).
 
 
