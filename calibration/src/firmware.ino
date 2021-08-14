@@ -79,6 +79,7 @@ void loop()
 
     Serial.print(" M4: ");
     Serial.println(motor4_encoder.read());
+    Serial.println();
 
     Serial.print("CPR1: ");
     Serial.print(counts_per_rev1);
