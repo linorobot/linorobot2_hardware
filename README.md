@@ -125,7 +125,7 @@ Constants' Meaning:
 
 - **MOTOR_MAX_RPM** - Motor's maximum number of rotations it can do in a minute specified by the manufacturer.
 
-- **MAX_WHEEL_VEL_RATIO** - Percentage of the motor's maximum RPM that the robot is allowed to move. This parameter ensures that the user-defined velocity will not be more than or equal the motor's max RPM, allowing the PID to have ample space to add/substract RPM values to reach the target velocity. For instance, if your motor's max velocity is 0.5 m/s and `MAX_WHEEL_VEL_RATIO` set to 0.85, and you asked the robot to move at 0.5 m/s as well, the max velocity that would be allowed for the wheels to spin will be capped at 0.45 m/s (0.85 * 0.5m/s). You can set this parameter to 1.0 if your wheels can spin way more than your operational speed.
+- **MAX_WHEEL_VEL_RATIO** - Percentage of the motor's maximum RPM that the robot is allowed to move. This parameter ensures that the user-defined velocity will not be more than or equal the motor's max RPM, allowing the PID to have ample space to add/substract RPM values to reach the target velocity. For instance, if your motor's max velocity is 0.5 m/s with `MAX_WHEEL_VEL_RATIO` set to 0.85, and you asked the robot to move at 0.5 m/s, the robot's max velocity will be capped at 0.425 m/s (0.85 * 0.5m/s). You can set this parameter to 1.0 if your wheels can spin way more than your operational speed.
 
     Wheel velocity can be computed as:  MAX_WHEEL_VELOCITY = (`MOTOR_MAX_RPM` / 60.0) * PI * `WHEEL_DIAMETER` 
 
