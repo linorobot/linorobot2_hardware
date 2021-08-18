@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BEEBO_CONFIG_H
-#define BEEBO_CONFIG_H
+#ifndef DEV_CONFIG_H
+#define DEV_CONFIG_H
 
 #define LED_PIN 13 
 
