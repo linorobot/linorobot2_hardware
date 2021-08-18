@@ -27,6 +27,7 @@
 #define K_D 0.5                             
 
 #define MOTOR_MAX_RPM 100
+#define MAX_WHEEL_VEL_RATIO 0.9             // max velocity of the wheels = MAX_WHEEL_VEL_RATIO * MOTOR_MAX_RPM          
 #define MOTOR_OPERATING_VOLTAGE 12
 #define MOTOR_POWER_MEASURED_VOLTAGE 12                         
 #define COUNTS_PER_REV1 2200

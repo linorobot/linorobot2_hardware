@@ -15,8 +15,8 @@
 #include "Arduino.h"
 #include "kinematics.h"
 
-Kinematics::Kinematics(base robot_base, int motor_max_rpm, float wheel_diameter, 
-float wheels_x_distance, float wheels_y_distance):
+Kinematics::Kinematics(base robot_base, int motor_max_rpm, float max_wheel_vel_ratio,
+                       float wheel_diameter, float wheels_x_distance, float wheels_y_distance):
     base_platform(robot_base),
     max_rpm_(motor_max_rpm),
     wheels_x_distance_(base_platform == DIFFERENTIAL_DRIVE ? 0 : wheels_x_distance),
@@ -24,30 +24,34 @@ float wheels_x_distance, float wheels_y_distance):
     wheel_circumference_(PI * wheel_diameter),
     total_wheels_(getTotalWheels(robot_base))
 {    
+    max_velocity_ = ((motor_max_rpm / 60.0) * wheel_circumference_) * max_wheel_vel_ratio;
 }
 
 Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float angular_z)
 {
     float linear_vel_x_mins;
     float linear_vel_y_mins;
-    float angular_vel_z_mins;
     float tangential_vel;
+    float tangential_vel_mins;
     float x_rpm;
     float y_rpm;
     float tan_rpm;
 
+    linear_x = constrain(linear_x, -max_velocity_, max_velocity_);
+    linear_y = constrain(linear_y, -max_velocity_, max_velocity_);
+
+    tangential_vel = angular_z * ((wheels_x_distance_ / 2.0) + (wheels_y_distance_ / 2.0));
+    tangential_vel = constrain(tangential_vel, -max_velocity_, max_velocity_);
+
     //convert m/s to m/min
-    linear_vel_x_mins = linear_x * 60;
-    linear_vel_y_mins = linear_y * 60;
-
+    linear_vel_x_mins = linear_x * 60.0;
+    linear_vel_y_mins = linear_y * 60.0;
     //convert rad/s to rad/min
-    angular_vel_z_mins = angular_z * 60;
-
-    tangential_vel = angular_vel_z_mins * ((wheels_x_distance_ / 2) + (wheels_y_distance_ / 2));
+    tangential_vel_mins = tangential_vel * 60.0;
 
     x_rpm = linear_vel_x_mins / wheel_circumference_;
     y_rpm = linear_vel_y_mins / wheel_circumference_;
-    tan_rpm = tangential_vel / wheel_circumference_;
+    tan_rpm = tangential_vel_mins / wheel_circumference_;
 
     Kinematics::rpm rpm;
 
@@ -97,7 +101,7 @@ Kinematics::velocities Kinematics::getVelocities(float steering_angle, int rpm1,
     float average_rps_x;
 
     //convert average revolutions per minute to revolutions per second
-    average_rps_x = ((float)(rpm1 + rpm2) / total_wheels_) / 60; // RPM
+    average_rps_x = ((float)(rpm1 + rpm2) / total_wheels_) / 60.0; // RPM
     vel.linear_x = average_rps_x * wheel_circumference_; // m/s
 
     vel.linear_y = 0.0;
@@ -116,18 +120,18 @@ Kinematics::velocities Kinematics::getVelocities(int rpm1, int rpm2, int rpm3, i
     float average_rps_a;
 
     //convert average revolutions per minute to revolutions per second
-    average_rps_x = ((float)(rpm1 + rpm2 + rpm3 + rpm4) / total_wheels_) / 60; // RPM
+    average_rps_x = ((float)(rpm1 + rpm2 + rpm3 + rpm4) / total_wheels_) / 60.0; // RPM
     vel.linear_x = average_rps_x * wheel_circumference_; // m/s
 
     //convert average revolutions per minute in y axis to revolutions per second
-    average_rps_y = ((float)(-rpm1 + rpm2 + rpm3 - rpm4) / total_wheels_) / 60; // RPM
+    average_rps_y = ((float)(-rpm1 + rpm2 + rpm3 - rpm4) / total_wheels_) / 60.0; // RPM
     if(base_platform == MECANUM)
         vel.linear_y = average_rps_y * wheel_circumference_; // m/s
     else
         vel.linear_y = 0;
 
     //convert average revolutions per minute to revolutions per second
-    average_rps_a = ((float)(-rpm1 + rpm2 - rpm3 + rpm4) / total_wheels_) / 60;
+    average_rps_a = ((float)(-rpm1 + rpm2 - rpm3 + rpm4) / total_wheels_) / 60.0;
     vel.angular_z =  (average_rps_a * wheel_circumference_) / ((wheels_x_distance_ / 2) + (wheels_y_distance_ / 2)); //  rad/s
 
     return vel;
