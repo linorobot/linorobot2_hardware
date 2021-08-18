@@ -102,6 +102,7 @@ Next, fill in the robot settings accordingly:
 
     //define your robot' specs here
     #define MOTOR_MAX_RPM 100             
+    #define MAX_WHEEL_VEL_RATIO 0.9          
     #define MOTOR_OPERATING_VOLTAGE 12
     #define MOTOR_POWER_MEASURED_VOLTAGE 11.7
 
@@ -123,6 +124,10 @@ Constants' Meaning:
 - **K_P, K_I, K_D** - [PID](https://en.wikipedia.org/wiki/PID_controller) constants used to translate the robot's target velocity to motor speed. These values would likely work on your build, change these only if you experience jittery motions from the robot or you'd want to fine-tune it further.
 
 - **MOTOR_MAX_RPM** - Motor's maximum number of rotations it can do in a minute specified by the manufacturer.
+
+- **MAX_WHEEL_VEL_RATIO** - Percentage of the motor's maximum RPM that the robot is allowed to move. This parameter ensures that the user-defined velocity will not be more than or equal the motor's max RPM, allowing the PID to have ample space to add/substract RPM values to reach the target velocity. For instance, if your motor's max velocity is 0.5 m/s and `MAX_WHEEL_VEL_RATIO` set to 0.9, and you asked the robot to move at 0.5 m/s as well, the max velocity that would be allowed for the wheels to spin will be capped at 0.45 m/s (0.9 * 0.5m/s). You can set this parameter to 1.0 if your wheels can spin way more than your operational speed.
+
+    Wheel velocity can be computed as:  MAX_WHEEL_VELOCITY = (`MOTOR_MAX_RPM` / 60.0) * PI * `WHEEL_DIAMETER` (m/s)
 
 - **MOTOR_OPERATING_VOLTAGE** - Motor's operating voltage specified by the manufacturer (usually 5V/6V, 12V, 24V, 48V). This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant. You can ignore this if you're using the manufacturer's specified counts per rev.
 
