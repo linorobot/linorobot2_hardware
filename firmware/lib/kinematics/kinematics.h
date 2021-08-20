@@ -22,7 +22,7 @@
 class Kinematics
 {
     public:
-        enum base {DIFFERENTIAL_DRIVE, SKID_STEER, ACKERMANN, ACKERMANN1, MECANUM};
+        enum base {DIFFERENTIAL_DRIVE, SKID_STEER, MECANUM};
 
         base base_platform;
 
@@ -49,8 +49,7 @@ class Kinematics
             int motor4;
         };
 
-        Kinematics(base robot_base, int motor_max_rpm, float max_wheel_vel_ratio, float wheel_diameter, float wheels_x_distance, float wheels_y_distance);
-        velocities getVelocities(float steering_angle, int rpm1, int rpm2);
+        Kinematics(base robot_base, int motor_max_rpm, float max_wheel_vel_ratio, float wheel_diameter, float wheels_y_distance);
         velocities getVelocities(int rpm1, int rpm2, int rpm3, int rpm4);
         rpm getRPM(float linear_x, float linear_y, float angular_z);
 
@@ -59,7 +58,6 @@ class Kinematics
         int getTotalWheels(base robot_base);
 
         int max_rpm_;
-        float wheels_x_distance_;
         float wheels_y_distance_;
         float pwm_res_;
         float wheel_circumference_;

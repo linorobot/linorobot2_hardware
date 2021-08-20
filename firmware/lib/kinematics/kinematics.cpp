@@ -16,10 +16,9 @@
 #include "kinematics.h"
 
 Kinematics::Kinematics(base robot_base, int motor_max_rpm, float max_wheel_vel_ratio,
-                       float wheel_diameter, float wheels_x_distance, float wheels_y_distance):
+                       float wheel_diameter, float wheels_y_distance):
     base_platform(robot_base),
     max_rpm_(motor_max_rpm),
-    wheels_x_distance_(base_platform == DIFFERENTIAL_DRIVE ? 0 : wheels_x_distance),
     wheels_y_distance_(wheels_y_distance),
     wheel_circumference_(PI * wheel_diameter),
     total_wheels_(getTotalWheels(robot_base))
@@ -40,7 +39,7 @@ Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float a
     linear_x = constrain(linear_x, -max_velocity_, max_velocity_);
     linear_y = constrain(linear_y, -max_velocity_, max_velocity_);
 
-    tangential_vel = angular_z * ((wheels_x_distance_ / 2.0) + (wheels_y_distance_ / 2.0));
+    tangential_vel = angular_z * (wheels_y_distance_ / 2.0);
     tangential_vel = constrain(tangential_vel, -max_velocity_, max_velocity_);
 
     //convert m/s to m/min
@@ -83,33 +82,12 @@ Kinematics::rpm Kinematics::getRPM(float linear_x, float linear_y, float angular
     {
         rpm = calculateRPM(linear_x, 0.0 , angular_z);
     }
-    else if(base_platform == ACKERMANN || base_platform == ACKERMANN1)
-    {
-        rpm = calculateRPM(linear_x, 0.0, 0.0);
-    }
     else if(base_platform == MECANUM)
     {
         rpm = calculateRPM(linear_x, linear_y, angular_z);
     }
 
     return rpm;
-}
-
-Kinematics::velocities Kinematics::getVelocities(float steering_angle, int rpm1, int rpm2)
-{
-    Kinematics::velocities vel;
-    float average_rps_x;
-
-    //convert average revolutions per minute to revolutions per second
-    average_rps_x = ((float)(rpm1 + rpm2) / total_wheels_) / 60.0; // RPM
-    vel.linear_x = average_rps_x * wheel_circumference_; // m/s
-
-    vel.linear_y = 0.0;
-
-    //http://wiki.ros.org/teb_local_planner/Tutorials/Planning%20for%20car-like%20robots
-    vel.angular_z =  (vel.linear_x * tan(steering_angle)) / wheels_x_distance_;
-
-    return vel;
 }
 
 Kinematics::velocities Kinematics::getVelocities(int rpm1, int rpm2, int rpm3, int rpm4)
@@ -132,7 +110,7 @@ Kinematics::velocities Kinematics::getVelocities(int rpm1, int rpm2, int rpm3, i
 
     //convert average revolutions per minute to revolutions per second
     average_rps_a = ((float)(-rpm1 + rpm2 - rpm3 + rpm4) / total_wheels_) / 60.0;
-    vel.angular_z =  (average_rps_a * wheel_circumference_) / ((wheels_x_distance_ / 2) + (wheels_y_distance_ / 2)); //  rad/s
+    vel.angular_z =  (average_rps_a * wheel_circumference_) / (wheels_y_distance_ / 2); //  rad/s
 
     return vel;
 }
@@ -142,8 +120,6 @@ int Kinematics::getTotalWheels(base robot_base)
     switch(robot_base)
     {
         case DIFFERENTIAL_DRIVE:    return 2;
-        case ACKERMANN:             return 2;
-        case ACKERMANN1:            return 1;
         case SKID_STEER:            return 4;
         case MECANUM:               return 4;
         default:                    return 2;

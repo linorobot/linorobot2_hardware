@@ -57,7 +57,6 @@ ROBOT ORIENTATION
 #define COUNTS_PER_REV4 144000              // wheel1 encoder's no of ticks per rev
 #define WHEEL_DIAMETER 0.152                // wheel's diameter in meters
 #define LR_WHEELS_DISTANCE 0.271            // distance between left and right wheels
-#define FR_WHEELS_DISTANCE 0.240            // distance between front and rear wheels. Ignore this if you're on 2WD
 #define PWM_BITS 8                          // PWM Resolution of the microcontroller
 
 /// ENCODER PINS

@@ -115,8 +115,6 @@ Next, fill in the robot settings accordingly:
 
     #define LR_WHEELS_DISTANCE 0.2  
 
-    #define FR_WHEELS_DISTANCE 0.30  
-
     #define PWM_BITS 8
 
 Constants' Meaning:
@@ -138,8 +136,6 @@ Constants' Meaning:
 - **WHEEL_DIAMETER** - Diameter of the wheels in meters.
 
 - **LR_WHEELS_DISTANCE** - The distance between the center of left and right wheels in meters.
-
-- **FR_WHEELS_DISTANCE** - The distance between the center of front and rear wheels in meters. This only applies to 4wd and mecanum robots. Just use the default value if you're using a 2wd robot.
 
 - **PWM_BITS** - Number of bits in generating the PWM signal. You can leave this value as is unless you have a very special use-case.
 
