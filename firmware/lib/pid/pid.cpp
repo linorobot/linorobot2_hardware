@@ -37,6 +37,7 @@ double PID::compute(float setpoint, float measured_value)
     if(setpoint == 0 && error == 0)
     {
         integral_ = 0;
+        derivative_ = 0;
     }
 
     pid = (kp_ * error) + (ki_ * integral_) + (kd_ * derivative_);
