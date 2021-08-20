@@ -162,7 +162,7 @@ void twistCallback(const void * msgin)
 
     // detect first command (ie. when user just started pressing accelerator)
     unsigned long now = micros();
-    if((now - prev_cmd_time) > 200000)
+    if((now - prev_cmd_time) >= 200000)
     {
         new_command = true;
     }
@@ -282,7 +282,7 @@ void loop()
     {
         prev_connect_test_time = micros();
         // check if the agent is connected
-        if(RMW_RET_OK == rmw_uros_ping_agent(10, 2))
+        if(RMW_RET_OK == rmw_uros_ping_agent(50, 2))
         {
             // reconnect if agent got disconnected or haven't at all
             if (!micro_ros_init_successful) 
@@ -299,7 +299,7 @@ void loop()
         }
     }
    
-    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(20));
+    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
 }
 
 void rclErrorLoop() 
