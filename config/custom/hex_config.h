@@ -30,11 +30,11 @@
 #define MAX_RPM_RATIO 0.85
 #define MOTOR_OPERATING_VOLTAGE 12
 #define MOTOR_POWER_MAX_VOLTAGE 12
-#define MOTOR_POWER_MEASURED_VOLTAGE 12                         
-#define COUNTS_PER_REV1 2200
-#define COUNTS_PER_REV2 2200
-#define COUNTS_PER_REV3 2200
-#define COUNTS_PER_REV4 2200
+#define MOTOR_POWER_MEASURED_VOLTAGE 11.67                         
+#define COUNTS_PER_REV1 2421
+#define COUNTS_PER_REV2 2501
+#define COUNTS_PER_REV3 2421
+#define COUNTS_PER_REV4 2501
 #define WHEEL_DIAMETER 0.09               
 #define LR_WHEELS_DISTANCE 0.255            
 #define PWM_BITS 8                         
