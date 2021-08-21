@@ -28,10 +28,10 @@ class Kinematics
 
         struct rpm
         {
-            int motor1;
-            int motor2;
-            int motor3;
-            int motor4;
+            float motor1;
+            float motor2;
+            float motor3;
+            float motor4;
         };
         
         struct velocities
