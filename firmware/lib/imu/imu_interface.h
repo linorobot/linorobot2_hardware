@@ -27,7 +27,7 @@ class IMUInterface
 
         float accel_cov_ = 0.00001;
         float gyro_cov_ = 0.00001;
-        const int sample_size_ = 40;
+        const int sample_size_ = 100;
 
         geometry_msgs__msg__Vector3 gyro_cal_;
 
@@ -41,8 +41,6 @@ class IMUInterface
                 gyro_cal_.x += gyro.x;
                 gyro_cal_.y += gyro.y;
                 gyro_cal_.z += gyro.z;
-
-                delay(50);
             }
 
             gyro_cal_.x = gyro_cal_.x / (float)sample_size_;
