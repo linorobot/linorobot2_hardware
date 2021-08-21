@@ -15,42 +15,51 @@
 #include "Arduino.h"
 #include "kinematics.h"
 
-Kinematics::Kinematics(base robot_base, int motor_max_rpm, float max_wheel_vel_ratio,
+Kinematics::Kinematics(base robot_base, int motor_max_rpm, float max_rpm_ratio,
                        float wheel_diameter, float wheels_y_distance):
     base_platform(robot_base),
-    max_rpm_(motor_max_rpm),
+    max_rpm_(motor_max_rpm * max_rpm_ratio),
     wheels_y_distance_(wheels_y_distance),
     wheel_circumference_(PI * wheel_diameter),
     total_wheels_(getTotalWheels(robot_base))
 {    
-    max_velocity_ = ((motor_max_rpm / 60.0) * wheel_circumference_) * max_wheel_vel_ratio;
 }
 
 Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float angular_z)
 {
-    float linear_vel_x_mins;
-    float linear_vel_y_mins;
-    float tangential_vel;
-    float tangential_vel_mins;
-    float x_rpm;
-    float y_rpm;
-    float tan_rpm;
 
-    linear_x = constrain(linear_x, -max_velocity_, max_velocity_);
-    linear_y = constrain(linear_y, -max_velocity_, max_velocity_);
-
-    tangential_vel = angular_z * (wheels_y_distance_ / 2.0);
-    tangential_vel = constrain(tangential_vel, -max_velocity_, max_velocity_);
+    float tangential_vel = angular_z * (wheels_y_distance_ / 2.0);
 
     //convert m/s to m/min
-    linear_vel_x_mins = linear_x * 60.0;
-    linear_vel_y_mins = linear_y * 60.0;
+    float linear_vel_x_mins = linear_x * 60.0;
+    float linear_vel_y_mins = linear_y * 60.0;
     //convert rad/s to rad/min
-    tangential_vel_mins = tangential_vel * 60.0;
+    float tangential_vel_mins = tangential_vel * 60.0;
 
-    x_rpm = linear_vel_x_mins / wheel_circumference_;
-    y_rpm = linear_vel_y_mins / wheel_circumference_;
-    tan_rpm = tangential_vel_mins / wheel_circumference_;
+    float x_rpm = linear_vel_x_mins / wheel_circumference_;
+    float y_rpm = linear_vel_y_mins / wheel_circumference_;
+    float tan_rpm = tangential_vel_mins / wheel_circumference_;
+
+    float xy_sum = x_rpm + y_rpm;
+    float xtan_sum = x_rpm + tan_rpm;
+
+    //calculate the scale value how much each target velocity
+    //must be scaled down in such cases where the total required RPM
+    //is more than the motor's max RPM
+    //this is to ensure that the required motion is achieved just with slower speed
+    if(((xy_sum) > max_rpm_ ) || ((xy_sum < -max_rpm_)))
+    {
+        float vel_scaler = (float)max_rpm_ / xy_sum;
+        x_rpm *= vel_scaler;
+        y_rpm *= vel_scaler;
+    }
+    
+    if(((xtan_sum) > max_rpm_ ) || ((xtan_sum < -max_rpm_)))
+    {
+        float vel_scaler = (float)max_rpm_ / xtan_sum;
+        x_rpm *= vel_scaler;
+        tan_rpm *= vel_scaler;
+    }
 
     Kinematics::rpm rpm;
 
@@ -76,18 +85,12 @@ Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float a
 
 Kinematics::rpm Kinematics::getRPM(float linear_x, float linear_y, float angular_z)
 {
-    Kinematics::rpm rpm;
-
     if(base_platform == DIFFERENTIAL_DRIVE || base_platform == SKID_STEER)
     {
-        rpm = calculateRPM(linear_x, 0.0 , angular_z);
-    }
-    else if(base_platform == MECANUM)
-    {
-        rpm = calculateRPM(linear_x, linear_y, angular_z);
+        linear_y = 0;
     }
 
-    return rpm;
+    return calculateRPM(linear_x, linear_y, angular_z);;
 }
 
 Kinematics::velocities Kinematics::getVelocities(int rpm1, int rpm2, int rpm3, int rpm4)

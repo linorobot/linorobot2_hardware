@@ -49,7 +49,7 @@ class Kinematics
             int motor4;
         };
 
-        Kinematics(base robot_base, int motor_max_rpm, float max_wheel_vel_ratio, float wheel_diameter, float wheels_y_distance);
+        Kinematics(base robot_base, int motor_max_rpm, float max_rpm_ratio, float wheel_diameter, float wheels_y_distance);
         velocities getVelocities(int rpm1, int rpm2, int rpm3, int rpm4);
         rpm getRPM(float linear_x, float linear_y, float angular_z);
 
@@ -62,7 +62,6 @@ class Kinematics
         float pwm_res_;
         float wheel_circumference_;
         int total_wheels_;
-        float max_velocity_;
 };
 
 #endif
