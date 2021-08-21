@@ -160,7 +160,7 @@ public:
 		encoder.position = p;
 	}
 #endif
-	int getRPM(){
+	float getRPM(){
 		long encoder_ticks = read();
 		//this function calculates the motor's RPM based on encoder ticks and delta time
 		unsigned long current_time = micros();

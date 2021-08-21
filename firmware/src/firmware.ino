@@ -144,10 +144,10 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         );
 
         // get the current speed of each motor
-        int current_rpm1 = motor1_encoder.getRPM();
-        int current_rpm2 = motor2_encoder.getRPM();
-        int current_rpm3 = motor3_encoder.getRPM();
-        int current_rpm4 = motor4_encoder.getRPM();
+        float current_rpm1 = motor1_encoder.getRPM();
+        float current_rpm2 = motor2_encoder.getRPM();
+        float current_rpm3 = motor3_encoder.getRPM();
+        float current_rpm4 = motor4_encoder.getRPM();
 
         // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
         // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
