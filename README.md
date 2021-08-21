@@ -320,10 +320,10 @@ Now you should see the following topics:
 
     /cmd_vel
     /imu/data
-    /odom
+    /odom/unfiltered
     /parameter_events
     /rosout
 
 You can subscribe to any of the topics by running:
 
-    ros2 topic echo odom
+    ros2 topic echo /odom/unfiltered
