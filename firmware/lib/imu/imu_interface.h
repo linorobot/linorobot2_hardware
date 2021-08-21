@@ -27,7 +27,7 @@ class IMUInterface
 
         float accel_cov_ = 0.00001;
         float gyro_cov_ = 0.00001;
-        const int sample_size_ = 10;
+        const int sample_size_ = 40;
 
         geometry_msgs__msg__Vector3 gyro_cal_;
 
@@ -42,7 +42,7 @@ class IMUInterface
                 gyro_cal_.y += gyro.y;
                 gyro_cal_.z += gyro.z;
 
-                delay(10);
+                delay(50);
             }
 
             gyro_cal_.x = gyro_cal_.x / (float)sample_size_;
@@ -74,7 +74,17 @@ class IMUInterface
             imu_msg_.angular_velocity = readGyroscope();
             imu_msg_.angular_velocity.x -= gyro_cal_.x; 
             imu_msg_.angular_velocity.y -= gyro_cal_.y; 
-            imu_msg_.angular_velocity.z -= gyro_cal_.z;
+            imu_msg_.angular_velocity.z -= gyro_cal_.z; 
+
+            if(imu_msg_.angular_velocity.x > -0.01 && imu_msg_.angular_velocity.x < 0.01 )
+                imu_msg_.angular_velocity.x = 0; 
+         
+            if(imu_msg_.angular_velocity.y > -0.01 && imu_msg_.angular_velocity.y < 0.01 )
+                imu_msg_.angular_velocity.y = 0;
+
+            if(imu_msg_.angular_velocity.z > -0.01 && imu_msg_.angular_velocity.z < 0.01 )
+                imu_msg_.angular_velocity.z = 0;
+       
             imu_msg_.angular_velocity_covariance[0] = gyro_cov_;
             imu_msg_.angular_velocity_covariance[4] = gyro_cov_;
             imu_msg_.angular_velocity_covariance[8] = gyro_cov_;
