@@ -333,8 +333,9 @@ void loop()
             destroyEntities();
         }
     }
-   
-    rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
+    
+    if(micro_ros_init_successful)
+        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
 }
 
 void rclErrorLoop() 
