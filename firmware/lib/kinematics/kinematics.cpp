@@ -16,13 +16,15 @@
 #include "kinematics.h"
 
 Kinematics::Kinematics(base robot_base, int motor_max_rpm, float max_rpm_ratio,
+                       float motor_operating_voltage, float motor_power_max_voltage,
                        float wheel_diameter, float wheels_y_distance):
-    base_platform(robot_base),
-    max_rpm_(motor_max_rpm * max_rpm_ratio),
+    base_platform_(robot_base),
     wheels_y_distance_(wheels_y_distance),
     wheel_circumference_(PI * wheel_diameter),
     total_wheels_(getTotalWheels(robot_base))
 {    
+    motor_power_max_voltage = constrain(motor_power_max_voltage, 0, motor_operating_voltage);
+    max_rpm_ =  ((motor_power_max_voltage / motor_operating_voltage) * motor_max_rpm) * max_rpm_ratio;
 }
 
 Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float angular_z)
@@ -85,7 +87,7 @@ Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float a
 
 Kinematics::rpm Kinematics::getRPM(float linear_x, float linear_y, float angular_z)
 {
-    if(base_platform == DIFFERENTIAL_DRIVE || base_platform == SKID_STEER)
+    if(base_platform_ == DIFFERENTIAL_DRIVE || base_platform_ == SKID_STEER)
     {
         linear_y = 0;
     }
@@ -106,7 +108,7 @@ Kinematics::velocities Kinematics::getVelocities(int rpm1, int rpm2, int rpm3, i
 
     //convert average revolutions per minute in y axis to revolutions per second
     average_rps_y = ((float)(-rpm1 + rpm2 + rpm3 - rpm4) / total_wheels_) / 60.0; // RPM
-    if(base_platform == MECANUM)
+    if(base_platform_ == MECANUM)
         vel.linear_y = average_rps_y * wheel_circumference_; // m/s
     else
         vel.linear_y = 0;

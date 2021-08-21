@@ -24,7 +24,7 @@ class Kinematics
     public:
         enum base {DIFFERENTIAL_DRIVE, SKID_STEER, MECANUM};
 
-        base base_platform;
+        base base_platform_;
 
         struct rpm
         {
@@ -48,8 +48,9 @@ class Kinematics
             int motor3;
             int motor4;
         };
-
-        Kinematics(base robot_base, int motor_max_rpm, float max_rpm_ratio, float wheel_diameter, float wheels_y_distance);
+        Kinematics(base robot_base, int motor_max_rpm, float max_rpm_ratio,
+                   float motor_operating_voltage, float motor_power_max_voltage,
+                   float wheel_diameter, float wheels_y_distance);
         velocities getVelocities(int rpm1, int rpm2, int rpm3, int rpm4);
         rpm getRPM(float linear_x, float linear_y, float angular_z);
 

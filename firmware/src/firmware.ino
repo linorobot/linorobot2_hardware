@@ -78,7 +78,16 @@ PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 
-Kinematics kinematics(Kinematics::LINO_BASE, MOTOR_MAX_RPM, MAX_RPM_RATIO, WHEEL_DIAMETER, LR_WHEELS_DISTANCE);
+Kinematics kinematics(
+    Kinematics::LINO_BASE, 
+    MOTOR_MAX_RPM, 
+    MAX_RPM_RATIO, 
+    MOTOR_OPERATING_VOLTAGE, 
+    MOTOR_POWER_MAX_VOLTAGE, 
+    WHEEL_DIAMETER, 
+    LR_WHEELS_DISTANCE
+);
+
 Odometry odometry;
 IMU imu;
 
@@ -128,7 +137,11 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
             digitalWrite(LED_PIN, HIGH);
         }
         // get the required rpm for each motor based on required velocities, and base used
-        Kinematics::rpm req_rpm = kinematics.getRPM(twist_msg.linear.x, twist_msg.linear.y, twist_msg.angular.z);
+        Kinematics::rpm req_rpm = kinematics.getRPM(
+            twist_msg.linear.x, 
+            twist_msg.linear.y, 
+            twist_msg.angular.z
+        );
 
         // get the current speed of each motor
         int current_rpm1 = motor1_encoder.getRPM();
@@ -143,7 +156,12 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
         motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
 
-        Kinematics::velocities current_vel = kinematics.getVelocities(current_rpm1, current_rpm2, current_rpm3, current_rpm4);
+        Kinematics::velocities current_vel = kinematics.getVelocities(
+            current_rpm1, 
+            current_rpm2, 
+            current_rpm3, 
+            current_rpm4
+        );
 
         clock_gettime(0, &time_stamp);
 
@@ -152,7 +170,12 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         float vel_dt = (now - prev_odom_update) / 1000000;
         prev_odom_update = now;
 
-        odometry.update(vel_dt, current_vel.linear_x, current_vel.linear_y, current_vel.angular_z);
+        odometry.update(
+            vel_dt, 
+            current_vel.linear_x, 
+            current_vel.linear_y, 
+            current_vel.angular_z
+        );
     }
 }
 
@@ -184,21 +207,24 @@ void createEntities()
         &odom_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
-        "odom/unfiltered"))
+        "odom/unfiltered"
+    ))
 
     // create IMU publisher
     RCCHECK(rclc_publisher_init_best_effort( 
         &imu_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
-        "imu/data"));
+        "imu/data"
+    ));
 
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_best_effort( 
         &twist_subscriber, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "cmd_vel"));
+        "cmd_vel"
+    ));
 
     // create timer for publishing data at 20 Hz (1000/50)
     const unsigned int publish_timeout = 50;
@@ -206,7 +232,8 @@ void createEntities()
         &publish_timer, 
         &support,
         RCL_MS_TO_NS(publish_timeout),
-        publishCallback));
+        publishCallback
+    ));
 
     // create timer for actuating the motors at 50 Hz (1000/20)
     const unsigned int control_timeout = 20;
@@ -214,7 +241,8 @@ void createEntities()
         &control_timer, 
         &support,
         RCL_MS_TO_NS(control_timeout),
-        controlCallback));
+        controlCallback
+    ));
 
     // create timer for synchronizing the time every minute
     const unsigned int sync_timeout = 60000;
@@ -222,14 +250,21 @@ void createEntities()
         &sync_timer, 
         &support,
         RCL_MS_TO_NS(sync_timeout),
-        syncCallback));
+        syncCallback
+    ));
 
     // create executor
     RCCHECK(rclc_executor_init(&executor, &support.context, 4, & allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &sync_timer));
-    RCCHECK(rclc_executor_add_subscription(&executor, &twist_subscriber, &twist_msg, &twistCallback, ON_NEW_DATA));
+    RCCHECK(rclc_executor_add_subscription(
+        &executor, 
+        &twist_subscriber, 
+        &twist_msg, 
+        &twistCallback, 
+        ON_NEW_DATA
+    ));
 
     // synchronize time with the agent
     RCCHECK(rmw_uros_sync_session(1000));
