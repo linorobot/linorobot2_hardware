@@ -206,7 +206,7 @@ void createEntities()
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
         "odom/unfiltered"
-    ))
+    ));
 
     // create IMU publisher
     RCCHECK(rclc_publisher_init_best_effort( 
