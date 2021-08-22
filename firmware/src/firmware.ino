@@ -253,9 +253,6 @@ void createEntities()
 
     executor = rclc_executor_get_zero_initialized_executor();
     RCCHECK(rclc_executor_init(&executor, &support.context, 4, & allocator));
-    RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
-    RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
-    RCCHECK(rclc_executor_add_timer(&executor, &sync_timer));
     RCCHECK(rclc_executor_add_subscription(
         &executor, 
         &twist_subscriber, 
@@ -263,6 +260,9 @@ void createEntities()
         &twistCallback, 
         ON_NEW_DATA
     ));
+    RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
+    RCCHECK(rclc_executor_add_timer(&executor, &sync_timer));
+    RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
 
     // synchronize time with the agent
     RCCHECK(rmw_uros_sync_session(1000));
@@ -283,6 +283,7 @@ void destroyEntities()
     rcl_node_fini(&node);
     rcl_timer_fini(&publish_timer);
     rcl_timer_fini(&control_timer);
+    rcl_timer_fini(&sync_timer);
     rclc_executor_fini(&executor);
     rclc_support_fini(&support);
 
