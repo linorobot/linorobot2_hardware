@@ -38,7 +38,6 @@
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
-extern "C" int clock_gettime(clockid_t unused, struct timespec *tp);
 
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
@@ -56,12 +55,12 @@ rcl_timer_t publish_timer;
 rcl_timer_t control_timer;
 rcl_timer_t sync_timer;
 
-struct timespec time_stamp = {0};
-unsigned long time_offset = 0;
-unsigned long prev_cmd_time = 0;
-unsigned long prev_odom_update = 0;
+unsigned long long time_offset = 0;
+unsigned long long prev_cmd_time = 0;
+unsigned long long prev_odom_update = 0;
 bool micro_ros_init_successful = false;
 bool new_command = false;
+unsigned long long rolling_micros();
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
@@ -106,12 +105,12 @@ void publishCallback(rcl_timer_t * timer, int64_t last_call_time)
         odom_msg = odometry.getData();
         imu_msg = imu.getData();
 
-        clock_gettime(0, &time_stamp);
+        struct timespec time_stamp = getTime();
 
-        odom_msg.header.stamp.sec = time_stamp.tv_sec + time_offset;
+        odom_msg.header.stamp.sec = time_stamp.tv_sec;
         odom_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
-        imu_msg.header.stamp.sec = time_stamp.tv_sec + time_offset;
+        imu_msg.header.stamp.sec = time_stamp.tv_sec;
         imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
         RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
@@ -127,7 +126,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
         // brake if there's no command received, or when it's only the first command sent
         // first command is ignored if it's less than 5hz to prevent jerky motion. ie, there's a long pause after 
         // the key is pressed in teleop_twist_keyboard
-        if(((micros() - prev_cmd_time) >= 200000) || new_command) 
+        if(((rolling_micros() - prev_cmd_time) >= 200000) || new_command) 
         {
             new_command = false;
             twist_msg.linear.x = 0.0;
@@ -163,7 +162,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
             current_rpm4
         );
 
-        unsigned long now = micros();
+        unsigned long long now = rolling_micros();
 
         float vel_dt = (now - prev_odom_update) / 1000000;
         prev_odom_update = now;
@@ -182,11 +181,12 @@ void twistCallback(const void * msgin)
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
 
     // detect first command (ie. when user just started pressing accelerator)
-    unsigned long now = micros();
+    unsigned long long now = rolling_micros();
     if((now - prev_cmd_time) >= 200000)
     {
         new_command = true;
     }
+
     prev_cmd_time = now;
 }
 
@@ -308,12 +308,12 @@ void setup()
 
 void loop() 
 {
-    static unsigned long prev_connect_test_time;
+    static unsigned long long prev_connect_test_time;
 
     // check if the agent got disconnected at 10Hz
-    if(micros() - prev_connect_test_time > 100000)
+    if(rolling_micros() - prev_connect_test_time > 100000)
     {
-        prev_connect_test_time = micros();
+        prev_connect_test_time = rolling_micros();
         // check if the agent is connected
         if(RMW_RET_OK == rmw_uros_ping_agent(50, 2))
         {
@@ -370,15 +370,42 @@ void fullStop()
     motor4_controller.brake();
 }
 
+unsigned long long rolling_micros()
+{
+    //https://github.com/micro-ROS/micro_ros_arduino/blob/galactic/src/default_transport.cpp#L15
+    const unsigned long micro_rollover_useconds = 4294967295;
+    static unsigned long rollover = 0;
+    static unsigned long long last_measure = 0;
+
+    unsigned long uc_time_us = micros();
+    unsigned long long now = uc_time_us;
+    
+    // check and count how many times micros() has overflowed 
+    rollover += (uc_time_us < last_measure) ? 1 : 0;
+    // calculate how much to compensate time depending how many times uc_time has overflowed
+    unsigned long long rollover_extra_us = rollover * micro_rollover_useconds;
+
+    last_measure = uc_time_us;
+    return now + rollover_extra_us;
+}
+
 void syncTime()
 {
     // get the current time from the agent
-    unsigned long long times_stamp_msec = rmw_uros_epoch_millis(); 
-    unsigned long time_stamp_sec = times_stamp_msec / 1000;
+    unsigned long long ros_time_ns = rmw_uros_epoch_nanos(); 
+    unsigned long long ros_time_us = ros_time_ns / 1000;
 
-    // get the running time
-    clock_gettime(0, &time_stamp);
+    // now we can find the difference between ROS time and uC time
+    time_offset = ros_time_us - rolling_micros();
+}
 
-    // now we can find the difference from ROS time and uC time
-    time_offset = time_stamp_sec - time_stamp.tv_sec;
+struct timespec getTime()
+{
+    struct timespec tp = {0};
+
+    unsigned long long now = rolling_micros() + time_offset;
+    tp.tv_sec = now / 1000000;
+    tp.tv_nsec = (now % 1000000) * 1000;
+
+    return tp;
 }
