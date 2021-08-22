@@ -163,8 +163,6 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
             current_rpm4
         );
 
-        clock_gettime(0, &time_stamp);
-
         unsigned long now = micros();
 
         float vel_dt = (now - prev_odom_update) / 1000000;
@@ -253,7 +251,7 @@ void createEntities()
         syncCallback
     ));
 
-    // create executor
+    executor = rclc_executor_get_zero_initialized_executor();
     RCCHECK(rclc_executor_init(&executor, &support.context, 4, & allocator));
     RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
@@ -335,7 +333,9 @@ void loop()
     }
     
     if(micro_ros_init_successful)
+    {
         rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
+    }
 }
 
 void rclErrorLoop() 
