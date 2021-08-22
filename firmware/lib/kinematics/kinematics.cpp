@@ -51,14 +51,14 @@ Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float a
     //this is to ensure that the required motion is achieved just with slower speed
     if(((xy_sum) > max_rpm_ ) || ((xy_sum < -max_rpm_)))
     {
-        float vel_scaler = (float)max_rpm_ / xy_sum;
+        float vel_scaler = abs(max_rpm_ / xy_sum);
         x_rpm *= vel_scaler;
         y_rpm *= vel_scaler;
     }
     
     if(((xtan_sum) > max_rpm_ ) || ((xtan_sum < -max_rpm_)))
     {
-        float vel_scaler = (float)max_rpm_ / xtan_sum;
+        float vel_scaler = abs(max_rpm_ / xtan_sum);
         x_rpm *= vel_scaler;
         tan_rpm *= vel_scaler;
     }

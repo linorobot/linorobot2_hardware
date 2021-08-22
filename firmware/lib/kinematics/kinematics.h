@@ -58,7 +58,7 @@ class Kinematics
         rpm calculateRPM(float linear_x, float linear_y, float angular_z);
         int getTotalWheels(base robot_base);
 
-        int max_rpm_;
+        float max_rpm_;
         float wheels_y_distance_;
         float pwm_res_;
         float wheel_circumference_;
