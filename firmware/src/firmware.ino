@@ -242,8 +242,8 @@ void createEntities()
         controlCallback
     ));
 
-    // create timer for synchronizing the time every 10s
-    const unsigned int sync_timeout = 10000;
+    // create timer for synchronizing the time every 1s
+    const unsigned int sync_timeout = 1000;
     RCCHECK(rclc_timer_init_default( 
         &sync_timer, 
         &support,
@@ -315,7 +315,7 @@ void loop()
     {
         prev_connect_test_time = rolling_micros();
         // check if the agent is connected
-        if(RMW_RET_OK == rmw_uros_ping_agent(50, 2))
+        if(RMW_RET_OK == rmw_uros_ping_agent(15, 2))
         {
             // reconnect if agent got disconnected or haven't at all
             if (!micro_ros_init_successful) 
@@ -334,7 +334,7 @@ void loop()
     
     if(micro_ros_init_successful)
     {
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(50));
+        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(15));
     }
 }
 
@@ -392,6 +392,7 @@ unsigned long long rolling_micros()
 void syncTime()
 {
     // get the current time from the agent
+    RCCHECK(rmw_uros_sync_session(15));
     unsigned long long ros_time_ns = rmw_uros_epoch_nanos(); 
     unsigned long long ros_time_us = ros_time_ns / 1000;
 
