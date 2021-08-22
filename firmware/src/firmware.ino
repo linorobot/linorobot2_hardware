@@ -242,8 +242,8 @@ void createEntities()
         controlCallback
     ));
 
-    // create timer for synchronizing the time every minute
-    const unsigned int sync_timeout = 60000;
+    // create timer for synchronizing the time every 10s
+    const unsigned int sync_timeout = 10000;
     RCCHECK(rclc_timer_init_default( 
         &sync_timer, 
         &support,
