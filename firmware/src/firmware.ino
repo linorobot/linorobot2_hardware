@@ -32,7 +32,6 @@
 #include "pid.h"
 #include "odometry.h"
 #include "imu.h"
-
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
 
@@ -53,14 +52,13 @@ rcl_allocator_t allocator;
 rcl_node_t node;
 rcl_timer_t publish_timer;
 rcl_timer_t control_timer;
-rcl_timer_t sync_timer;
 
+unsigned long long rolling_micros();
 unsigned long long time_offset = 0;
 unsigned long long prev_cmd_time = 0;
 unsigned long long prev_odom_update = 0;
 bool micro_ros_init_successful = false;
 bool new_command = false;
-unsigned long long rolling_micros();
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
@@ -90,11 +88,53 @@ Kinematics kinematics(
 Odometry odometry;
 IMU imu;
 
-void syncCallback(rcl_timer_t * timer, int64_t last_call_time)
+void setup() 
 {
-    RCLC_UNUSED(timer);
-    RCLC_UNUSED(last_call_time);
-    syncTime();
+    pinMode(LED_PIN, OUTPUT);
+    delay(1000);
+
+    bool imu_ok = imu.init();
+    if(!imu_ok)
+    {
+        while(1)
+        {
+            flashLED(3);
+        }
+    }
+    micro_ros_init_successful = false;
+    set_microros_transports();
+}
+
+void loop() 
+{
+    static unsigned long long prev_connect_test_time;
+
+    // check if the agent got disconnected at 10Hz
+    if(rolling_micros() - prev_connect_test_time > 100000)
+    {
+        prev_connect_test_time = rolling_micros();
+        // check if the agent is connected
+        if(RMW_RET_OK == rmw_uros_ping_agent(50, 2))
+        {
+            // reconnect if agent got disconnected or haven't at all
+            if (!micro_ros_init_successful) 
+            {
+                createEntities();
+            } 
+        } 
+        else if(micro_ros_init_successful)
+        {
+            // stop the robot when the agent got disconnected
+            fullStop();
+            // clean up micro-ROS components
+            destroyEntities();
+        }
+    }
+    
+    if(micro_ros_init_successful)
+    {
+        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+    }
 }
 
 void publishCallback(rcl_timer_t * timer, int64_t last_call_time) 
@@ -102,19 +142,7 @@ void publishCallback(rcl_timer_t * timer, int64_t last_call_time)
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
-        odom_msg = odometry.getData();
-        imu_msg = imu.getData();
-
-        struct timespec time_stamp = getTime();
-
-        odom_msg.header.stamp.sec = time_stamp.tv_sec;
-        odom_msg.header.stamp.nanosec = time_stamp.tv_nsec;
-
-        imu_msg.header.stamp.sec = time_stamp.tv_sec;
-        imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
-
-        RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
-        RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
+        publishData();
     }
 }
 
@@ -123,56 +151,7 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
-        // brake if there's no command received, or when it's only the first command sent
-        // first command is ignored if it's less than 5hz to prevent jerky motion. ie, there's a long pause after 
-        // the key is pressed in teleop_twist_keyboard
-        if(((rolling_micros() - prev_cmd_time) >= 200000) || new_command) 
-        {
-            new_command = false;
-            twist_msg.linear.x = 0.0;
-            twist_msg.linear.y = 0.0;
-            twist_msg.angular.z = 0.0;
-
-            digitalWrite(LED_PIN, HIGH);
-        }
-        // get the required rpm for each motor based on required velocities, and base used
-        Kinematics::rpm req_rpm = kinematics.getRPM(
-            twist_msg.linear.x, 
-            twist_msg.linear.y, 
-            twist_msg.angular.z
-        );
-
-        // get the current speed of each motor
-        float current_rpm1 = motor1_encoder.getRPM();
-        float current_rpm2 = motor2_encoder.getRPM();
-        float current_rpm3 = motor3_encoder.getRPM();
-        float current_rpm4 = motor4_encoder.getRPM();
-
-        // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
-        // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
-        motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
-        motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
-        motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
-        motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
-
-        Kinematics::velocities current_vel = kinematics.getVelocities(
-            current_rpm1, 
-            current_rpm2, 
-            current_rpm3, 
-            current_rpm4
-        );
-
-        unsigned long long now = rolling_micros();
-
-        float vel_dt = (now - prev_odom_update) / 1000000;
-        prev_odom_update = now;
-
-        odometry.update(
-            vel_dt, 
-            current_vel.linear_x, 
-            current_vel.linear_y, 
-            current_vel.angular_z
-        );
+       moveBase();
     }
 }
 
@@ -242,17 +221,8 @@ void createEntities()
         controlCallback
     ));
 
-    // create timer for synchronizing the time every 1s
-    const unsigned int sync_timeout = 1000;
-    RCCHECK(rclc_timer_init_default( 
-        &sync_timer, 
-        &support,
-        RCL_MS_TO_NS(sync_timeout),
-        syncCallback
-    ));
-
     executor = rclc_executor_get_zero_initialized_executor();
-    RCCHECK(rclc_executor_init(&executor, &support.context, 4, & allocator));
+    RCCHECK(rclc_executor_init(&executor, &support.context, 3, & allocator));
     RCCHECK(rclc_executor_add_subscription(
         &executor, 
         &twist_subscriber, 
@@ -261,11 +231,9 @@ void createEntities()
         ON_NEW_DATA
     ));
     RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
-    RCCHECK(rclc_executor_add_timer(&executor, &sync_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
 
     // synchronize time with the agent
-    RCCHECK(rmw_uros_sync_session(1000));
     syncTime();
 
     digitalWrite(LED_PIN, HIGH);
@@ -283,60 +251,160 @@ void destroyEntities()
     rcl_node_fini(&node);
     rcl_timer_fini(&publish_timer);
     rcl_timer_fini(&control_timer);
-    rcl_timer_fini(&sync_timer);
     rclc_executor_fini(&executor);
     rclc_support_fini(&support);
 
     micro_ros_init_successful = false;
 }
 
-void setup() 
+void fullStop()
 {
-    pinMode(LED_PIN, OUTPUT);
-    delay(1000);
+    twist_msg.linear.x = 0.0;
+    twist_msg.linear.y = 0.0;
+    twist_msg.angular.z = 0.0;
 
-    bool imu_ok = imu.init();
-    if(!imu_ok)
-    {
-        while(1)
-        {
-            flashLED(3);
-        }
-    }
-    micro_ros_init_successful = false;
-    set_microros_transports();
+    motor1_controller.brake();
+    motor2_controller.brake();
+    motor3_controller.brake();
+    motor4_controller.brake();
 }
 
-void loop() 
+void moveBase()
 {
-    static unsigned long long prev_connect_test_time;
+    // brake if there's no command received, or when it's only the first command sent
+    // first command is ignored if it's less than 5hz to prevent jerky motion. ie, there's a long pause after 
+    // the key is pressed in teleop_twist_keyboard
+    if(((rolling_micros() - prev_cmd_time) >= 200000) || new_command) 
+    {
+        new_command = false;
+        twist_msg.linear.x = 0.0;
+        twist_msg.linear.y = 0.0;
+        twist_msg.angular.z = 0.0;
 
-    // check if the agent got disconnected at 10Hz
-    if(rolling_micros() - prev_connect_test_time > 100000)
-    {
-        prev_connect_test_time = rolling_micros();
-        // check if the agent is connected
-        if(RMW_RET_OK == rmw_uros_ping_agent(15, 2))
-        {
-            // reconnect if agent got disconnected or haven't at all
-            if (!micro_ros_init_successful) 
-            {
-                createEntities();
-            } 
-        } 
-        else if(micro_ros_init_successful)
-        {
-            // stop the robot when the agent got disconnected
-            fullStop();
-            // clean up micro-ROS components
-            destroyEntities();
-        }
+        digitalWrite(LED_PIN, HIGH);
     }
+    // get the required rpm for each motor based on required velocities, and base used
+    Kinematics::rpm req_rpm = kinematics.getRPM(
+        twist_msg.linear.x, 
+        twist_msg.linear.y, 
+        twist_msg.angular.z
+    );
+
+    // get the current speed of each motor
+    float current_rpm1 = motor1_encoder.getRPM();
+    float current_rpm2 = motor2_encoder.getRPM();
+    float current_rpm3 = motor3_encoder.getRPM();
+    float current_rpm4 = motor4_encoder.getRPM();
+
+    // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
+    // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
+    motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
+    motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
+    motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
+    motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
+
+    Kinematics::velocities current_vel = kinematics.getVelocities(
+        current_rpm1, 
+        current_rpm2, 
+        current_rpm3, 
+        current_rpm4
+    );
+
+    unsigned long long now = rolling_micros();
+
+    float vel_dt = (now - prev_odom_update) / 1000000;
+    prev_odom_update = now;
+
+    odometry.update(
+        vel_dt, 
+        current_vel.linear_x, 
+        current_vel.linear_y, 
+        current_vel.angular_z
+    );
+}
+
+void publishData()
+{
+    odom_msg = odometry.getData();
+    imu_msg = imu.getData();
+
+    struct timespec time_stamp = getTime();
+
+    odom_msg.header.stamp.sec = time_stamp.tv_sec;
+    odom_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+
+    imu_msg.header.stamp.sec = time_stamp.tv_sec;
+    imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+
+    RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
+}
+
+unsigned long long rolling_micros()
+{
+    //https://github.com/micro-ROS/micro_ros_arduino/blob/galactic/src/default_transport.cpp#L15
+    const unsigned long micro_rollover_useconds = 4294967295;
+    static unsigned long rollover = 0;
+    static unsigned long last_measure = 0;
+
+    unsigned long uc_time_us = micros();
+    unsigned long long now = uc_time_us;
     
-    if(micro_ros_init_successful)
-    {
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(15));
-    }
+    // check and count how many times micros() has overflowed 
+    rollover += (uc_time_us < last_measure) ? 1 : 0;
+    // calculate how much to compensate time depending how many times uc_time has overflowed
+    unsigned long long rollover_extra_us = rollover * micro_rollover_useconds;
+
+    last_measure = uc_time_us;
+    return now + rollover_extra_us;
+}
+
+void syncTime()
+{
+    // get the current time from the agent
+    RCCHECK(rmw_uros_sync_session(1000));
+    unsigned long long ros_time_ns = rmw_uros_epoch_nanos(); 
+    unsigned long long ros_time_us = ros_time_ns / 1000;
+
+    // now we can find the difference between ROS time and uC time
+    time_offset = ros_time_us - rolling_micros();
+}
+
+struct timespec getTime()
+{
+    struct timespec tp = {0};
+
+    // add time difference between uC time and ROS time to
+    // synchronize time with ROS
+    unsigned long long now = rolling_micros() + time_offset;
+    tp.tv_sec = now / 1000000;
+    tp.tv_nsec = (now % 1000000) * 1000;
+
+    return tp;
+}
+
+// this is to override the default implemetation of micro-ros time
+// to fix timeout issues.
+// https://github.com/micro-ROS/micro_ros_arduino/issues/232
+int clock_gettime(clockid_t unused, struct timespec *tp)
+{
+    (void)unused;
+    const unsigned long micro_rollover_useconds = 4294967295;
+    static unsigned long rollover = 0;
+    static unsigned long last_measure = 0;
+
+    unsigned long m = micros();
+    tp->tv_sec = m / 1000000;
+    tp->tv_nsec = (m % 1000000) * 1000;
+
+    // Rollover handling
+    rollover += (m < last_measure) ? 1 : 0;
+    unsigned long long rollover_extra_us = rollover * micro_rollover_useconds;
+    tp->tv_sec += rollover_extra_us / 1000000;
+    tp->tv_nsec += (rollover_extra_us % 1000000) * 1000;
+    last_measure = m;
+
+    return 0;
 }
 
 void rclErrorLoop() 
@@ -357,57 +425,4 @@ void flashLED(int n_times)
         delay(150);
     }
     delay(1000);
-}
-
-void fullStop()
-{
-    twist_msg.linear.x = 0.0;
-    twist_msg.linear.y = 0.0;
-    twist_msg.angular.z = 0.0;
-
-    motor1_controller.brake();
-    motor2_controller.brake();
-    motor3_controller.brake();
-    motor4_controller.brake();
-}
-
-unsigned long long rolling_micros()
-{
-    //https://github.com/micro-ROS/micro_ros_arduino/blob/galactic/src/default_transport.cpp#L15
-    const unsigned long micro_rollover_useconds = 4294967295;
-    static unsigned long rollover = 0;
-    static unsigned long long last_measure = 0;
-
-    unsigned long uc_time_us = micros();
-    unsigned long long now = uc_time_us;
-    
-    // check and count how many times micros() has overflowed 
-    rollover += (uc_time_us < last_measure) ? 1 : 0;
-    // calculate how much to compensate time depending how many times uc_time has overflowed
-    unsigned long long rollover_extra_us = rollover * micro_rollover_useconds;
-
-    last_measure = uc_time_us;
-    return now + rollover_extra_us;
-}
-
-void syncTime()
-{
-    // get the current time from the agent
-    RCCHECK(rmw_uros_sync_session(15));
-    unsigned long long ros_time_ns = rmw_uros_epoch_nanos(); 
-    unsigned long long ros_time_us = ros_time_ns / 1000;
-
-    // now we can find the difference between ROS time and uC time
-    time_offset = ros_time_us - rolling_micros();
-}
-
-struct timespec getTime()
-{
-    struct timespec tp = {0};
-
-    unsigned long long now = rolling_micros() + time_offset;
-    tp.tv_sec = now / 1000000;
-    tp.tv_nsec = (now % 1000000) * 1000;
-
-    return tp;
 }
