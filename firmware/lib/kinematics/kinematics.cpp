@@ -53,7 +53,7 @@ Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float a
     //must be scaled down in such cases where the total required RPM
     //is more than the motor's max RPM
     //this is to ensure that the required motion is achieved just with slower speed
-    if(xy_sum >= max_rpm_)
+    if(xy_sum >= max_rpm_ && linear_y != 0 && angular_z == 0)
     {
         float vel_scaler = max_rpm_ / xy_sum;
 
@@ -61,7 +61,7 @@ Kinematics::rpm Kinematics::calculateRPM(float linear_x, float linear_y, float a
         y_rpm *= vel_scaler;
     }
     
-    if(xtan_sum >= max_rpm_)
+    if(xtan_sum >= max_rpm_ && angular_z != 0 && linear_y == 0)
     {
         float vel_scaler = max_rpm_ / xtan_sum;
 
