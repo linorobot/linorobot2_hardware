@@ -20,7 +20,8 @@
 #define LINO_BASE DIFFERENTIAL_DRIVE 
 
 #define USE_GENERIC_2_IN_MOTOR_DRIVER 
-#define USE_GY85_IMU
+// #define USE_GY85_IMU
+#define USE_FAKE_IMU
 
 #define K_P 0.6                             
 #define K_I 0.8                             

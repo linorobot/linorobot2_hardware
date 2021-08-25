@@ -369,6 +369,7 @@ struct timespec getTime()
   int clock_gettime(clockid_t unused, struct timespec *tp)
   {
     (void)unused;
+    static unsigned long micro_rollover_useconds = 4294967295;
     static unsigned long rollover = 0;
     static unsigned long last_measure = 0;
 
