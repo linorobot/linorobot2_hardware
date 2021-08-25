@@ -366,8 +366,8 @@ struct timespec getTime()
 // this is to override the default implemetation of micro-ros time
 // to fix timeout issues.
 // https://github.com/micro-ROS/micro_ros_arduino/issues/232
-  int clock_gettime(clockid_t unused, struct timespec *tp)
-  {
+int clock_gettime(clockid_t unused, struct timespec *tp)
+{
     (void)unused;
     static unsigned long micro_rollover_useconds = 4294967295;
     static unsigned long rollover = 0;
@@ -385,7 +385,7 @@ struct timespec getTime()
     last_measure = m;
 
     return 0;
-  }
+}
 
 void rclErrorLoop() 
 {
