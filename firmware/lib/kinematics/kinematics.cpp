@@ -101,7 +101,7 @@ Kinematics::rpm Kinematics::getRPM(float linear_x, float linear_y, float angular
     return calculateRPM(linear_x, linear_y, angular_z);;
 }
 
-Kinematics::velocities Kinematics::getVelocities(int rpm1, int rpm2, int rpm3, int rpm4)
+Kinematics::velocities Kinematics::getVelocities(float rpm1, float rpm2, float rpm3, float rpm4)
 {
     Kinematics::velocities vel;
     float average_rps_x;
@@ -121,7 +121,7 @@ Kinematics::velocities Kinematics::getVelocities(int rpm1, int rpm2, int rpm3, i
 
     //convert average revolutions per minute to revolutions per second
     average_rps_a = ((float)(-rpm1 + rpm2 - rpm3 + rpm4) / total_wheels_) / 60.0;
-    vel.angular_z =  (average_rps_a * wheel_circumference_) / (wheels_y_distance_ / 2); //  rad/s
+    vel.angular_z =  (average_rps_a * wheel_circumference_) / (wheels_y_distance_ / 2.0); //  rad/s
 
     return vel;
 }

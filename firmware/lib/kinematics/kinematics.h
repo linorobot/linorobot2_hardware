@@ -51,7 +51,7 @@ class Kinematics
         Kinematics(base robot_base, int motor_max_rpm, float max_rpm_ratio,
                    float motor_operating_voltage, float motor_power_max_voltage,
                    float wheel_diameter, float wheels_y_distance);
-        velocities getVelocities(int rpm1, int rpm2, int rpm3, int rpm4);
+        velocities getVelocities(float rpm1, float rpm2, float rpm3, float rpm4);
         rpm getRPM(float linear_x, float linear_y, float angular_z);
 
     private:
