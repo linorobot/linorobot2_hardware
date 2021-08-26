@@ -27,7 +27,7 @@
 #define K_D 0.5                             
 
 #define MOTOR_MAX_RPM 140
-#define MAX_RPM_RATIO 0.75
+#define MAX_RPM_RATIO 0.85
 #define MOTOR_OPERATING_VOLTAGE 24
 #define MOTOR_POWER_MAX_VOLTAGE 12
 #define MOTOR_POWER_MEASURED_VOLTAGE 12                         
