@@ -15,7 +15,7 @@
 #include <Arduino.h>
 #include "config.h"
 #include "motor.h"
-#define ENCODER_OPTIMIZE_INTERRUPTS
+#define ENCODER_DO_NOT_USE_INTERRUPTS
 #include "encoder.h"
 #include "kinematics.h"
 

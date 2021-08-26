@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-
 #include <Arduino.h>
 #include <micro_ros_arduino.h>
 #include <stdio.h>
@@ -32,7 +31,7 @@
 #include "pid.h"
 #include "odometry.h"
 #include "imu.h"
-#define ENCODER_OPTIMIZE_INTERRUPTS
+#define ENCODER_DO_NOT_USE_INTERRUPTS
 #include "encoder.h"
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
@@ -50,7 +49,6 @@ rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_node_t node;
-rcl_timer_t publish_timer;
 rcl_timer_t control_timer;
 
 unsigned long long time_offset = 0;
@@ -90,7 +88,6 @@ IMU imu;
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
-    delay(1000);
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -100,6 +97,7 @@ void setup()
             flashLED(3);
         }
     }
+    
     micro_ros_init_successful = false;
     set_microros_transports();
 }
@@ -107,13 +105,12 @@ void setup()
 void loop() 
 {
     static unsigned long prev_connect_test_time;
-
     // check if the agent got disconnected at 10Hz
     if(millis() - prev_connect_test_time > 100)
     {
         prev_connect_test_time = millis();
         // check if the agent is connected
-        if(RMW_RET_OK == rmw_uros_ping_agent(50, 2))
+        if(RMW_RET_OK == rmw_uros_ping_agent(10, 2))
         {
             // reconnect if agent got disconnected or haven't at all
             if (!micro_ros_init_successful) 
@@ -136,48 +133,35 @@ void loop()
     }
 }
 
-void publishCallback(rcl_timer_t * timer, int64_t last_call_time) 
-{
-    RCLC_UNUSED(last_call_time);
-    if (timer != NULL) 
-    {
-        publishData();
-    }
-}
-
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
 {
     RCLC_UNUSED(last_call_time);
     if (timer != NULL) 
     {
        moveBase();
+       publishData();
     }
 }
 
 void twistCallback(const void * msgin) 
 {
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-
     // detect first command (ie. when user just started pressing accelerator)
     unsigned long now = millis();
     if((now - prev_cmd_time) >= 200)
     {
         new_command = true;
     }
-
     prev_cmd_time = now;
 }
 
 void createEntities()
 {
     allocator = rcl_get_default_allocator();
-
     //create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
-
     // create node
     RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
-
     // create odometry publisher
     RCCHECK(rclc_publisher_init_best_effort( 
         &odom_publisher, 
@@ -185,7 +169,6 @@ void createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
         "odom/unfiltered"
     ));
-
     // create IMU publisher
     RCCHECK(rclc_publisher_init_best_effort( 
         &imu_publisher, 
@@ -193,7 +176,6 @@ void createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
         "imu/data"
     ));
-
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_best_effort( 
         &twist_subscriber, 
@@ -201,16 +183,6 @@ void createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
         "cmd_vel"
     ));
-
-    // create timer for publishing data at 20 Hz (1000/50)
-    const unsigned int publish_timeout = 50;
-    RCCHECK(rclc_timer_init_default( 
-        &publish_timer, 
-        &support,
-        RCL_MS_TO_NS(publish_timeout),
-        publishCallback
-    ));
-
     // create timer for actuating the motors at 50 Hz (1000/20)
     const unsigned int control_timeout = 20;
     RCCHECK(rclc_timer_init_default( 
@@ -219,9 +191,8 @@ void createEntities()
         RCL_MS_TO_NS(control_timeout),
         controlCallback
     ));
-
     executor = rclc_executor_get_zero_initialized_executor();
-    RCCHECK(rclc_executor_init(&executor, &support.context, 3, & allocator));
+    RCCHECK(rclc_executor_init(&executor, &support.context, 2, & allocator));
     RCCHECK(rclc_executor_add_subscription(
         &executor, 
         &twist_subscriber, 
@@ -229,12 +200,9 @@ void createEntities()
         &twistCallback, 
         ON_NEW_DATA
     ));
-    RCCHECK(rclc_executor_add_timer(&executor, &publish_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
-
     // synchronize time with the agent
     syncTime();
-
     digitalWrite(LED_PIN, HIGH);
     micro_ros_init_successful = true;
 }
@@ -246,9 +214,7 @@ void destroyEntities()
     rcl_publisher_fini(&odom_publisher, &node);
     rcl_publisher_fini(&imu_publisher, &node);
     rcl_subscription_fini(&twist_subscriber, &node);
-
     rcl_node_fini(&node);
-    rcl_timer_fini(&publish_timer);
     rcl_timer_fini(&control_timer);
     rclc_executor_fini(&executor);
     rclc_support_fini(&support);
@@ -310,10 +276,8 @@ void moveBase()
     );
 
     unsigned long now = millis();
-
-    float vel_dt = (now - prev_odom_update) / 1000000;
+    float vel_dt = (now - prev_odom_update) / 1000.0;
     prev_odom_update = now;
-
     odometry.update(
         vel_dt, 
         current_vel.linear_x, 
@@ -345,7 +309,6 @@ void syncTime()
     unsigned long now = millis();
     RCCHECK(rmw_uros_sync_session(1000));
     unsigned long long ros_time_ms = rmw_uros_epoch_millis(); 
-
     // now we can find the difference between ROS time and uC time
     time_offset = ros_time_ms - now;
 }
@@ -353,7 +316,6 @@ void syncTime()
 struct timespec getTime()
 {
     struct timespec tp = {0};
-
     // add time difference between uC time and ROS time to
     // synchronize time with ROS
     unsigned long long now = millis() + time_offset;
@@ -361,30 +323,6 @@ struct timespec getTime()
     tp.tv_nsec = (now % 1000) * 1000000;
 
     return tp;
-}
-
-// this is to override the default implemetation of micro-ros time
-// to fix timeout issues.
-// https://github.com/micro-ROS/micro_ros_arduino/issues/232
-int clock_gettime(clockid_t unused, struct timespec *tp)
-{
-    (void)unused;
-    static unsigned long micro_rollover_useconds = 4294967295;
-    static unsigned long rollover = 0;
-    static unsigned long last_measure = 0;
-
-    unsigned long m = micros();
-    tp->tv_sec = m / 1000000;
-    tp->tv_nsec = (m % 1000000) * 1000;
-
-    // Rollover handling
-    rollover += (m < last_measure) ? 1 : 0;
-    unsigned long long rollover_extra_us = rollover * micro_rollover_useconds;
-    tp->tv_sec += rollover_extra_us / 1000000;
-    tp->tv_nsec += (rollover_extra_us % 1000000) * 1000;
-    last_measure = m;
-
-    return 0;
 }
 
 void rclErrorLoop() 
