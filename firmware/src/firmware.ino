@@ -31,7 +31,7 @@
 #include "pid.h"
 #include "odometry.h"
 #include "imu.h"
-#define ENCODER_DO_NOT_USE_INTERRUPTS
+#define ENCODER_USE_INTERRUPTS
 #include "encoder.h"
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}

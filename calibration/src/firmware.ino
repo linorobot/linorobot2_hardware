@@ -15,7 +15,7 @@
 #include <Arduino.h>
 #include "config.h"
 #include "motor.h"
-#define ENCODER_DO_NOT_USE_INTERRUPTS
+#define ENCODER_USE_INTERRUPTS
 #include "encoder.h"
 #include "kinematics.h"
 
@@ -50,11 +50,6 @@ void setup()
             motor4_controller.spin(0);
             break;
         }
-        motor1_encoder.read();
-        motor2_encoder.read();
-        motor3_encoder.read();
-        motor4_encoder.read();
-
         motor1_controller.spin(PWM_MAX);
         motor2_controller.spin(PWM_MAX);
         motor3_controller.spin(PWM_MAX);
