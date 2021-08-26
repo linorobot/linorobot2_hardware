@@ -27,14 +27,14 @@
 #define K_D 0.5                             
 
 #define MOTOR_MAX_RPM 140
-#define MAX_RPM_RATIO 0.85 
+#define MAX_RPM_RATIO 0.75
 #define MOTOR_OPERATING_VOLTAGE 24
 #define MOTOR_POWER_MAX_VOLTAGE 12
 #define MOTOR_POWER_MEASURED_VOLTAGE 12                         
 #define COUNTS_PER_REV1 144384
 #define COUNTS_PER_REV2 140777
 #define COUNTS_PER_REV3 148326
-#define COUNTS_PER_REV4 106261
+#define COUNTS_PER_REV4 144495
 #define WHEEL_DIAMETER 0.152               
 #define LR_WHEELS_DISTANCE 0.271            
 #define PWM_BITS 8                         
