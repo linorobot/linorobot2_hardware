@@ -50,6 +50,11 @@ void setup()
             motor4_controller.spin(0);
             break;
         }
+        motor1_encoder.read();
+        motor2_encoder.read();
+        motor3_encoder.read();
+        motor4_encoder.read();
+
         motor1_controller.spin(PWM_MAX);
         motor2_controller.spin(PWM_MAX);
         motor3_controller.spin(PWM_MAX);
