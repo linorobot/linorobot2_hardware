@@ -16,6 +16,7 @@
 #include "config.h"
 #include "motor.h"
 #define ENCODER_USE_INTERRUPTS
+#define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
 #include "kinematics.h"
 
