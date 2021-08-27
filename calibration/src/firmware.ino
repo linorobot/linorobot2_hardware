@@ -32,69 +32,155 @@ Motor motor2_controller(MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
 Motor motor3_controller(MOTOR3_INV, MOTOR3_PWM, MOTOR3_IN_A, MOTOR3_IN_B);
 Motor motor4_controller(MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
 
-long long int counts_per_rev1;
-long long int counts_per_rev2;
-long long int counts_per_rev3;
-long long int counts_per_rev4;
+Kinematics kinematics(
+    Kinematics::LINO_BASE, 
+    MOTOR_MAX_RPM, 
+    MAX_RPM_RATIO, 
+    MOTOR_OPERATING_VOLTAGE, 
+    MOTOR_POWER_MAX_VOLTAGE, 
+    WHEEL_DIAMETER, 
+    LR_WHEELS_DISTANCE
+);
+
+long long int counts_per_rev[4];
+int total_motors = 4;
+Motor *motors[4] = {&motor1_controller, &motor2_controller, &motor3_controller, &motor4_controller};
+Encoder *encoders[4] = {&motor1_encoder, &motor2_encoder, &motor3_encoder, &motor4_encoder};
+String labels[4] = {"FRONT LEFT - M1: ", "FRONT RIGHT - M2: ", "REAR LEFT - M3: ", "REAR RIGHT - M4: "};
 
 void setup()
 {
-    Serial.begin(115200);
-    unsigned long start_time = micros();
-    while(true)
-    {
-        if(micros() - start_time >= SAMPLE_TIME * 1000000)
-        {
-            motor1_controller.spin(0);
-            motor2_controller.spin(0);
-            motor3_controller.spin(0);
-            motor4_controller.spin(0);
-            break;
-        }
-        motor1_controller.spin(PWM_MAX);
-        motor2_controller.spin(PWM_MAX);
-        motor3_controller.spin(PWM_MAX);
-        motor4_controller.spin(PWM_MAX);
+    Serial.begin(9600);
+    while (!Serial) {
     }
-    float measured_voltage = constrain(MOTOR_POWER_MEASURED_VOLTAGE, 0, MOTOR_OPERATING_VOLTAGE);
-    int scaled_max_rpm = ((measured_voltage / MOTOR_OPERATING_VOLTAGE) * MOTOR_MAX_RPM);
-    int total_rev = scaled_max_rpm * (SAMPLE_TIME / 60.0);
-
-    counts_per_rev1 = motor1_encoder.read() / total_rev;
-    counts_per_rev2 = motor2_encoder.read() / total_rev;
-    counts_per_rev3 = motor3_encoder.read() / total_rev;
-    counts_per_rev4 = motor4_encoder.read() / total_rev;
+    Serial.println("Sampling process will spin the motors at its maximum RPM.");
+    Serial.println("Please ensure that the robot is ELEVATED and there are NO OBSTRUCTIONS to the wheels.");
+    Serial.println("");
+    Serial.println("Type 'spin' and press enter to spin the motors.");
+    Serial.println("Type 'sample' and press enter to spin the motors with motor summary.");
+    Serial.println("Press enter to clear command.");
+    Serial.println("");
 }
 
 void loop()
 {
-    delay(1500);
-    Serial.println("================MOTOR ENCODER READINGS================");
+    static String cmd = "";
 
-    Serial.print("FRONT LEFT - M1: ");
-    Serial.print(motor1_encoder.read());
+    while (Serial.available())
+    {
+        char character = Serial.read(); 
+        cmd.concat(character); 
+        Serial.print(character);
+        delay(1);
+        if(character == '\r' and cmd.equals("spin\r"))
+        {
+            cmd = "";
+            Serial.println("\r\n");
+            sampleMotors(0);
+        }
+        else if(character == '\r' and cmd.equals("sample\r"))
+        {
+            cmd = "";
+            Serial.println("\r\n");
+            sampleMotors(1);
+        }
+        else if(character == '\r')
+        {
+            Serial.println("");
+            cmd = "";
+        }
+    }
+}
 
-    Serial.print(" FRONT RIGHT - M2: ");
-    Serial.println(motor2_encoder.read());
+void sampleMotors(bool show_summary)
+{
+    if(Kinematics::LINO_BASE == Kinematics::DIFFERENTIAL_DRIVE)
+    {
+        total_motors = 2;
+    }
 
-    Serial.print("BACK LEFT - M3: ");
-    Serial.print(motor3_encoder.read());
+    float measured_voltage = constrain(MOTOR_POWER_MEASURED_VOLTAGE, 0, MOTOR_OPERATING_VOLTAGE);
+    float scaled_max_rpm = ((measured_voltage / MOTOR_OPERATING_VOLTAGE) * MOTOR_MAX_RPM);
+    float total_rev = scaled_max_rpm * (SAMPLE_TIME / 60.0);
 
-    Serial.print(" BACK RIGHT - M4: ");
-    Serial.println(motor4_encoder.read());
-    Serial.println();
+    for(int i=0; i<total_motors; i++)
+    {
+        Serial.print("SPINNING ");
+        Serial.print(labels[i]);
+
+        unsigned long start_time = micros();
+        unsigned long last_status = micros();
+
+        encoders[i]->write(0);
+        while(true)
+        {
+            if(micros() - start_time >= SAMPLE_TIME * 1000000)
+            {
+                motors[i]->spin(0);
+                Serial.println("");
+                break;
+            }
+
+            if(micros() - last_status >= 1000000)
+            {
+                last_status = micros();
+                Serial.print(".");
+            }
+
+            motors[i]->spin(PWM_MAX);
+        }
+        
+        counts_per_rev[i] = encoders[i]->read() / total_rev;
+    }
+    if(show_summary)
+        printSummary();
+}
+
+void printSummary()
+{
+    Serial.println("\r\n================MOTOR ENCODER READINGS================");
+    Serial.print(labels[0]);
+    Serial.print(encoders[0]->read());
+    Serial.print(" ");
+
+    Serial.print(labels[1]);
+    Serial.println(encoders[1]->read());
+
+    Serial.print(labels[2]);
+    Serial.print(encoders[2]->read());
+    Serial.print(" ");
+
+    Serial.print(labels[3]);
+    Serial.println(encoders[3]->read());
+    Serial.println("");
 
     Serial.println("================COUNTS PER REVOLUTION=================");
-    Serial.print("FRONT LEFT - CPR1: ");
-    Serial.print(counts_per_rev1);
+    Serial.print(labels[0]);
+    Serial.print(counts_per_rev[0]);
+    Serial.print(" ");
 
-    Serial.print(" FRONT RIGHT - CPR2: ");
-    Serial.println(counts_per_rev2);
+    Serial.print(labels[1]);
+    Serial.println(counts_per_rev[1]);
+    
+    Serial.print(labels[2]);
+    Serial.print(counts_per_rev[2]);
+    Serial.print(" ");
 
-    Serial.print("BACK LEFT - CPR3: ");
-    Serial.print(counts_per_rev3);
+    Serial.print(labels[3]);
+    Serial.println(counts_per_rev[3]);
+    Serial.println("");
 
-    Serial.print(" BACK RIGHT - CPR4: ");
-    Serial.println(counts_per_rev4);
-    Serial.println();
+    Serial.println("====================MAX VELOCITIES====================");
+    float max_rpm = kinematics.getMaxRPM();
+    
+    Kinematics::velocities max_linear = kinematics.getVelocities(max_rpm, max_rpm, max_rpm, max_rpm);
+    Kinematics::velocities max_angular = kinematics.getVelocities(-max_rpm, max_rpm,-max_rpm, max_rpm);
+
+    Serial.print("Linear Velocity: +- ");
+    Serial.print(max_linear.linear_x);
+    Serial.println(" m/s");
+
+    Serial.print("Angular Velocity: +- ");
+    Serial.print(max_angular.angular_z);
+    Serial.println(" rad/s");
 }

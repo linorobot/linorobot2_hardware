@@ -157,6 +157,8 @@ WHEEL3 WHEEL4 (4WD)
 
 --------------BACK--------------
 
+If you're building a 2 wheel drive robot, assign `MOTOR1` and `MOTOR2` to the left and right motors respectively.
+
     #define MOTOR1_ENCODER_A 14
     #define MOTOR1_ENCODER_B 15 
     #define MOTOR1_ENCODER_INV false 
@@ -199,17 +201,18 @@ WHEEL3 WHEEL4 (4WD)
     #endif 
 
 Constants' Meaning:
+
 - **MOTORX_ENCODER_A** - Microcontroller pin that is connected to the first read pin of the motor encoder. This pin is usually labelled as A pin on the motor encoder board.
 
 - **MOTORX_ENCODER_B** - Microcontroller pin that is connected to the second read pin of the motor encoder. This pin is usually labelled as B pin on the motor encoder board.
 
 - **MOTORX_ENCODER_INV** - Flag used to change the sign of the encoder value. More on that later.
 
-- **MOTORX_PWM** - Microcontroller pin that is connected to the PWM pin of the motor driver. This pin is usually labelled as EN or ENABLE pin on the motor driver board.
+- **MOTORX_PWM** - Microcontroller pin that is connected to the PWM pin of the motor driver. This pin is usually labelled as EN or ENABLE pin on the motor driver board. 
 
-- **MOTORX_IN_A** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRA or DIR1 pin on the motor driver board.
+- **MOTORX_IN_A** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRA or DIR1 pin on the motor driver board. 
 
-- **MOTORX_IN_B** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRB or DIR2 pin on the motor driver board.
+- **MOTORX_IN_B** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRB or DIR2 pin on the motor driver board. 
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
@@ -217,8 +220,7 @@ Constants' Meaning:
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 
 ### 5.1 Motor Check
-Go to calibration folder and upload the firmware. The robot will start spinning once the firmware has been uploaded, so **ensure that nothing is obstructing the wheels**.
-
+Go to calibration folder and upload the firmware. 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
 
@@ -233,30 +235,36 @@ Some Linux machines might encounter a problem related to libusb. If so, install 
 
     sudo apt install libusb-dev
 
-Once the wheels start spinning, check if each wheel's direction is spinning **forward**. Take note of the motors that are spinning in the opposite direction and set the MOTORX_INV constant in lino_base_config.h to `true` to invert the motor's direction. Reupload the calibration firmware to check if the wheels have been reconfigured properly:
+Start spinning the motors by running:
+    
+    screen /dev/ttyACM0
+
+On the terminal type `spin` and press the enter key.
+
+The wheels will spin one by one for 10 seconds from Motor1 to Motor4. Check if each wheel's direction is spinning **forward** and take note of the motors that are spinning in the opposite direction. Set MOTORX_INV constant in lino_base_config.h to `true` to invert the motor's direction. Reupload the calibration firmware once you're done. Press `Ctrl` + `a` + `d` to exit the screen terminal.
 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
-
-Verify if all the wheels are spinning **forward**. Redo this step if you missed out any.
 
 ### 5.2 Encoder Check
 
 Open your terminal and run:
 
-    screen /dev/ttyACM0 115200
+    screen /dev/ttyACM0
 
-Wait until the terminal starts printing then look for the values of M1, M2, M3 and M4. If you see any negative number in one of the motors, set `MOTORX_ENCODER_INV` in lino_base_config.h to `true` to invert the encoder pin. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
+Type `sample` and press the enter key. Verify if all the wheels are spinning **forward**. Redo the previous step (5.1) if there are motors still spinning in the opposite direction.
+
+You'll see a summary of the total encoder readings and counts per revolution after the motors have been sampled. If you see any negative number in the MOTOR ENCODER READINGS section, invert the encoder pin by setting `MOTORX_ENCODER_INV` in lino_base_config.h to `true`. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
 
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
-    screen /dev/ttyACM0 115200
+    screen /dev/ttyACM0
 
-Verify if all encoder values are now **positive**. Redo this step if you missed out any.
+Type `sample` and press the enter key. Verify if all encoder values are now **positive**. Redo this step if you missed out any.
 
 ### 5.3 Counts Per Revolution
 
-On the previous instruction where you check the encoder reads for each motor, you'll see that there's also CPR values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in lino_base_config.h to have a more accurate model of the encoder.
+On the previous instruction where you check the encoder reads for each motor, you'll see that there's also COUNTES PER REVOLUTION values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in lino_base_config.h to have a more accurate model of the encoder.
 
 ### 5.4 Troubleshooting Guide
 
@@ -267,12 +275,16 @@ On the previous instruction where you check the encoder reads for each motor, yo
 - Check if you uncommented the correct motor driver (ie. `USE_GENERIC_2_IN_MOTOR_DRIVER`)
 - Check if you assigned the motor driver pins under the correct motor driver constant. For instance, if you uncommented `USE_GENERIC_2_IN_MOTOR_DRIVER`, all the pins you assigned must be inside the `ifdef USE_GENERIC_2_IN_MOTOR_DRIVER` macro.
 
-#### 5.4.2 One of my encoder has no reading (0 value).
+#### 5.4.2 Wrong wheel is spinning during calibration process
+- Check if the motor drivers have been connected to the correct microcontroller pin.
+- Check if you have misconfigured the motor's pin assignment in lino_base_config.h.
+
+#### 5.4.3 One of my encoder has no reading (0 value).
 - Check if the encoders are powered.
 - Check if you have a bad wiring.
 - Check if you have misconfigured the encoder's pin assignment in lino_base_config.h.
 
-#### 5.4.3 Nothing's printing when I run the screen app.
+#### 5.4.4 Nothing's printing when I run the screen app.
 - Check if you're passing the correct serial port. Run:
 
         ls /dev/ttyACM*
@@ -285,13 +297,13 @@ On the previous instruction where you check the encoder reads for each motor, yo
 
     Remember to restart your computer if you just copied the udev rule.
 
-#### 5.4.4 The firmware was uploaded but nothing's happening.
+#### 5.4.5 The firmware was uploaded but nothing's happening.
 - Check if you're assigning the correct Teensy board when uploading the firmware. If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).
 
 
 ## 6. Upload the firmware
 
-Upload the firmware by running:
+Run:
 
     cd linorobot2_prototype/firmware
     pio run --target upload -e <your_teensy_board>
