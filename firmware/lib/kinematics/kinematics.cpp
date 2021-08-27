@@ -108,6 +108,12 @@ Kinematics::velocities Kinematics::getVelocities(float rpm1, float rpm2, float r
     float average_rps_y;
     float average_rps_a;
 
+    if(base_platform_ == DIFFERENTIAL_DRIVE)
+    {
+        rpm3 = 0.0;
+        rpm4 = 0.0;
+    }
+ 
     //convert average revolutions per minute to revolutions per second
     average_rps_x = ((float)(rpm1 + rpm2 + rpm3 + rpm4) / total_wheels_) / 60.0; // RPM
     vel.linear_x = average_rps_x * wheel_circumference_; // m/s
@@ -135,4 +141,9 @@ int Kinematics::getTotalWheels(base robot_base)
         case MECANUM:               return 4;
         default:                    return 2;
     }
+}
+
+float Kinematics::getMaxRPM()
+{
+    return max_rpm_;
 }

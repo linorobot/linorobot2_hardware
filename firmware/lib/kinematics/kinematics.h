@@ -53,6 +53,7 @@ class Kinematics
                    float wheel_diameter, float wheels_y_distance);
         velocities getVelocities(float rpm1, float rpm2, float rpm3, float rpm4);
         rpm getRPM(float linear_x, float linear_y, float angular_z);
+        float getMaxRPM();
 
     private:
         rpm calculateRPM(float linear_x, float linear_y, float angular_z);
