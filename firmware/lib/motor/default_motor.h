@@ -43,7 +43,7 @@ class Generic2: public MotorInterface
         }
 
     public:
-        Generic2(bool invert, int pwm_pin, int in_a_pin, int in_b_pin): 
+        Generic2(float pwm_frequency, int pwm_bits, bool invert, int pwm_pin, int in_a_pin, int in_b_pin): 
             MotorInterface(invert),
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin),
@@ -52,6 +52,12 @@ class Generic2: public MotorInterface
             pinMode(in_a_pin_, OUTPUT);
             pinMode(in_b_pin_, OUTPUT);
             pinMode(pwm_pin_, OUTPUT);
+
+            if(pwm_frequency > 0)
+            {
+                analogWriteFrequency(pwm_pin_, pwm_frequency);
+            }
+            analogWriteResolution(pwm_bits);
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(pwm_pin_, abs(0));
@@ -83,13 +89,19 @@ class Generic1: public MotorInterface
         }
 
     public:
-        Generic1(bool invert, int pwm_pin, int in_pin, int unused=-1): 
+        Generic1(float pwm_frequency, int pwm_bits, bool invert, int pwm_pin, int in_pin, int unused=-1): 
             MotorInterface(invert),
             in_pin_(in_pin),
             pwm_pin_(pwm_pin)
         {
             pinMode(in_pin_, OUTPUT);
             pinMode(pwm_pin_, OUTPUT);
+
+            if(pwm_frequency > 0)
+            {
+                analogWriteFrequency(pwm_pin_, pwm_frequency);
+            }
+            analogWriteResolution(pwm_bits);
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(pwm_pin_, abs(0));
@@ -121,7 +133,7 @@ class BTS7960: public MotorInterface
         }
 
     public:
-        BTS7960(bool invert, int unused, int in_a_pin, int in_b_pin): 
+        BTS7960(float pwm_frequency, int pwm_bits, bool invert, int unused, int in_a_pin, int in_b_pin): 
             MotorInterface(invert),
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin)
@@ -129,18 +141,34 @@ class BTS7960: public MotorInterface
             pinMode(in_a_pin_, OUTPUT);
             pinMode(in_b_pin_, OUTPUT);
 
+            if(pwm_frequency > 0)
+            {
+                analogWriteFrequency(in_a_pin_, pwm_frequency);
+                analogWriteFrequency(in_b_pin_, pwm_frequency);
+
+            }
+            analogWriteResolution(pwm_bits);
+
             //ensure that the motor is in neutral state during bootup
             analogWrite(in_a_pin_, 0);
             analogWrite(in_b_pin_, 0);
         }
     
-        BTS7960(bool invert, int in_a_pin, int in_b_pin): 
+        BTS7960(float pwm_frequency, int pwm_bits, bool invert, int in_a_pin, int in_b_pin): 
             MotorInterface(invert),
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin)
         {
             pinMode(in_a_pin_, OUTPUT);
             pinMode(in_b_pin_, OUTPUT);
+
+            if(pwm_frequency > 0)
+            {
+                analogWriteFrequency(in_a_pin_, pwm_frequency);
+                analogWriteFrequency(in_b_pin_, pwm_frequency);
+
+            }
+            analogWriteResolution(pwm_bits);
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(in_a_pin_, 0);
@@ -172,7 +200,7 @@ class ESC: public MotorInterface
         }
 
     public:
-        ESC( bool invert, int pwm_pin, int unused=-1, int unused2=-1): 
+        ESC(float pwm_frequency, int pwm_bits, bool invert, int pwm_pin, int unused=-1, int unused2=-1): 
             MotorInterface(invert),
             pwm_pin_(pwm_pin)
         {

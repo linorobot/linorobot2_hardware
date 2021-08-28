@@ -139,8 +139,9 @@ Constants' Meaning:
 
 - **LR_WHEELS_DISTANCE** - The distance between the center of left and right wheels in meters.
 
-- **PWM_BITS** - Number of bits in generating the PWM signal. You can leave this value as is unless you have a very special use-case.
+- **PWM_BITS** - Number of bits in generating the PWM signal. You can use the defualt value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
+- **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the defualt value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
 ### 4.2 Hardware Pin Assignments
 Remember to only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can checkout PJRC [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.

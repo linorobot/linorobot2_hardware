@@ -59,6 +59,7 @@ ROBOT ORIENTATION
 #define WHEEL_DIAMETER 0.152                // wheel's diameter in meters
 #define LR_WHEELS_DISTANCE 0.271            // distance between left and right wheels
 #define PWM_BITS 8                          // PWM Resolution of the microcontroller
+#define PWM_FREQUENCY 20000                 // PWM Frequency
 
 /// ENCODER PINS
 #define MOTOR1_ENCODER_A 14
