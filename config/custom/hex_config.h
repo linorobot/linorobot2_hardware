@@ -23,7 +23,7 @@
 #define USE_GY85_IMU
 
 #define K_P 0.6                             
-#define K_I 0.8                             
+#define K_I 0.55                             
 #define K_D 0.5                             
 
 #define MOTOR_MAX_RPM 100
