@@ -80,10 +80,9 @@ ROBOT ORIENTATION
 
 //MOTOR PINS
 #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
-
-  #define MOTOR1_PWM 21
+  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can swap it with pin no 1 instead.
   #define MOTOR1_IN_A 20
-  #define MOTOR1_IN_B 1
+  #define MOTOR1_IN_B 1 
   #define MOTOR1_INV false
 
   #define MOTOR2_PWM 5
@@ -106,8 +105,7 @@ ROBOT ORIENTATION
 #endif 
 
 #ifdef USE_GENERIC_1_IN_MOTOR_DRIVER
-
-  #define MOTOR1_PWM 21
+  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can use pin no 1 instead.
   #define MOTOR1_IN_A 20
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_INV false
@@ -132,25 +130,24 @@ ROBOT ORIENTATION
 #endif 
 
 #ifdef USE_BTS7960_MOTOR_DRIVER
-
   #define MOTOR1_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR1_IN_A 20
-  #define MOTOR1_IN_B 1
+  #define MOTOR1_IN_A 21 // Pin no 21 is not a PWM pin on Teensy 4.x, you can use pin no 1 instead.
+  #define MOTOR1_IN_B 20 // Pin no 20 is not a PWM pin on Teensy 4.x, you can use pin no 0 instead.
   #define MOTOR1_INV false
 
   #define MOTOR2_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR2_IN_A 6
-  #define MOTOR2_IN_B 8
+  #define MOTOR2_IN_A 5
+  #define MOTOR2_IN_B 6
   #define MOTOR2_INV false
 
   #define MOTOR3_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR3_IN_A 23
-  #define MOTOR3_IN_B 0
+  #define MOTOR3_IN_A 22
+  #define MOTOR3_IN_B 23
   #define MOTOR3_INV false
 
   #define MOTOR4_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR4_IN_A 3
-  #define MOTOR4_IN_B 2
+  #define MOTOR4_IN_A 4
+  #define MOTOR4_IN_B 3
   #define MOTOR4_INV false
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
@@ -158,9 +155,7 @@ ROBOT ORIENTATION
 #endif
 
 #ifdef USE_ESC_MOTOR_DRIVER
-  #define MOTOR_DRIVER ESC  
-
-  #define MOTOR1_PWM 21
+  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x. You can use pin no 1 instead.
   #define MOTOR1_IN_A -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_INV false
