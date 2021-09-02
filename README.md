@@ -219,7 +219,7 @@ Constants' Meaning:
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
-* Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in lino_base_config.h carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy. 
+Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in lino_base_config.h carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy. 
 
 ## 5. Motor and Encoder Checks
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
