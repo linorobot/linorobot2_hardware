@@ -225,7 +225,8 @@ Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside eac
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 
 ### 5.1 Motor Check
-Go to calibration folder and upload the firmware. 
+Go to calibration folder and upload the firmware:
+
     cd linorobot2_prototype/calibration
     pio run --target upload -e <your_teensy_board>
 
