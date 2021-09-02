@@ -27,7 +27,7 @@ Download and install micro-ROS:
 
     cd <your_ws>
     git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
-    sudo apt install python3-vcstool
+    sudo apt install python3-vcstool screen
     sudo apt update && rosdep update
     rosdep install --from-path src --ignore-src -y
     colcon build

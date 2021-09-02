@@ -23,7 +23,7 @@
 #define USE_GY85_IMU
 
 #define K_P 0.6                             
-#define K_I 0.8                             
+#define K_I 0.55                             
 #define K_D 0.5                             
 
 #define MOTOR_MAX_RPM 100
@@ -31,8 +31,8 @@
 #define MOTOR_OPERATING_VOLTAGE 12
 #define MOTOR_POWER_MAX_VOLTAGE 12
 #define MOTOR_POWER_MEASURED_VOLTAGE 11.67                         
-#define COUNTS_PER_REV1 2421
-#define COUNTS_PER_REV2 2501
+#define COUNTS_PER_REV1 2513
+#define COUNTS_PER_REV2 2580
 #define COUNTS_PER_REV3 2421
 #define COUNTS_PER_REV4 2501
 #define WHEEL_DIAMETER 0.09               
