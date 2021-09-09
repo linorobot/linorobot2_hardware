@@ -143,10 +143,10 @@ Take note of the IMU's correct orientation when mounted on the robot. Ensure tha
 Reference designs you can follow in building your robot.
 
 A minimal setup with a 5V powered robot computer.
-![minimal_setup](docs/minimal_setup.png)
+![minimal_setup](docs/minimal_setup.svg)
 
 A more advanced setup up with a 19V powered computer and USB hub connected to sensors.
-![advanced_setup](docs/advanced_setup.png)
+![advanced_setup](docs/advanced_setup.svg)
 
 For bigger robots, you can add an emergency switch in between the motor drivers' power supply and motor drivers.
 
