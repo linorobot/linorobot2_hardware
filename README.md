@@ -114,7 +114,7 @@ Below are connection diagrams you can follow for each supported motor driver and
 
 - When connecting motor driver's EN/PWM pin, ensure that the microcontroller pin used is PWM enabled. You can checkout PJRC [pinout page](https://www.pjrc.com/teensy/pinout.html) for more info.
 
-Alternatively, you can also use the pre-defined pin assignments in lino_base_config.h. Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in [lino_base_config.h](https://github.com/linorobot/linorobot2_prototype/blob/master/config/lino_base_config.h#L109) carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy. 
+Alternatively, you can also use the pre-defined pin assignments in lino_base_config.h. Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L109) carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy. 
 
 All diagrams below are based on Teensy 4.0 microcontroller and GY85 IMU. Click the images for higher resolution.
 
@@ -309,7 +309,7 @@ Before proceeding, **ensure that your robot is elevated and the wheels aren't to
 ### 1. Motor Check
 Go to calibration folder and upload the firmware:
 
-    cd linorobot2_prototype/calibration
+    cd linorobot2_hardware/calibration
     pio run --target upload -e <your_teensy_board>
 
 Available Teensy boards:
@@ -329,9 +329,9 @@ Start spinning the motors by running:
 
 On the terminal type `spin` and press the enter key.
 
-The wheels will spin one by one for 10 seconds from Motor1 to Motor4. Check if each wheel's direction is spinning **forward** and take note of the motors that are spinning in the opposite direction. Set MOTORX_INV constant in [lino_base_config.h](https://github.com/linorobot/linorobot2_prototype/blob/master/config/lino_base_config.h#L71-L74) to `true` to invert the motor's direction. Reupload the calibration firmware once you're done. Press `Ctrl` + `a` + `d` to exit the screen terminal.
+The wheels will spin one by one for 10 seconds from Motor1 to Motor4. Check if each wheel's direction is spinning **forward** and take note of the motors that are spinning in the opposite direction. Set MOTORX_INV constant in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L71-L74) to `true` to invert the motor's direction. Reupload the calibration firmware once you're done. Press `Ctrl` + `a` + `d` to exit the screen terminal.
 
-    cd linorobot2_prototype/calibration
+    cd linorobot2_hardware/calibration
     pio run --target upload -e <your_teensy_board>
 
 ### 2. Encoder Check
@@ -342,9 +342,9 @@ Open your terminal and run:
 
 Type `sample` and press the enter key. Verify if all the wheels are spinning **forward**. Redo the previous step if there are motors still spinning in the opposite direction.
 
-You'll see a summary of the total encoder readings and counts per revolution after the motors have been sampled. If you see any negative number in the MOTOR ENCODER READINGS section, invert the encoder pin by setting `MOTORX_ENCODER_INV` in [lino_base_config.h](https://github.com/linorobot/linorobot2_prototype/blob/master/config/lino_base_config.h#L65-L68) to `true`. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
+You'll see a summary of the total encoder readings and counts per revolution after the motors have been sampled. If you see any negative number in the MOTOR ENCODER READINGS section, invert the encoder pin by setting `MOTORX_ENCODER_INV` in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L65-L68) to `true`. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
 
-    cd linorobot2_prototype/calibration
+    cd linorobot2_hardware/calibration
     pio run --target upload -e <your_teensy_board>
     screen /dev/ttyACM0
 
@@ -352,7 +352,7 @@ Type `sample` and press the enter key. Verify if all encoder values are now **po
 
 ### 3. Counts Per Revolution
 
-On the previous instruction where you check the encoder reads for each motor, you'll see that there's also COUNTES PER REVOLUTION values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in [lino_base_config.h](https://github.com/linorobot/linorobot2_prototype/blob/master/config/lino_base_config.h#L55-L58) to have a more accurate model of the encoder.
+On the previous instruction where you check the encoder reads for each motor, you'll see that there's also COUNTES PER REVOLUTION values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L55-L58) to have a more accurate model of the encoder.
 
 ## Upload the firmware
 Ensure that the robot pass all the requirements before uploading the firmware:
@@ -370,7 +370,7 @@ Ensure that the robot pass all the requirements before uploading the firmware:
 
 Run:
 
-    cd linorobot2_prototype/firmware
+    cd linorobot2_hardware/firmware
     pio run --target upload -e <your_teensy_board>
 
 ## Testing the robot
@@ -440,7 +440,7 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
     
     and ensure that the available serial port matches the port you're passing to the screen app.
 
-- Check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_prototype#3-udev-rule):
+- Check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_hardware#3-udev-rule):
 
         ls /etc/udev/rules.d/00-teensy.rules 
 
