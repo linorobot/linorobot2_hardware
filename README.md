@@ -116,7 +116,7 @@ Below are connection diagrams you can follow for each supported motor driver and
 
 Alternatively, you can also use the pre-defined pin assignments in lino_base_config.h. Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in [lino_base_config.h](https://github.com/linorobot/linorobot2_prototype/blob/master/config/lino_base_config.h#L109) carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy. 
 
-All diagrams below are based on Teensy 4.0 microcontroller and GY85 IMU. You can click on the images to for higher resolution.
+All diagrams below are based on Teensy 4.0 microcontroller and GY85 IMU. Click the images for higher resolution.
 
 #### 4.1 GENERIC 2 IN
 
