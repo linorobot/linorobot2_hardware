@@ -50,7 +50,7 @@ Download and install platformio. [Platformio](https://platformio.org/) allows yo
 
 Add platformio to your $PATH:
 
-    echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> ~/.bashrc
+    echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
     source $HOME/.bashrc
 
 ### 3. UDEV Rule
