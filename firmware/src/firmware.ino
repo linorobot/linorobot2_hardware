@@ -30,6 +30,7 @@
 #include "kinematics.h"
 #include "pid.h"
 #include "odometry.h"
+#include "velocity_smoother.h"
 #include "imu.h"
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
@@ -72,6 +73,10 @@ PID motor1_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
+
+VelocitySmoother linear_x_s(0.1);
+VelocitySmoother linear_y_s(0.1);
+VelocitySmoother angular_z_s(0.1);
 
 Kinematics kinematics(
     Kinematics::LINO_BASE, 
@@ -147,13 +152,8 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
 void twistCallback(const void * msgin) 
 {
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    // detect first command (ie. when user just started pressing accelerator)
-    unsigned long now = millis();
-    if((now - prev_cmd_time) >= 200)
-    {
-        new_command = true;
-    }
-    prev_cmd_time = now;
+
+    prev_cmd_time = millis();
 }
 
 void createEntities()
@@ -240,9 +240,8 @@ void moveBase()
     // brake if there's no command received, or when it's only the first command sent
     // first command is ignored if it's less than 5hz to prevent jerky motion. ie, there's a long pause after 
     // the key is pressed in teleop_twist_keyboard
-    if(((millis() - prev_cmd_time) >= 200) || new_command) 
+    if(((millis() - prev_cmd_time) >= 200)) 
     {
-        new_command = false;
         twist_msg.linear.x = 0.0;
         twist_msg.linear.y = 0.0;
         twist_msg.angular.z = 0.0;
@@ -251,9 +250,9 @@ void moveBase()
     }
     // get the required rpm for each motor based on required velocities, and base used
     Kinematics::rpm req_rpm = kinematics.getRPM(
-        twist_msg.linear.x, 
-        twist_msg.linear.y, 
-        twist_msg.angular.z
+        linear_x_s.smooth(twist_msg.linear.x), 
+        linear_y_s.smooth(twist_msg.linear.y), 
+        angular_z_s.smooth(twist_msg.angular.z)
     );
 
     // get the current speed of each motor
