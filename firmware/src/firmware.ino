@@ -30,7 +30,6 @@
 #include "kinematics.h"
 #include "pid.h"
 #include "odometry.h"
-#include "velocity_smoother.h"
 #include "imu.h"
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
