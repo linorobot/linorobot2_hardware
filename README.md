@@ -1,46 +1,7 @@
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 
-### 1. Installing ROS2 and micro-ROS in the host computer
-
-#### 1.1 ROS2 Installation
-
-You can use the script found in [ros2me](https://github.com/linorobot/ros2me) to install ROS2 - Foxy. Take note that this project only works on ROS Foxy and above.
-
-    git clone https://github.com/linorobot/ros2me
-    cd ros2me
-    ./install
-
-You'll also need the teleoperation package to control the robot manually. Install ROS2's teleop_twist_keyboard package:
-
-    sudo apt install ros-foxy-teleop-twist-keyboard 
-
-#### 1.2 micro-ROS Installation
-
-Source your ROS2 distro and workspace:
-
-    source /opt/ros/<your_ros_distro>/setup.bash
-    cd <your_ws>
-    colcon build
-    source install/local_setup.bash
-
-Download and install micro-ROS:
-
-    cd <your_ws>
-    git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
-    sudo apt install python3-vcstool
-    sudo apt update && rosdep update
-    rosdep install --from-path src --ignore-src -y
-    colcon build
-    source install/local_setup.bash
-
-Setup micro-ROS agent:
-
-    ros2 run micro_ros_setup create_agent_ws.sh
-    ros2 run micro_ros_setup build_agent.sh
-    source install/local_setup.bash
-
-### 1. ROS2 and linorobot2 installation (ignore this for now this is just a placeholder)
+### 1. ROS2 and linorobot2 installation
 It is assumed that you already have ROS2 and linorobot2 package installed. If you haven't, go to [linorobot2](https://github.com/linorobot/linorobot2) package for installation guide.
 
 ### 2. Install PlatformIO
