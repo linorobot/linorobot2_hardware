@@ -74,10 +74,6 @@ PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 
-VelocitySmoother linear_x_s(0.01);
-VelocitySmoother linear_y_s(0.01);
-VelocitySmoother angular_z_s(0.01);
-
 Kinematics kinematics(
     Kinematics::LINO_BASE, 
     MOTOR_MAX_RPM, 
@@ -238,8 +234,6 @@ void fullStop()
 void moveBase()
 {
     // brake if there's no command received, or when it's only the first command sent
-    // first command is ignored if it's less than 5hz to prevent jerky motion. ie, there's a long pause after 
-    // the key is pressed in teleop_twist_keyboard
     if(((millis() - prev_cmd_time) >= 200)) 
     {
         twist_msg.linear.x = 0.0;
@@ -250,9 +244,9 @@ void moveBase()
     }
     // get the required rpm for each motor based on required velocities, and base used
     Kinematics::rpm req_rpm = kinematics.getRPM(
-        linear_x_s.smooth(twist_msg.linear.x), 
-        linear_y_s.smooth(twist_msg.linear.y), 
-        angular_z_s.smooth(twist_msg.angular.z)
+        twist_msg.linear.x, 
+        twist_msg.linear.y, 
+        twist_msg.angular.z
     );
 
     // get the current speed of each motor
