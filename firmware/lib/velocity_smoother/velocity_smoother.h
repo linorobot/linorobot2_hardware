@@ -19,7 +19,7 @@
 class VelocitySmoother
 {
     public:
-        VelocitySmoother(float beta=0.1):
+        VelocitySmoother(float beta=0.01):
             prev_vel_(0.0),
             alpha_(0.0),
             beta_(0.0)

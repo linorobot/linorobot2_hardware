@@ -74,9 +74,9 @@ PID motor2_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor3_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 PID motor4_pid(PWM_MIN, PWM_MAX, K_P, K_I, K_D);
 
-VelocitySmoother linear_x_s(0.1);
-VelocitySmoother linear_y_s(0.1);
-VelocitySmoother angular_z_s(0.1);
+VelocitySmoother linear_x_s(0.01);
+VelocitySmoother linear_y_s(0.01);
+VelocitySmoother angular_z_s(0.01);
 
 Kinematics kinematics(
     Kinematics::LINO_BASE, 
