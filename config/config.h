@@ -16,6 +16,10 @@
     #include "custom/beebo_config.h"
 #endif
 
+#ifdef USE_BEEBO_M_CONFIG
+    #include "custom/beebo_m_config.h"
+#endif
+
 #ifdef USE_HEX_CONFIG
     #include "custom/hex_config.h"
 #endif
@@ -24,7 +28,7 @@
     #include "custom/dev_config.h"
 #endif
 
-#if !defined (USE_BEEBO_CONFIG) && !defined (USE_DEV_CONFIG) && !defined (USE_HEX_CONFIG)
+#if !defined (USE_BEEBO_CONFIG) && !defined (USE_DEV_CONFIG) && !defined (USE_HEX_CONFIG) && !defined (USE_BEEBO_M_CONFIG)
     #include "lino_base_config.h"
 #endif
 
