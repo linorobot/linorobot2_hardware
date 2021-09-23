@@ -56,7 +56,6 @@ unsigned long long time_offset = 0;
 unsigned long prev_cmd_time = 0;
 unsigned long prev_odom_update = 0;
 bool micro_ros_init_successful = false;
-bool new_command = false;
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
@@ -147,13 +146,8 @@ void controlCallback(rcl_timer_t * timer, int64_t last_call_time)
 void twistCallback(const void * msgin) 
 {
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
-    // detect first command (ie. when user just started pressing accelerator)
-    unsigned long now = millis();
-    if((now - prev_cmd_time) >= 200)
-    {
-        new_command = true;
-    }
-    prev_cmd_time = now;
+
+    prev_cmd_time = millis();
 }
 
 void createEntities()
@@ -238,11 +232,8 @@ void fullStop()
 void moveBase()
 {
     // brake if there's no command received, or when it's only the first command sent
-    // first command is ignored if it's less than 5hz to prevent jerky motion. ie, there's a long pause after 
-    // the key is pressed in teleop_twist_keyboard
-    if(((millis() - prev_cmd_time) >= 200) || new_command) 
+    if(((millis() - prev_cmd_time) >= 200)) 
     {
-        new_command = false;
         twist_msg.linear.x = 0.0;
         twist_msg.linear.y = 0.0;
         twist_msg.angular.z = 0.0;

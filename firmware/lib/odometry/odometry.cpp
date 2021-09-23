@@ -76,20 +76,17 @@ nav_msgs__msg__Odometry Odometry::getData()
     return odom_msg_;
 } 
 
-const void Odometry::euler_to_quat(float x, float y, float z, float* q) 
+const void Odometry::euler_to_quat(float roll, float pitch, float yaw, float* q) 
 {
-    //SOURCE:  https://github.com/micro-ROS/micro_ros_arduino/blob/galactic/examples/micro-ros_tf_publisher/micro-ros_tf_publisher.ino
-    const float p_o = 3.14 / 180.0;
-    float c1 = cos((y * p_o) / 2);
-    float c2 = cos((z * p_o) / 2);
-    float c3 = cos((x * p_o) / 2);
+    float cy = cos(yaw * 0.5);
+    float sy = sin(yaw * 0.5);
+    float cp = cos(pitch * 0.5);
+    float sp = sin(pitch * 0.5);
+    float cr = cos(roll * 0.5);
+    float sr = sin(roll * 0.5);
 
-    float s1 = sin((y * p_o) / 2);
-    float s2 = sin((z * p_o) / 2);
-    float s3 = sin((x * p_o) / 2);
-
-    q[0] = c1 * c2 * c3 - s1 * s2 * s3;
-    q[1] = s1 * s2 * c3 + c1 * c2 * s3;
-    q[2] = s1 * c2 * c3 + c1 * s2 * s3;
-    q[3] = c1 * s2 * c3 - s1 * c2 * s3;
+    q[0] = cy * cp * cr + sy * sp * sr;
+    q[1] = cy * cp * sr - sy * sp * cr;
+    q[2] = sy * cp * sr + cy * sp * cr;
+    q[3] = sy * cp * cr - cy * sp * sr;
 }

@@ -1,46 +1,7 @@
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 
-### 1. Installing ROS2 and micro-ROS in the host computer
-
-#### 1.1 ROS2 Installation
-
-You can use the script found in [ros2me](https://github.com/linorobot/ros2me) to install ROS2 - Foxy. Take note that this project only works on ROS Foxy and above.
-
-    git clone https://github.com/linorobot/ros2me
-    cd ros2me
-    ./install
-
-You'll also need the teleoperation package to control the robot manually. Install ROS2's teleop_twist_keyboard package:
-
-    sudo apt install ros-foxy-teleop-twist-keyboard 
-
-#### 1.2 micro-ROS Installation
-
-Source your ROS2 distro and workspace:
-
-    source /opt/ros/<your_ros_distro>/setup.bash
-    cd <your_ws>
-    colcon build
-    source install/local_setup.bash
-
-Download and install micro-ROS:
-
-    cd <your_ws>
-    git clone -b $ROS_DISTRO https://github.com/micro-ROS/micro_ros_setup.git src/micro_ros_setup
-    sudo apt install python3-vcstool
-    sudo apt update && rosdep update
-    rosdep install --from-path src --ignore-src -y
-    colcon build
-    source install/local_setup.bash
-
-Setup micro-ROS agent:
-
-    ros2 run micro_ros_setup create_agent_ws.sh
-    ros2 run micro_ros_setup build_agent.sh
-    source install/local_setup.bash
-
-### 1. ROS2 and linorobot2 installation (ignore this for now this is just a placeholder)
+### 1. ROS2 and linorobot2 installation
 It is assumed that you already have ROS2 and linorobot2 package installed. If you haven't, go to [linorobot2](https://github.com/linorobot/linorobot2) package for installation guide.
 
 ### 2. Install PlatformIO
@@ -99,7 +60,7 @@ Supported Motor Drivers:
 
 The motor drivers are configurable from the config file explained in the later part of this document.
 
-### 3. Interial Measurement Unit (IMU)
+### 3. Inertial Measurement Unit (IMU)
 
 Supported IMUs:
 
@@ -113,7 +74,7 @@ Below are connection diagrams you can follow for each supported motor driver and
 
 - Reserve SCL0 and SDA0 (pins 18 and 19 on Teensy boards) for IMU.
 
-- When connecting motor driver's EN/PWM pin, ensure that the microcontroller pin used is PWM enabled. You can checkout PJRC [pinout page](https://www.pjrc.com/teensy/pinout.html) for more info.
+- When connecting the motor driver's EN/PWM pin, ensure that the microcontroller pin used is PWM enabled. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for more info.
 
 Alternatively, you can also use the pre-defined pin assignments in lino_base_config.h. Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L112) carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy. 
 
@@ -147,14 +108,14 @@ Reference designs you can follow in building your robot.
 A minimal setup with a 5V powered robot computer.
 ![minimal_setup](docs/minimal_setup.png)
 
-A more advanced setup up with a 19V powered computer and USB hub connected to sensors.
+A more advanced setup with a 19V powered computer and USB hub connected to sensors.
 ![advanced_setup](docs/advanced_setup.png)
 
 For bigger robots, you can add an emergency switch in between the motor drivers' power supply and motor drivers.
 
 ## Setting up the firmware
 ### 1. Robot Settings
-Go to config folder and open lino_base_config.h. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
+Go to the config folder and open lino_base_config.h. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
 
     #define LINO_BASE DIFFERENTIAL_DRIVE
     #define USE_GENERIC_2_IN_MOTOR_DRIVER
@@ -216,7 +177,7 @@ Constants' Meaning:
 
 - **MOTOR_MAX_RPM** - Motor's maximum number of rotations it can do in a minute specified by the manufacturer.
 
-- **MAX_RPM_RATIO** - Percentage of the motor's maximum RPM that the robot is allowed to move. This parameter ensures that the user-defined velocity will not be more than or equal the motor's max RPM, allowing the PID to have ample space to add/substract RPM values to reach the target velocity. For instance, if your motor's maximum velocity is 0.5 m/s with `MAX_RPM_RATIO` set to 0.85, and you asked the robot to move at 0.5 m/s, the robot's maximum velocity will be capped at 0.425 m/s (0.85 * 0.5m/s). You can set this parameter to 1.0 if your wheels can spin way more than your operational speed.
+- **MAX_RPM_RATIO** - Percentage of the motor's maximum RPM that the robot is allowed to move. This parameter ensures that the user-defined velocity will not be more than or equal the motor's max RPM, allowing the PID to have ample space to add/subtract RPM values to reach the target velocity. For instance, if your motor's maximum velocity is 0.5 m/s with `MAX_RPM_RATIO` set to 0.85, and you asked the robot to move at 0.5 m/s, the robot's maximum velocity will be capped at 0.425 m/s (0.85 * 0.5m/s). You can set this parameter to 1.0 if your wheels can spin way more than your operational speed.
 
     Wheel velocity can be computed as:  MAX_WHEEL_VELOCITY = (`MOTOR_MAX_RPM` / 60.0) * PI * `WHEEL_DIAMETER` 
 
@@ -232,12 +193,12 @@ Constants' Meaning:
 
 - **LR_WHEELS_DISTANCE** - The distance between the center of left and right wheels in meters.
 
-- **PWM_BITS** - Number of bits in generating the PWM signal. You can use the defualt value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
+- **PWM_BITS** - Number of bits in generating the PWM signal. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
-- **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the defualt value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
+- **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
 ### 2. Hardware Pin Assignments
-Remember to only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can checkout PJRC [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
+Remember to only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
 
 The pin assignments found in lino_base_config.h are based on Linorobot's PCB board. You can wire up your electronic components based on the default pin assignments but you're also free to modify it depending on your setup. Just ensure that you're connecting MOTORX_PWM pins to a PWM enabled pin on the microcontroller and reserve SCL and SDA pins for the IMU, and pin 13 (built-in LED) for debugging.
 
@@ -298,9 +259,9 @@ Constants' Meaning:
 
 - **MOTORX_PWM** - Microcontroller pin that is connected to the PWM pin of the motor driver. This pin is usually labelled as EN or ENABLE pin on the motor driver board. 
 
-- **MOTORX_IN_A** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRA or DIR1 pin on the motor driver board. On BTS7960 driver, this is one of the two PWM pins connected to the driver (RPWM/LPWM).
+- **MOTORX_IN_A** - Microcontroller pin that is connected to one of the motor driver's direction pins. This pin is usually labelled as DIRA or DIR1 pin on the motor driver board. On BTS7960 driver, this is one of the two PWM pins connected to the driver (RPWM/LPWM).
 
-- **MOTORX_IN_B** - Microcontroller pin that is connected to one of the motor driver's direction pin. This pin is usually labelled as DIRB or DIR2 pin on the motor driver board. On BTS7960 driver, this is one of the two PWM pins connected to the driver (RPWM/LPWM).
+- **MOTORX_IN_B** - Microcontroller pin that is connected to one of the motor driver's direction pins. This pin is usually labelled as DIRB or DIR2 pin on the motor driver board. On BTS7960 driver, this is one of the two PWM pins connected to the driver (RPWM/LPWM).
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
@@ -361,7 +322,7 @@ Ensure that the robot pass all the requirements before uploading the firmware:
 - Defined the correct motor rpm.
 - Motors' IDs are correct.
 - Motors spin in the right direction.
-- Encoders' sign are correct.
+- Encoders' signs are correct.
 - Defined the correct encoder's COUNTS_PER_REV.
 - Defined the correct robot type.
 - Defined the correct motor driver.
@@ -418,9 +379,9 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 
 ## Troubleshooting Guide
 
-### 1. One of my motor's not spinning.
+### 1. One of my motor isn't spinning.
 - Check if the motors are powered.
-- Check if you have a bad wiring.
+- Check if you have bad wiring.
 - Check if you have misconfigured the motor's pin assignment in lino_base_config.h.
 - Check if you uncommented the correct motor driver (ie. `USE_GENERIC_2_IN_MOTOR_DRIVER`)
 - Check if you assigned the motor driver pins under the correct motor driver constant. For instance, if you uncommented `USE_GENERIC_2_IN_MOTOR_DRIVER`, all the pins you assigned must be inside the `ifdef USE_GENERIC_2_IN_MOTOR_DRIVER` macro.
@@ -429,9 +390,9 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 - Check if the motor drivers have been connected to the correct microcontroller pin.
 - Check if you have misconfigured the motor's pin assignment in lino_base_config.h.
 
-### 3 One of my encoder has no reading (0 value).
+### 3 One of my encoders has no reading (0 value).
 - Check if the encoders are powered.
-- Check if you have a bad wiring.
+- Check if you have bad wiring.
 - Check if you have misconfigured the encoder's pin assignment in lino_base_config.h.
 
 ### 4. Nothing's printing when I run the screen app.
