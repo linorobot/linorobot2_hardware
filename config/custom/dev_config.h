@@ -38,6 +38,7 @@
 #define WHEEL_DIAMETER 0.152               
 #define LR_WHEELS_DISTANCE 0.271            
 #define PWM_BITS 8                         
+#define PWM_FREQUENCY 20000
 
 /// ENCODER PINS
 #define MOTOR1_ENCODER_A 14
