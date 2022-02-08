@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef HEX_CONFIG_H
-#define HEX_CONFIG_H
+#ifndef SQUARE_CONFIG_H
+#define SQUARE_CONFIG_H
 
 #define LED_PIN 13 
 
@@ -36,7 +36,7 @@
 #define COUNTS_PER_REV3 2421
 #define COUNTS_PER_REV4 2501
 #define WHEEL_DIAMETER 0.09               
-#define LR_WHEELS_DISTANCE 0.255            
+#define LR_WHEELS_DISTANCE 0.24            
 #define PWM_BITS 10                        
 #define PWM_FREQUENCY 20000
 
