@@ -97,7 +97,7 @@ void setup()
             flashLED(3);
         }
     }
-    
+
     micro_ros_init_successful = false;
     set_microros_transports();
 }
@@ -158,21 +158,21 @@ void createEntities()
     // create node
     RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
     // create odometry publisher
-    RCCHECK(rclc_publisher_init_best_effort( 
+    RCCHECK(rclc_publisher_init_default( 
         &odom_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
         "odom/unfiltered"
     ));
     // create IMU publisher
-    RCCHECK(rclc_publisher_init_best_effort( 
+    RCCHECK(rclc_publisher_init_default( 
         &imu_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
         "imu/data"
     ));
     // create twist command subscriber
-    RCCHECK(rclc_subscription_init_best_effort( 
+    RCCHECK(rclc_subscription_init_default( 
         &twist_subscriber, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
