@@ -410,3 +410,12 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 
 ### 5. The firmware was uploaded but nothing's happening.
 - Check if you're assigning the correct Teensy board when uploading the firmware. If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).
+
+### 6. The wheels only spin in one direction
+- Check if the Teensy's GND pin is connected to the motor driver's GND pin.
+
+### 7. The robot's forward motion is not straight
+- This happens when the target velocity is more than or equal the motor's RPM (usually happens on low RPM motors). To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors.
+
+### 8. The robot rotates after braking
+- This happens due to the same reason as 7. When the motor hits its maximum rpm and fails to reach the target velocity, the PID controller's error continously increases. The abrupt turning motion is due to the PID controller's attempt to further compensate the accumulated error. To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors while moving to avoid huge accumulative errors when the robot stops.
