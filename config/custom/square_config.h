@@ -22,12 +22,12 @@
 #define USE_GENERIC_2_IN_MOTOR_DRIVER 
 #define USE_GY85_IMU
 
-#define K_P 0.6                             
-#define K_I 0.55                             
-#define K_D 0.5                             
+#define K_P 20.                           
+#define K_I 0.8                             
+#define K_D 5.                             
 
 #define MOTOR_MAX_RPM 100
-#define MAX_RPM_RATIO 0.85
+#define MAX_RPM_RATIO 0.8
 #define MOTOR_OPERATING_VOLTAGE 12
 #define MOTOR_POWER_MAX_VOLTAGE 12
 #define MOTOR_POWER_MEASURED_VOLTAGE 11.67                         
