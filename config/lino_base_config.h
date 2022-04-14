@@ -38,6 +38,17 @@
 #define K_I 0.8                             // I constant
 #define K_D 0.5                             // D constant
 
+//Battery Monitor
+#define K           0.00472199
+#define CELLS       3
+#define MAX_CELLS   3
+#define CRITICAL    0.30
+
+double cell_const[MAX_CELLS] = 
+{
+  1.3300, 1.3250, 1.4333
+};
+
 /*
 ROBOT ORIENTATION
          FRONT
