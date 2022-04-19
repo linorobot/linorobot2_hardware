@@ -198,7 +198,7 @@ Constants' Meaning:
 - **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
 ### 2. Hardware Pin Assignments
-Remember to only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
+Only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
 
 The pin assignments found in lino_base_config.h are based on Linorobot's PCB board. You can wire up your electronic components based on the default pin assignments but you're also free to modify it depending on your setup. Just ensure that you're connecting MOTORX_PWM pins to a PWM enabled pin on the microcontroller and reserve SCL and SDA pins for the IMU, and pin 13 (built-in LED) for debugging.
 
@@ -395,7 +395,13 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 - Check if you have bad wiring.
 - Check if you have misconfigured the encoder's pin assignment in lino_base_config.h.
 
-### 4. Nothing's printing when I run the screen app.
+### 4. The wheels only spin in one direction
+- Check if the Teensy's GND pin is connected to the motor driver's GND pin.
+
+### 5. The motor doesn't change it's direction after setting the INV to true.
+- Check if the Teensy's GND pin is connected to the motor driver's GND pin.
+
+### 6. Nothing's printing when I run the screen app.
 - Check if you're passing the correct serial port. Run:
 
         ls /dev/ttyACM*
@@ -408,5 +414,12 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 
     Remember to restart your computer if you just copied the udev rule.
 
-### 5. The firmware was uploaded but nothing's happening.
+### 7. The firmware was uploaded but nothing's happening.
 - Check if you're assigning the correct Teensy board when uploading the firmware. If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).
+
+### 8. The robot's forward motion is not straight
+- This happens when the target velocity is more than or equal the motor's RPM (usually happens on low RPM motors). To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors.
+
+### 9. The robot rotates after braking
+- This happens due to the same reason as 7. When the motor hits its maximum rpm and fails to reach the target velocity, the PID controller's error continously increases. The abrupt turning motion is due to the PID controller's attempt to further compensate the accumulated error. To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors while moving to avoid huge accumulative errors when the robot stops.
+
