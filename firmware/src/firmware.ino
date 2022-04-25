@@ -94,7 +94,7 @@ IMU imu;
 void setup() 
 {
     // Populate battery parameters.
-    bool initbatttate();
+    bool initbattstate();
     battstate.design_capacity          = 2200;  // mAh
     battstate.power_supply_status      = 2;     // discharging
     battstate.power_supply_health      = 0;     // unknown
