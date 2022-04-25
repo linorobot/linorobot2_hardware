@@ -88,12 +88,12 @@ Kinematics kinematics(
 
 Odometry odometry;
 IMU imu;
-BatteryState battstate;
+//BatteryState battstate;
 
 void setup() 
 {
     // Populate battery parameters.
-    battstate = battery_state.init();
+    battstate = BatteryState.init();
     battstate.design_capacity          = 2200;  // mAh
     battstate.power_supply_status      = 2;     // discharging
     battstate.power_supply_health      = 0;     // unknown
