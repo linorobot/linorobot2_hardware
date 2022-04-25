@@ -100,10 +100,10 @@ void setup()
     battstate.power_supply_health      = 0;     // unknown
     battstate.power_supply_technology  = 3;     // LiPo
     battstate.present                  = 1;     // battery present
-    battstate.location      = "Crawler";        // unit location
-    battstate.serial_number = "ABC_0001";       // unit serial number
+    battstate.location.data      = "Crawler";        // unit location
+    battstate.serial_number.data = "ABC_0001";       // unit serial number
   
-    battstate.cell_voltage = new float[CELLS];  // individual cell health
+    battstate.cell_voltage.data = new float[CELLS];  // individual cell health
     pinMode(LED_PIN, OUTPUT);
     //***********************************************************************************************
     bool imu_ok = imu.init();
@@ -127,7 +127,7 @@ void loop()
     double prevVoltage = 0.0;
 
     // Reset Power Supply Health.
-    battstate.power_supply_health = 0;
+    battstate.power_supply_health.data = 0;
     // Populate battery state message.
     for (int i = 0; i < CELLS; i++)
     {
