@@ -127,7 +127,7 @@ void loop()
     double prevVoltage = 0.0;
 
     // Reset Power Supply Health.
-    battstate.power_supply_health.data = 0;
+    battstate.power_supply_health = 0;
     // Populate battery state message.
     for (int i = 0; i < CELLS; i++)
     {
