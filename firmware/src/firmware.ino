@@ -93,7 +93,7 @@ BatteryState battstate;
 void setup() 
 {
     // Populate battery parameters.
-    //battery_state.init();
+    battstate = battery_state.init();
     battstate.design_capacity          = 2200;  // mAh
     battstate.power_supply_status      = 2;     // discharging
     battstate.power_supply_health      = 0;     // unknown
