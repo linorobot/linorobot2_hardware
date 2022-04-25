@@ -144,12 +144,12 @@ void loop()
       prevVoltage = tmp;
   
       // Set current cell voltage to message.
-      battstate.cell_voltage[i].data = (float)cellVoltage;
+      battstate.cell_voltage[i].size = (float)cellVoltage;
 
       // Check if battery is attached.
-      if (battstate.cell_voltage[i].data >= 2.0)
+      if (battstate.cell_voltage[i].size >= 2.0)
       {
-        if (battstate.cell_voltage[i].data <= 3.2)
+        if (battstate.cell_voltage[i].size <= 3.2)
           battstate.power_supply_health = 5; // Unspecified failure.
         battstate.present = 1;
       }
