@@ -118,7 +118,7 @@ void setup()
 
 void loop() 
 {
-    /      
+    //      
     // Battery status.
     double battVoltage = 0.0;
     double prevVoltage = 0.0;
