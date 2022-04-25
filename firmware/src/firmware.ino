@@ -126,7 +126,7 @@ void loop()
     // Reset Power Supply Health.
     batterystate.power_supply_health = 0;
     // Populate battery state message.
-    for (int i = 14; i < CELLS; i++)
+    for (int i = 0; i < CELLS; i++)
     {
       // Read raw voltage from analog pin.
       double cellVoltage = analogRead(i) * K;
