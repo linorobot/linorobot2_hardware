@@ -88,6 +88,7 @@ Kinematics kinematics(
 
 Odometry odometry;
 IMU imu;
+BatteryState battery_state;
 
 void setup() 
 {
