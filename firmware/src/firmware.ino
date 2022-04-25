@@ -94,7 +94,7 @@ IMU imu;
 void setup() 
 {
     // Populate battery parameters.
-    
+    bool initbatttate();
     battstate.design_capacity          = 2200;  // mAh
     battstate.power_supply_status      = 2;     // discharging
     battstate.power_supply_health      = 0;     // unknown
@@ -387,8 +387,8 @@ void publishData()
     imu_msg.header.stamp.sec = time_stamp.tv_sec;
     imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
     
-    battery_state_msg.header.stamp.sec = time_stamp.tv_sec;
-    battery_state_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+    battstate.header.stamp.sec = time_stamp.tv_sec;
+    battstate.header.stamp.nanosec = time_stamp.tv_nsec;
     
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
