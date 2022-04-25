@@ -104,6 +104,7 @@ void setup()
     battstate.serial_number.data = "ABC_0001";       // unit serial number
   
     battstate.cell_voltage.data = new float[CELLS];  // individual cell health
+    battstate.cell_voltage.size;
     pinMode(LED_PIN, OUTPUT);
     //***********************************************************************************************
     bool imu_ok = imu.init();
