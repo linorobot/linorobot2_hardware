@@ -172,7 +172,7 @@ void loop()
     }
   
     // Update power supply health if not failed.
-    if (battstate.power_supply_health == 0 && battery_state.present)
+    if (battstate.power_supply_health == 0 && battstate.present)
     {
       if (battstate.voltage > CELLS * 4.2)
         battstate.power_supply_health = 4; // overvoltage
@@ -385,7 +385,10 @@ void publishData()
 
     imu_msg.header.stamp.sec = time_stamp.tv_sec;
     imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
-
+    
+    battery_state_msg.header.stamp.sec = time_stamp.tv_sec;
+    battery_state_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+    
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
     RCSOFTCHECK(rcl_publish(&battery_state_publisher, &battery_state_msg, NULL));
