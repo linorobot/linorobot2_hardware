@@ -47,7 +47,7 @@ rcl_subscription_t battery_state_subscriber;
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
-sensor_msgs__msg__BatteryState battery_state_msg;
+sensor_msgs__msg__BatteryState battstate;
 geometry_msgs__msg__Twist twist_msg;
 
 rclc_executor_t executor;
@@ -88,14 +88,14 @@ Kinematics kinematics(
 
 Odometry odometry;
 IMU imu;
-bool initBatteryState();
+//bool initBatteryState();
 //BatteryState battstate;
 
 void setup() 
 {
     // Populate battery parameters.
     
-    //battstate.design_capacity          = 2200;  // mAh
+    battstate.design_capacity          = 2200;  // mAh
     battstate.power_supply_status      = 2;     // discharging
     battstate.power_supply_health      = 0;     // unknown
     battstate.power_supply_technology  = 3;     // LiPo
@@ -127,7 +127,7 @@ void loop()
     double prevVoltage = 0.0;
 
     // Reset Power Supply Health.
-    //battstate.power_supply_health = 0;
+    battstate.power_supply_health = 0;
     // Populate battery state message.
     for (int i = 0; i < CELLS; i++)
     {
@@ -377,7 +377,7 @@ void publishData()
 {
     odom_msg = odometry.getData();
     imu_msg = imu.getData();
-    //battery_state_msg = battstate.getData();
+    battery_state_msg = battstate.getData();
 
     struct timespec time_stamp = getTime();
 
