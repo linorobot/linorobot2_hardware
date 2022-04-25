@@ -103,8 +103,7 @@ void setup()
     battstate.location.data      = "Crawler";        // unit location
     battstate.serial_number.data = "ABC_0001";       // unit serial number
   
-    battstate.cell_voltage.data = new float[CELLS];  // individual cell health
-    battstate.cell_voltage.size;
+    battstate.cell_voltage.size = new float[CELLS];  // individual cell health
     pinMode(LED_PIN, OUTPUT);
     //***********************************************************************************************
     bool imu_ok = imu.init();
