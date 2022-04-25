@@ -251,14 +251,14 @@ void createEntities()
     RCCHECK(rclc_publisher_init_default( 
         &battery_state_publisher, 
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Battery_State),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
         "BatteryState"
     ));
     // create Batterystate subscribe
     RCCHECK(rclc_subscription_init_default( 
         &battery_state_subscriber, 
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Battery_State),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
         "BatteryState"
     ));
     // create twist command subscriber
