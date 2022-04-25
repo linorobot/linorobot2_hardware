@@ -22,7 +22,7 @@
 
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h>
-#include <sensor_msgs/msg/BatteryState.h>
+#include <sensor_msgs/msg/battery_state.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 
@@ -41,13 +41,13 @@
 
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
-rcl_publisher_t batterystate_publisher;
+rcl_publisher_t battery_state_publisher;
 rcl_subscription_t twist_subscriber;
-rcl_subscription_t batterystate_subscriber;
+rcl_subscription_t battery_state_subscriber;
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
-sensor_msgs__msg__BatteryState batterystate_msg;
+sensor_msgs__msg__Battery_State battery_state_msg;
 geometry_msgs__msg__Twist twist_msg;
 
 rclc_executor_t executor;
@@ -92,15 +92,15 @@ IMU imu;
 void setup() 
 {
     // Populate battery parameters.
-    batterystate.design_capacity          = 2200;  // mAh
-    batterystate.power_supply_status      = 2;     // discharging
-    batterystate.power_supply_health      = 0;     // unknown
-    batterystate.power_supply_technology  = 3;     // LiPo
-    batterystate.present                  = 1;     // battery present
-    batterystate.location      = "Crawler";        // unit location
-    batterystate.serial_number = "ABC_0001";       // unit serial number
+    battery_state.design_capacity          = 2200;  // mAh
+    battery_state.power_supply_status      = 2;     // discharging
+    battery_state.power_supply_health      = 0;     // unknown
+    battery_state.power_supply_technology  = 3;     // LiPo
+    battery_state.present                  = 1;     // battery present
+    battery_state.location      = "Crawler";        // unit location
+    battery_state.serial_number = "ABC_0001";       // unit serial number
   
-    batterystate.cell_voltage = new float[CELLS];  // individual cell health
+    battery_state.cell_voltage = new float[CELLS];  // individual cell health
     pinMode(LED_PIN, OUTPUT);
     //***********************************************************************************************
     bool imu_ok = imu.init();
@@ -124,7 +124,7 @@ void loop()
     double prevVoltage = 0.0;
 
     // Reset Power Supply Health.
-    batterystate.power_supply_health = 0;
+    battery_state.power_supply_health = 0;
     // Populate battery state message.
     for (int i = 0; i < CELLS; i++)
     {
@@ -141,43 +141,43 @@ void loop()
       prevVoltage = tmp;
   
       // Set current cell voltage to message.
-      batterystate.cell_voltage[i] = (float)cellVoltage;
+      battery_state.cell_voltage[i] = (float)cellVoltage;
 
       // Check if battery is attached.
-      if (batterystate.cell_voltage[i] >= 2.0)
+      if (battery_state.cell_voltage[i] >= 2.0)
       {
-        if (batterystate.cell_voltage[i] <= 3.2)
-          batterystate.power_supply_health = 5; // Unspecified failure.
-        batterystate.present = 1;
+        if (battery_state.cell_voltage[i] <= 3.2)
+          battery_state.power_supply_health = 5; // Unspecified failure.
+        battery_state.present = 1;
       }
       else
-        batterystate.present = 0;
+        battery_state.present = 0;
     }
 
     // Update battery health.
-    if (batterystate.present)
+    if (battery_state.present)
     {
-      batterystate.voltage = (float)battVoltage;
-      float volt = batterystate.voltage;
+      battery_state.voltage = (float)battVoltage;
+      float volt = battery_state.voltage;
       float low  = 3.0 * CELLS;
       float high = 4.2 * CELLS;
-      batterystate.percentage = constrain((volt - low) / (high - low), 0.0, 1.0);    
+      battery_state.percentage = constrain((volt - low) / (high - low), 0.0, 1.0);    
     }
     else 
     {
-      batterystate.voltage = 0.0;
-      batterystate.percentage = 0.0;
+      battery_state.voltage = 0.0;
+      battery_state.percentage = 0.0;
     }
   
     // Update power supply health if not failed.
-    if (batterystate.power_supply_health == 0 && batt_state.present)
+    if (battery_state.power_supply_health == 0 && battery_state.present)
     {
-      if (batterystate.voltage > CELLS * 4.2)
-        batterystate.power_supply_health = 4; // overvoltage
-      else if (batterystate.voltage < CELLS * 3.0)
-        batterystate.power_supply_health = 3; // dead
+      if (battery_state.voltage > CELLS * 4.2)
+        battery_state.power_supply_health = 4; // overvoltage
+      else if (battery_state.voltage < CELLS * 3.0)
+        battery_state.power_supply_health = 3; // dead
       else
-        batterystate.power_supply_health = 1; // good 
+        battery_state.power_supply_health = 1; // good 
     }
     //*****************************************************************************************
     static unsigned long prev_connect_test_time;
@@ -249,16 +249,16 @@ void createEntities()
     ));
     // create Batterystate publisher
     RCCHECK(rclc_publisher_init_default( 
-        &batterystate_publisher, 
+        &battery_state_publisher, 
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Battery_State),
         "BatteryState"
     ));
     // create Batterystate subscribe
     RCCHECK(rclc_subscription_init_default( 
-        &batterystate_subscriber, 
+        &battery_state_subscriber, 
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
+        ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Battery_State),
         "BatteryState"
     ));
     // create twist command subscriber
@@ -298,8 +298,8 @@ void destroyEntities()
 
     rcl_publisher_fini(&odom_publisher, &node);
     rcl_publisher_fini(&imu_publisher, &node);
-    rcl_publisher_fini(&batterystate_publisher, &node);
-    rcl_subscription_fini(&batterystate_subscriber, &node);
+    rcl_publisher_fini(&battery_state_publisher, &node);
+    rcl_subscription_fini(&battery_state_subscriber, &node);
     rcl_subscription_fini(&twist_subscriber, &node);
     rcl_node_fini(&node);
     rcl_timer_fini(&control_timer);
@@ -374,7 +374,7 @@ void publishData()
 {
     odom_msg = odometry.getData();
     imu_msg = imu.getData();
-    batterystate_msg = batterystate.getData();
+    battery_state_msg = battery_state.getData();
 
     struct timespec time_stamp = getTime();
 
@@ -386,7 +386,7 @@ void publishData()
 
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
-    RCSOFTCHECK(rcl_publish(&batterystate_publisher, &batterystate_msg, NULL));
+    RCSOFTCHECK(rcl_publish(&battery_state_publisher, &battery_state_msg, NULL));
 }
 
 void syncTime()
