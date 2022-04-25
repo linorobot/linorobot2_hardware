@@ -47,7 +47,7 @@ rcl_subscription_t batterystate_subscriber;
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
-sensor_msgs__msg__BatteryState BatteryState_msg;
+sensor_msgs__msg__BatteryState batterystate_msg;
 geometry_msgs__msg__Twist twist_msg;
 
 rclc_executor_t executor;
