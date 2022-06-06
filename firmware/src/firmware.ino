@@ -87,18 +87,19 @@ IMU imu;
 
 void setup() 
 {
-    // pinMode(LED_PIN, OUTPUT);
+    pinMode(LED_PIN, OUTPUT);
 
-    // bool imu_ok = imu.init();
-    // if(!imu_ok)
-    // {
-    //     while(1)
-    //     {
-    //         flashLED(3);
-    //     }
-    // }
+    bool imu_ok = imu.init();
+    if(!imu_ok)
+    {
+        while(1)
+        {
+            flashLED(3);
+        }
+    }
 
-    // micro_ros_init_successful = false;
+    micro_ros_init_successful = false;
+    
     Serial.begin(115200);
     set_microros_serial_transports(Serial);
 }
