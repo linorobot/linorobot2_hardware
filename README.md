@@ -4,7 +4,12 @@ All software mentioned in this guide must be installed on the robot computer.
 ### 1. ROS2 and linorobot2 installation
 It is assumed that you already have ROS2 and linorobot2 package installed. If you haven't, go to [linorobot2](https://github.com/linorobot/linorobot2) package for installation guide.
 
-### 2. Install PlatformIO
+### 2. Download linorobot2_hardware
+
+    cd $HOME
+    git clone https://github.com/linorobot/linorobot2_hardware -b $ROS_DISTRO
+
+### 3. Install PlatformIO
 Download and install platformio. [Platformio](https://platformio.org/) allows you to develop, configure, and upload the firmware without the Arduino IDE. This means that you can upload the firmware remotely which is ideal on headless setup especially when all components have already been fixed. 
     
     python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
@@ -14,7 +19,7 @@ Add platformio to your $PATH:
     echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
     source $HOME/.bashrc
 
-### 3. UDEV Rule
+### 4. UDEV Rule
 Download the udev rules from Teensy's website:
 
     wget https://www.pjrc.com/teensy/00-teensy.rules
@@ -23,7 +28,7 @@ and copy the file to /etc/udev/rules.d :
 
     sudo cp 00-teensy.rules /etc/udev/rules.d/
 
-### 4. Install Screen Terminal
+### 5. Install Screen Terminal
 
     sudo apt install screen
 
