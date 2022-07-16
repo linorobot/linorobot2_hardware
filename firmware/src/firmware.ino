@@ -35,7 +35,7 @@
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
 
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){flashLED(2);}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile int64_t init = -1; \
@@ -330,14 +330,6 @@ struct timespec getTime()
     tp.tv_nsec = (now % 1000) * 1000000;
 
     return tp;
-}
-
-void rclErrorLoop() 
-{
-    while(true)
-    {
-        flashLED(2);
-    }
 }
 
 void flashLED(int n_times)
