@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <Arduino.h>
-#include <micro_ros_arduino.h>
+#include <micro_ros_platformio.h>
 #include <stdio.h>
 
 #include <rcl/rcl.h>
@@ -37,6 +37,11 @@
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+#define EXECUTE_EVERY_N_MS(MS, X)  do { \
+  static volatile int64_t init = -1; \
+  if (init == -1) { init = uxr_millis();} \
+  if (uxr_millis() - init > MS) { X; init = uxr_millis();} \
+} while (0)
 
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
@@ -55,7 +60,14 @@ rcl_timer_t control_timer;
 unsigned long long time_offset = 0;
 unsigned long prev_cmd_time = 0;
 unsigned long prev_odom_update = 0;
-bool micro_ros_init_successful = false;
+
+enum states 
+{
+  WAITING_AGENT,
+  AGENT_AVAILABLE,
+  AGENT_CONNECTED,
+  AGENT_DISCONNECTED
+} state;
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
 Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
@@ -97,39 +109,37 @@ void setup()
             flashLED(3);
         }
     }
-
-    micro_ros_init_successful = false;
-    set_microros_transports();
+    
+    Serial.begin(115200);
+    set_microros_serial_transports(Serial);
 }
 
-void loop() 
-{
-    static unsigned long prev_connect_test_time;
-    // check if the agent got disconnected at 10Hz
-    if(millis() - prev_connect_test_time >= 100)
+void loop() {
+    switch (state) 
     {
-        prev_connect_test_time = millis();
-        // check if the agent is connected
-        if(RMW_RET_OK == rmw_uros_ping_agent(10, 2))
-        {
-            // reconnect if agent got disconnected or haven't at all
-            if (!micro_ros_init_successful) 
+        case WAITING_AGENT:
+            EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
+            break;
+        case AGENT_AVAILABLE:
+            state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
+            if (state == WAITING_AGENT) 
             {
-                createEntities();
-            } 
-        } 
-        else if(micro_ros_init_successful)
-        {
-            // stop the robot when the agent got disconnected
-            fullStop();
-            // clean up micro-ROS components
+                destroyEntities();
+            }
+            break;
+        case AGENT_CONNECTED:
+            EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
+            if (state == AGENT_CONNECTED) 
+            {
+                rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
+            }
+            break;
+        case AGENT_DISCONNECTED:
             destroyEntities();
-        }
-    }
-    
-    if(micro_ros_init_successful)
-    {
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+            state = WAITING_AGENT;
+            break;
+        default:
+            break;
     }
 }
 
@@ -150,7 +160,7 @@ void twistCallback(const void * msgin)
     prev_cmd_time = millis();
 }
 
-void createEntities()
+bool createEntities()
 {
     allocator = rcl_get_default_allocator();
     //create init_options
@@ -196,15 +206,18 @@ void createEntities()
         ON_NEW_DATA
     ));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
+
     // synchronize time with the agent
     syncTime();
     digitalWrite(LED_PIN, HIGH);
-    micro_ros_init_successful = true;
+
+    return true;
 }
 
-void destroyEntities()
+bool destroyEntities()
 {
-    digitalWrite(LED_PIN, LOW);
+    rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support.context);
+    (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
     rcl_publisher_fini(&odom_publisher, &node);
     rcl_publisher_fini(&imu_publisher, &node);
@@ -214,7 +227,9 @@ void destroyEntities()
     rclc_executor_fini(&executor);
     rclc_support_fini(&support);
 
-    micro_ros_init_successful = false;
+    digitalWrite(LED_PIN, HIGH);
+    
+    return true;
 }
 
 void fullStop()
