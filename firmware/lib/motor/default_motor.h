@@ -14,7 +14,7 @@
 
 #ifndef DEFAULT_MOTOR
 #define DEFAULT_MOTOR
-
+#include <analogWrite.h>
 #include <Arduino.h>
 #include <Servo.h> 
 
