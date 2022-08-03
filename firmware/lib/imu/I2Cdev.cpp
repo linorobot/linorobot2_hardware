@@ -89,8 +89,8 @@ THE SOFTWARE.
 
 /** Default constructor.
  */
-I2Cdev::I2Cdev() {
-}
+//I2Cdev::I2Cdev() {
+//}
 
 /** Read a single bit from an 8-bit device register.
  * @param devAddr I2C slave device address
