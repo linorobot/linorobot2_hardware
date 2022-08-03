@@ -1,6 +1,9 @@
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 
+This is a work in progress fork for the ESP32.
+
+
 ### 1. ROS2 and linorobot2 installation
 It is assumed that you already have ROS2 and linorobot2 package installed. If you haven't, go to [linorobot2](https://github.com/linorobot/linorobot2) package for installation guide.
 
@@ -20,7 +23,7 @@ Add platformio to your $PATH:
     source $HOME/.bashrc
 
 ### 4. UDEV Rule
-Download the udev rules from Teensy's website:
+If using a Teensy Download the udev rules from Teensy's website:
 
     wget https://www.pjrc.com/teensy/00-teensy.rules
 
