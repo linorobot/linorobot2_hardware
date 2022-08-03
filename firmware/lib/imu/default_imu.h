@@ -22,9 +22,9 @@
 #include "I2Cdev.h"
 #include "ADXL345.h"
 #include "ITG3200.h"
-#include "HMC5883L.h"
+//#include "HMC5883L.h"
 #include "MPU6050.h"
-#include "MPU9150.h"
+//#include "MPU9150.h"
 #include "MPU9250.h"
 
 class GY85IMU: public IMUInterface 
