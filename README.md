@@ -1,7 +1,7 @@
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 
-This is a work in progress fork for the ESP32. Will do a pull once it's working
+This is a work in progress fork for the ESP32. Will do a pull once it's working. This fork drops support for HMC5883L & MPU9150 due to compilation errors
 
 
 ### 1. ROS2 and linorobot2 installation
