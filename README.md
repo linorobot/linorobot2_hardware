@@ -1,7 +1,7 @@
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 
-This is a work in progress fork for the ESP32.
+This is a work in progress fork for the ESP32. Will do a pull once it's working
 
 
 ### 1. ROS2 and linorobot2 installation
@@ -10,7 +10,7 @@ It is assumed that you already have ROS2 and linorobot2 package installed. If yo
 ### 2. Download linorobot2_hardware
 
     cd $HOME
-    git clone https://github.com/linorobot/linorobot2_hardware -b $ROS_DISTRO
+    git clone https://github.com/rosmo-robot/linorobot2_hardware -b $ROS_DISTRO
 
 ### 3. Install PlatformIO
 Download and install platformio. [Platformio](https://platformio.org/) allows you to develop, configure, and upload the firmware without the Arduino IDE. This means that you can upload the firmware remotely which is ideal on headless setup especially when all components have already been fixed. 
