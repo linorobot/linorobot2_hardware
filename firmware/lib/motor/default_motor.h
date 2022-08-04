@@ -17,7 +17,10 @@
 #include <analogWrite.h> //Comment out for Teensy
 #include <Arduino.h>
 #include <Servo.h> 
-
+#include <Wire.h>
+#include <SimpleFOC.h>
+#include "SimpleFOCDrivers.h"
+#include "comms/i2c/I2CCommanderMaster.h"
 #include "motor_interface.h"
 
 class Generic2: public MotorInterface
@@ -220,36 +223,26 @@ class ESC: public MotorInterface
 class I2C_COMMMANDER: public MotorInterface
 {
     private:
-        Servo motor_;
-        int pwm_pin_;
-
+       
     protected:
-        void forward(int pwm) override
-        {
-            motor_.writeMicroseconds(1500 + pwm);
-        }
-
-        void reverse(int pwm) override
-        {
-            motor_.writeMicroseconds(1500 + pwm);
-        }
+        
 
     public:
-        ESC(float pwm_frequency, int pwm_bits, bool invert, int pwm_pin, int unused=-1, int unused2=-1): 
-            MotorInterface(invert),
-            pwm_pin_(pwm_pin)
-        {
-            motor_.attach(pwm_pin);
-            
-            //ensure that the motor is in neutral state during bootup
-            motor_.writeMicroseconds(1500);
-        }
+        I2C_COMMMANDER(#define TARGET_I2C_ADDRESS 0x60
+I2CCommanderMaster commander;
 
-        void brake() override
-        {
-            motor_.writeMicroseconds(1500);         
-        }
-        
+void setup() {
+    
+    // ...other setup code
+
+    Wire.setClock(400000);          // use same speed on target device!
+    Wire.begin();                   // initialize i2c in controller mode
+    commander.addI2CMotors(TARGET_I2C_ADDRESS, 1);            // add target device, it has 1 motor
+    //commander.addI2CMotors(TARGET_I2C_ADDRESS2, 1);         // you could add another target device on the same bus
+    //commander.addI2CMotors(TARGET_I2C_ADDRESS, 1, &wire2);  // or on a different i2c bus
+    commander.init();               // init commander
+    Wire.onReceive(onReceive);      // connect the interrupt handlers
+    Wire.onRequest(onRequest);
         
 };
 
