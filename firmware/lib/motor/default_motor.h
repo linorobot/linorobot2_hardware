@@ -17,10 +17,7 @@
 #include <analogWrite.h> //Comment out for Teensy
 #include <Arduino.h>
 #include <Servo.h> 
-#include <Wire.h>
-#include <SimpleFOC.h>
-#include "SimpleFOCDrivers.h"
-#include "comms/i2c/I2CCommanderMaster.h"
+
 #include "motor_interface.h"
 
 class Generic2: public MotorInterface
@@ -217,8 +214,6 @@ class ESC: public MotorInterface
         {
             motor_.writeMicroseconds(1500);         
         }
-        
-        
-
+};
 
 #endif
