@@ -37,6 +37,11 @@
 #ifdef USE_ESC_MOTOR_DRIVER
     // pass your built in class to Motor macro
     #define Motor ESC
+
+#ifdef USE_I2C_COMMMANDER_MOTOR_DRIVER
+    // pass your built in class to Motor macro
+    #define Motor I2C_COMMMANDER
+
 #endif
 
 
