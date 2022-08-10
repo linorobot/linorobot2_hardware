@@ -20,49 +20,34 @@
 
 #include "motor_interface.h"
 
+#include <SimpleFOC.h>
 #include "SimpleFOCDrivers.h"
-#include "comms/i2c/I2CCommander.h"
+#include "comms/i2c/I2CCommanderMaster.h"
 
 
-
-class I2CCOMMANDER: public MotorInterface
-
-// commander instance
-uint8_t i2c_addr = 0x60;  // can be anything you choose
-I2CCommander commander;
-// interrupt callbacks
-void onReceive(int numBytes) { commander.onReceive(numBytes); }
-void onRequest() { commander.onRequest(); }
+// our RosmoESC's address...
+#define TARGET_I2C_ADDRESS 0x60
 
 
-// ... other variables, like sensor, etc...
-BLDCMotor motor = BLDCMotor(POLE_PAIRS);
-
+// global instance of commander - controller device version
+I2CCommanderMaster commander;
 
 void setup() {
-    
-    // ...other setup code
+    // slow start - give RosmoESC a chance to boot up, serial to connect, etc...
+    delay(1000);
 
-    Wire.setClock(400000);          // use same speed on controller device
-    Wire.begin(i2c_addr, true);     // initialize i2c in target mode
-    commander.addMotor(&motor);     // add a motor
-    //commander.addMotor(&motor2);  // you could add more than one motor
-    commander.init(i2c_addr);       // initialize commander
-    Wire.onReceive(onReceive);      // connect the interrupt handlers
-    Wire.onRequest(onRequest);
+    // this is a debug setup so initialize and wait for serial connection
+    Serial.begin(115200);
+    while (!Serial);
 
+    while (!Wire.begin(21, 22, 100000)) {    // standard wire pins for ESP32 PICO Kit v4 
+        Serial.println("I2C failed to initialize");
+        delay(1000);
+    } 
+    commander.addI2CMotors(TARGET_I2C_ADDRESS, 1); // only one motor in my test setup
+    commander.init();
+    Serial.println("I2C Commander intialized.");
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
