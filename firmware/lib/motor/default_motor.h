@@ -268,32 +268,7 @@ void setup() {
 
 
 
-    protected:
-        void forward(int pwm) override
-        {
-            motor_.writeMicroseconds(1500 + pwm);
-        }
-
-        void reverse(int pwm) override
-        {
-            motor_.writeMicroseconds(1500 + pwm);
-        }
-
-    public:
-        ESC(float pwm_frequency, int pwm_bits, bool invert, int pwm_pin, int unused=-1, int unused2=-1): 
-            MotorInterface(invert),
-            pwm_pin_(pwm_pin)
-        {
-            motor_.attach(pwm_pin);
-            
-            //ensure that the motor is in neutral state during bootup
-            motor_.writeMicroseconds(1500);
-        }
-
-        void brake() override
-        {
-            motor_.writeMicroseconds(1500);         
-        }
+   
 };
 
 
