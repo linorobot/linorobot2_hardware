@@ -25,29 +25,7 @@
 #include "comms/i2c/I2CCommanderMaster.h"
 
 
-// our RosmoESC's address...
-#define TARGET_I2C_ADDRESS 0x60
 
-
-// global instance of commander - controller device version
-I2CCommanderMaster commander;
-
-void setup() {
-    // slow start - give RosmoESC a chance to boot up, serial to connect, etc...
-    delay(1000);
-
-    // this is a debug setup so initialize and wait for serial connection
-    Serial.begin(115200);
-    while (!Serial);
-
-    while (!Wire.begin(21, 22, 100000)) {    // standard wire pins for ESP32 PICO Kit v4 
-        Serial.println("I2C failed to initialize");
-        delay(1000);
-    } 
-    commander.addI2CMotors(TARGET_I2C_ADDRESS, 1); // only one motor in my test setup
-    commander.init();
-    Serial.println("I2C Commander intialized.");
-}
 
 
 
@@ -246,5 +224,30 @@ class ESC: public MotorInterface
             motor_.writeMicroseconds(1500);         
         }
 };
+
+
+// our RosmoESC's address...
+#define TARGET_I2C_ADDRESS 0x60
+
+
+// global instance of commander - controller device version
+I2CCommanderMaster commander;
+
+void setup() {
+    // slow start - give RosmoESC a chance to boot up, serial to connect, etc...
+    delay(1000);
+
+    // this is a debug setup so initialize and wait for serial connection
+    Serial.begin(115200);
+    while (!Serial);
+
+    while (!Wire.begin(21, 22, 100000)) {    // standard wire pins for ESP32 PICO Kit v4 
+        Serial.println("I2C failed to initialize");
+        delay(1000);
+    } 
+    commander.addI2CMotors(TARGET_I2C_ADDRESS, 1); // only one motor in my test setup
+    commander.init();
+    Serial.println("I2C Commander intialized.");
+}
 
 #endif
