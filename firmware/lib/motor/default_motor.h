@@ -232,7 +232,7 @@ class ESC: public MotorInterface
 
 
 
-class ESC: public MotorInterface
+class I2CCOMMANDER: public MotorInterface
 {
     private:
         
