@@ -23,11 +23,11 @@
 // #define LINO_BASE MECANUM               // Mecanum drive robot
 
 //uncomment the motor driver you're using
-#define USE_GENERIC_2_IN_MOTOR_DRIVER      // Motor drivers with 2 Direction Pins(INA, INB) and 1 PWM(ENABLE) pin ie. L298, L293, VNH5019
+//#define USE_GENERIC_2_IN_MOTOR_DRIVER      // Motor drivers with 2 Direction Pins(INA, INB) and 1 PWM(ENABLE) pin ie. L298, L293, VNH5019
 // #define USE_GENERIC_1_IN_MOTOR_DRIVER   // Motor drivers with 1 Direction Pin(INA) and 1 PWM(ENABLE) pin.
 // #define USE_BTS7960_MOTOR_DRIVER        // BTS7970 Motor Driver
 // #define USE_ESC_MOTOR_DRIVER            // Motor ESC for brushless motors
-// #define USE_I2C_COMMMANDER_MOTOR_DRIVER // Simple FOC I2C commander https://github.com/simplefoc/Arduino-FOC-drivers/tree/master/src/comms/i2c#readme
+ #define USE_I2C_COMMMANDER_MOTOR_DRIVER // Simple FOC I2C commander https://github.com/simplefoc/Arduino-FOC-drivers/tree/master/src/comms/i2c#readme
 
 //uncomment the IMU you're using
 #define USE_GY85_IMU
