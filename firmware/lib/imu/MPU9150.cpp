@@ -72,7 +72,7 @@ void MPU9150::initialize() {
  * @return True if connection is valid, false otherwise
  */
 bool MPU9150::testConnection() {
-    return getDeviceID() == 0x34; 
+    return getDeviceID() == 0x34;
 }
 
 // AUX_VDDIO register (InvenSense demo code calls this RA_*G_OFFS_TC)
@@ -1726,9 +1726,10 @@ void MPU9150::getMotion9(int16_t* ax, int16_t* ay, int16_t* az, int16_t* gx, int
     I2Cdev::writeByte(MPU9150_RA_MAG_ADDRESS, 0x0A, 0x01); //enable the magnetometer
     delay(10);
     I2Cdev::readBytes(MPU9150_RA_MAG_ADDRESS, MPU9150_RA_MAG_XOUT_L, 6, buffer);
-    *mx = (((int16_t)buffer[0]) << 8) | buffer[1];
-    *my = (((int16_t)buffer[2]) << 8) | buffer[3];
-    *mz = (((int16_t)buffer[4]) << 8) | buffer[5];
+    //Measurement data is stored in two's complement and Little Endian format. Measurement range of each axis is from -4096 to +4095 in decimal.
+	*mx = (int16_t)(((uint16_t)buffer[1] << 8) | (uint16_t)buffer[0]);
+	*my = (int16_t)(((uint16_t)buffer[3] << 8) | (uint16_t)buffer[2]);
+	*mz = (int16_t)(((uint16_t)buffer[5] << 8) | (uint16_t)buffer[4]);
 }
 /** Get raw 6-axis motion sensor readings (accel/gyro).
  * Retrieves all currently available motion sensor values.
@@ -1832,17 +1833,6 @@ int16_t MPU9150::getTemperature() {
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
-void MPU9150::getHeading(int16_t* mx, int16_t* my, int16_t* mz) {
-    //read mag
-    I2Cdev::writeByte(devAddr, MPU9150_RA_INT_PIN_CFG, 0x02); //set i2c bypass enable pin to true to access magnetometer
-    delay(10);
-    I2Cdev::writeByte(MPU9150_RA_MAG_ADDRESS, 0x0A, 0x01); //enable the magnetometer
-    delay(10);
-    I2Cdev::readBytes(MPU9150_RA_MAG_ADDRESS, MPU9150_RA_MAG_XOUT_L, 6, buffer);
-    *mx = (((int16_t)buffer[0]) << 8) | buffer[1];
-    *my = (((int16_t)buffer[2]) << 8) | buffer[3];
-    *mz = (((int16_t)buffer[4]) << 8) | buffer[5];
-}
 // GYRO_*OUT_* registers
 
 /** Get 3-axis gyroscope readings.
