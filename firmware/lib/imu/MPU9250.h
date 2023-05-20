@@ -103,18 +103,28 @@ THE SOFTWARE.
 #define MPU9250_RA_X_FINE_GAIN      0x03 //[7:0] X_FINE_GAIN
 #define MPU9250_RA_Y_FINE_GAIN      0x04 //[7:0] Y_FINE_GAIN
 #define MPU9250_RA_Z_FINE_GAIN      0x05 //[7:0] Z_FINE_GAIN
-#define MPU9250_RA_XA_OFFS_H        0x06 //[15:0] XA_OFFS
-#define MPU9250_RA_XA_OFFS_L_TC     0x07
-#define MPU9250_RA_YA_OFFS_H        0x08 //[15:0] YA_OFFS
-#define MPU9250_RA_YA_OFFS_L_TC     0x09
-#define MPU9250_RA_ZA_OFFS_H        0x0A //[15:0] ZA_OFFS
-#define MPU9250_RA_ZA_OFFS_L_TC     0x0B
+
+#define MPU9250_RA_XA_OFFS_H        0x77 //[15:0] XA_OFFS
+#define MPU9250_RA_XA_OFFS_L_TC     0x78
+#define MPU9250_RA_YA_OFFS_H        0x7A //[15:0] YA_OFFS
+#define MPU9250_RA_YA_OFFS_L_TC     0x7B
+#define MPU9250_RA_ZA_OFFS_H        0x7D //[15:0] ZA_OFFS
+#define MPU9250_RA_ZA_OFFS_L_TC     0x7E
+
+//#define MPU9250_RA_XA_OFFS_H        0x06 //[15:0] XA_OFFS
+//#define MPU9250_RA_XA_OFFS_L_TC     0x07
+//#define MPU9250_RA_YA_OFFS_H        0x08 //[15:0] YA_OFFS
+//#define MPU9250_RA_YA_OFFS_L_TC     0x09
+//#define MPU9250_RA_ZA_OFFS_H        0x0A //[15:0] ZA_OFFS
+//#define MPU9250_RA_ZA_OFFS_L_TC     0x0B
+
 #define MPU9250_RA_XG_OFFS_USRH     0x13 //[15:0] XG_OFFS_USR
 #define MPU9250_RA_XG_OFFS_USRL     0x14
 #define MPU9250_RA_YG_OFFS_USRH     0x15 //[15:0] YG_OFFS_USR
 #define MPU9250_RA_YG_OFFS_USRL     0x16
 #define MPU9250_RA_ZG_OFFS_USRH     0x17 //[15:0] ZG_OFFS_USR
 #define MPU9250_RA_ZG_OFFS_USRL     0x18
+
 #define MPU9250_RA_SMPLRT_DIV       0x19
 #define MPU9250_RA_CONFIG           0x1A
 #define MPU9250_RA_GYRO_CONFIG      0x1B
@@ -440,11 +450,8 @@ THE SOFTWARE.
 #define MPU9250_BANKSEL_MEM_SEL_BIT         4
 #define MPU9250_BANKSEL_MEM_SEL_LENGTH      5
 
-#define MPU9250_WHO_AM_I_BIT        6
-//TODO: VERIFY THIS!
-// #define MPU9250_WHO_AM_I_LENGTH     8
-#define MPU9250_WHO_AM_I_LENGTH     6
-
+#define MPU9250_WHO_AM_I_BIT        8
+#define MPU9250_WHO_AM_I_LENGTH     8
 
 #define MPU9250_DMP_MEMORY_BANKS        8
 #define MPU9250_DMP_MEMORY_BANK_SIZE    256

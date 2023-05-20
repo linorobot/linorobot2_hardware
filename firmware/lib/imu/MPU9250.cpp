@@ -61,10 +61,10 @@ MPU9250::MPU9250(uint8_t address) {
  * the default internal clock source.
  */
 void MPU9250::initialize() {
+    setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
     setClockSource(MPU9250_CLOCK_PLL_XGYRO);
     setFullScaleGyroRange(MPU9250_GYRO_FS_250);
     setFullScaleAccelRange(MPU9250_ACCEL_FS_2);
-    setSleepEnabled(false); // thanks to Jack Elston for pointing this one out!
 }
 
 /** Verify the I2C connection.
@@ -72,12 +72,7 @@ void MPU9250::initialize() {
  * @return True if connection is valid, false otherwise
  */
 bool MPU9250::testConnection() {
-    uint8_t device_id = getDeviceID();
-
-    if(device_id == 0x38 || device_id == 0x71)
-        return true;
-    else 
-        return false;
+    return getDeviceID() == 0x71;
 }
 
 // AUX_VDDIO register (InvenSense demo code calls this RA_*G_OFFS_TC)
@@ -1837,18 +1832,6 @@ int16_t MPU9250::getTemperature() {
     return (((int16_t)buffer[0]) << 8) | buffer[1];
 }
 
-void MPU9250::getHeading(int16_t* mx, int16_t* my, int16_t* mz) {
-    //read mag
-	I2Cdev::writeByte(devAddr, MPU9250_RA_INT_PIN_CFG, 0x02); //set i2c bypass enable pin to true to access magnetometer
-	delay(10);
-	I2Cdev::writeByte(MPU9150_RA_MAG_ADDRESS, 0x0A, 0x01); //enable the magnetometer
-	delay(10);
-	I2Cdev::readBytes(MPU9150_RA_MAG_ADDRESS, MPU9150_RA_MAG_XOUT_L, 6, buffer);
-	*mx = (((int16_t)buffer[1]) << 8) | buffer[0];
-    *my = (((int16_t)buffer[3]) << 8) | buffer[2];
-    *mz = (((int16_t)buffer[5]) << 8) | buffer[4];	
-}
-
 // GYRO_*OUT_* registers
 
 /** Get 3-axis gyroscope readings.
@@ -2723,7 +2706,12 @@ void MPU9250::setFIFOByte(uint8_t data) {
  * @see MPU9250_WHO_AM_I_LENGTH
  */
 uint8_t MPU9250::getDeviceID() {
-    I2Cdev::readBits(devAddr, MPU9250_RA_WHO_AM_I, MPU9250_WHO_AM_I_BIT, MPU9250_WHO_AM_I_LENGTH, buffer);
+//	#define MPU9250_RA_WHO_AM_I         0x75
+// 	#define MPU9250_WHO_AM_I_BIT        6
+//	#define MPU9250_WHO_AM_I_LENGTH     8
+//    I2Cdev::readBits(devAddr, MPU9250_RA_WHO_AM_I, MPU9250_WHO_AM_I_BIT, MPU9250_WHO_AM_I_LENGTH, buffer);
+//    return buffer[0];
+    I2Cdev::readByte(devAddr, MPU9250_RA_WHO_AM_I, buffer);
     return buffer[0];
 }
 /** Set Device ID.
@@ -2812,30 +2800,39 @@ void MPU9250::setZFineGain(int8_t gain) {
 
 int16_t MPU9250::getXAccelOffset() {
     I2Cdev::readBytes(devAddr, MPU9250_RA_XA_OFFS_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]);
 }
 void MPU9250::setXAccelOffset(int16_t offset) {
-    I2Cdev::writeWord(devAddr, MPU9250_RA_XA_OFFS_H, offset);
+    int16_t bit0 = getXAccelOffset() & 1;
+    int16_t value = offset & 0xFFFE | bit0;
+    
+    I2Cdev::writeWord(devAddr, MPU9250_RA_XA_OFFS_H, value);
 }
 
 // YA_OFFS_* register
 
 int16_t MPU9250::getYAccelOffset() {
     I2Cdev::readBytes(devAddr, MPU9250_RA_YA_OFFS_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]);
 }
 void MPU9250::setYAccelOffset(int16_t offset) {
-    I2Cdev::writeWord(devAddr, MPU9250_RA_YA_OFFS_H, offset);
+    int16_t bit0 = getYAccelOffset() & 1;
+    int16_t value = offset & 0xFFFE | bit0;
+
+    I2Cdev::writeWord(devAddr, MPU9250_RA_YA_OFFS_H, value);
 }
 
 // ZA_OFFS_* register
 
 int16_t MPU9250::getZAccelOffset() {
     I2Cdev::readBytes(devAddr, MPU9250_RA_ZA_OFFS_H, 2, buffer);
-    return (((int16_t)buffer[0]) << 8) | buffer[1];
+    return ((((int16_t)buffer[0]) << 8) | buffer[1]);
 }
 void MPU9250::setZAccelOffset(int16_t offset) {
-    I2Cdev::writeWord(devAddr, MPU9250_RA_ZA_OFFS_H, offset);
+    int16_t bit0 = getZAccelOffset() & 1;
+    int16_t value = offset & 0xFFFE | bit0;
+
+    I2Cdev::writeWord(devAddr, MPU9250_RA_ZA_OFFS_H, value);
 }
 
 // XG_OFFS_USR* registers
