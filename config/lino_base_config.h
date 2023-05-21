@@ -184,6 +184,11 @@ ROBOT ORIENTATION
 #define WIFI_SSID "WIFI_SSID"
 #define WIFI_PASSWORD "WIFI_PASSWORD"
 // #define USE_ARDUINO_OTA
+// #define USE_SYSLOG
+#define SYSLOG_SERVER "syslog-server"
+#define SYSLOG_PORT 514
+#define DEVICE_HOSTNAME "linorobot2"
+#define APP_NAME "hardware"
 #define BAUDRATE 115200
 
 #endif

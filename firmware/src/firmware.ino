@@ -27,6 +27,7 @@
 #include <geometry_msgs/msg/vector3.h>
 
 #include "config.h"
+#include "syslog.h"
 #include "motor.h"
 #include "kinematics.h"
 #include "pid.h"
@@ -175,6 +176,7 @@ void setup()
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
 #endif
+    syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
 
 void loop() {
@@ -228,6 +230,7 @@ void twistCallback(const void * msgin)
 
 bool createEntities()
 {
+    syslog(LOG_INFO, "%s %lu", __FUNCTION__, millis());
     allocator = rcl_get_default_allocator();
     //create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
@@ -288,6 +291,7 @@ bool createEntities()
 
 bool destroyEntities()
 {
+    syslog(LOG_INFO, "%s %lu", __FUNCTION__, millis());
     rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support.context);
     (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
