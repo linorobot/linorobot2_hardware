@@ -110,7 +110,11 @@ void setup()
         }
     }
     
+#ifdef BAUDRATE
+    Serial.begin(BAUDRATE);
+#else
     Serial.begin(115200);
+#endif
     set_microros_serial_transports(Serial);
 }
 
