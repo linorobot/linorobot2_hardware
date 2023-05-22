@@ -171,4 +171,10 @@ ROBOT ORIENTATION
   #define PWM_MIN -PWM_MAX
 #endif
 
+// #define USE_WIFI_TRANSPORT  // use micro ros wifi transport
+#define AGENT_IP { 192, 168, 1, 1 }
+#define AGENT_PORT 8888
+#define WIFI_SSID "WIFI_SSID"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
+
 #endif
