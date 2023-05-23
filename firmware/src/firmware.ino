@@ -222,9 +222,9 @@ bool destroyEntities()
     rcl_publisher_fini(&odom_publisher, &node);
     rcl_publisher_fini(&imu_publisher, &node);
     rcl_subscription_fini(&twist_subscriber, &node);
-    rcl_node_fini(&node);
     rcl_timer_fini(&control_timer);
     rclc_executor_fini(&executor);
+    rcl_node_fini(&node);
     rclc_support_fini(&support);
 
     digitalWrite(LED_PIN, HIGH);
