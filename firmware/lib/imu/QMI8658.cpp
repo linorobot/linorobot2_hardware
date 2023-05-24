@@ -210,6 +210,50 @@ void QMI8658::read_sensor_data(float acc[3], float gyro[3])
 #endif
 }
 
+void QMI8658::read_acc(float acc[3])
+{
+	unsigned char	buf_reg[12];
+	short 		raw_acc_xyz[3];
+
+	raw_acc_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Ax_L) ));
+	raw_acc_xyz[1] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Ay_L) ));
+	raw_acc_xyz[2] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Az_L) ));
+
+#if defined(QMI8658_UINT_MG_DPS)
+	// mg
+	acc[0] = (float)(raw_acc_xyz[0]*1000.0f)/g_imu.ssvt_a;
+	acc[1] = (float)(raw_acc_xyz[1]*1000.0f)/g_imu.ssvt_a;
+	acc[2] = (float)(raw_acc_xyz[2]*1000.0f)/g_imu.ssvt_a;
+#else
+	// m/s2
+	acc[0] = (float)(raw_acc_xyz[0]*ONE_G)/g_imu.ssvt_a;
+	acc[1] = (float)(raw_acc_xyz[1]*ONE_G)/g_imu.ssvt_a;
+	acc[2] = (float)(raw_acc_xyz[2]*ONE_G)/g_imu.ssvt_a;
+#endif
+}
+
+void QMI8658::read_gyro(float gyro[3])
+{
+	unsigned char	buf_reg[12];
+	short 		raw_gyro_xyz[3];
+
+	raw_gyro_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gx_L) ));
+	raw_gyro_xyz[1] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gy_L) ));
+	raw_gyro_xyz[2] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gz_L) ));
+
+#if defined(QMI8658_UINT_MG_DPS)
+	// dps
+	gyro[0] = (float)(raw_gyro_xyz[0]*1.0f)/g_imu.ssvt_g;
+	gyro[1] = (float)(raw_gyro_xyz[1]*1.0f)/g_imu.ssvt_g;
+	gyro[2] = (float)(raw_gyro_xyz[2]*1.0f)/g_imu.ssvt_g;
+#else
+	// rad/s
+	gyro[0] = (float)(raw_gyro_xyz[0]*M_PI)/(g_imu.ssvt_g*180);		// *pi/180
+	gyro[1] = (float)(raw_gyro_xyz[1]*M_PI)/(g_imu.ssvt_g*180);
+	gyro[2] = (float)(raw_gyro_xyz[2]*M_PI)/(g_imu.ssvt_g*180);
+#endif
+}
+
 
 
 void QMI8658::axis_convert(float data_a[3], float data_g[3], int layout)

@@ -26,6 +26,7 @@
 #include "MPU6050.h"
 #include "MPU9150.h"
 #include "MPU9250.h"
+#include "QMI8658.h"
 
 class GY85IMU: public IMUInterface 
 {
@@ -306,6 +307,50 @@ class FakeIMU: public IMUInterface
 
         geometry_msgs__msg__Vector3 readGyroscope() override
         {
+            return gyro_;
+        }
+};
+
+class QMI8658IMU: public IMUInterface 
+{
+    private:
+        QMI8658 qmi8658_;
+
+        geometry_msgs__msg__Vector3 accel_;
+        geometry_msgs__msg__Vector3 gyro_;
+
+    public:
+        QMI8658IMU()
+        {
+        }
+
+        bool startSensor() override
+        {
+            Wire.begin();
+	    if (qmi8658_.begin() == 0){
+	        // Serial.println("qmi8658_init fail");
+	        return false;
+	    }
+	    return true;
+        }
+
+        geometry_msgs__msg__Vector3 readAccelerometer() override
+        {
+	    float ac[3];
+            qmi8658_.read_acc(ac);
+            accel_.x = ac[0];
+            accel_.y = ac[1];
+            accel_.z = ac[2];
+            return accel_;
+        }
+
+        geometry_msgs__msg__Vector3 readGyroscope() override
+        {
+	    float gy[3];
+            qmi8658_.read_gyro(gy);
+            gyro_.x = gy[0];
+            gyro_.y = gy[1];
+            gyro_.z = gy[2];
             return gyro_;
         }
 };

@@ -37,6 +37,8 @@ public:
                       enum qmi8658_LpfConfig lpfEnable, enum qmi8658_StConfig stEnable);
 
   void read_sensor_data(float acc[3], float gyro[3]);
+  void read_acc(float acc[3]);
+  void read_gyro(float gyro[3]);
   void read_xyz(float acc[3], float gyro[3]);
   void axis_convert(float data_a[3], float data_g[3], int layout);
   void config_reg(unsigned char low_power);

@@ -33,6 +33,7 @@
 // #define USE_MPU6050_IMU
 // #define USE_MPU9150_IMU
 // #define USE_MPU9250_IMU
+// #define USE_QMI8658_IMU
 
 #define K_P 0.6                             // P constant
 #define K_I 0.8                             // I constant
