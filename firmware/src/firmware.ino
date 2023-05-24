@@ -39,6 +39,10 @@
 #include <ArduinoOTA.h>
 #endif
 
+#ifndef BAUDRATE
+#define BAUDRATE 115200
+#endif
+
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
@@ -103,6 +107,7 @@ IMU imu;
 
 void setup() 
 {
+    Serial.begin(BAUDRATE);
     pinMode(LED_PIN, OUTPUT);
 
     bool imu_ok = imu.init();
@@ -114,7 +119,6 @@ void setup()
         }
     }
     
-    Serial.begin(115200);
 #ifdef USE_WIFI_TRANSPORT
     set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
 #else
