@@ -115,6 +115,13 @@ AK09918_err_type_t AK09918::getRawData(int32_t* axis_x, int32_t* axis_y, int32_t
     }
 }
 
+void AK09918::getHeading(int16_t* x, int16_t* y, int16_t* z) {
+    I2Cdev::readBytes(_addr, AK09918_HXL, 8, _buffer);
+    *x = (int16_t)(_buffer[1] << 8 | _buffer[0]);
+    *y = (int16_t)(_buffer[3] << 8 | _buffer[2]);
+    *z = (int16_t)(_buffer[5] << 8 | _buffer[4]);
+}
+
 AK09918_mode_type_t AK09918::getMode() {
     return _mode;
 }

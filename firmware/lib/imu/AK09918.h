@@ -99,8 +99,8 @@ class AK09918 {
   public:
     AK09918();
 
-    // default to AK09918_CONTINUOUS_10HZ mode
-    AK09918_err_type_t initialize(AK09918_mode_type_t mode = AK09918_NORMAL);
+    // default to AK09918_CONTINUOUS_100HZ mode
+    AK09918_err_type_t initialize(AK09918_mode_type_t mode = AK09918_CONTINUOUS_100HZ);
     // At AK09918_CONTINUOUS_** mode, check if data is ready to read
     AK09918_err_type_t isDataReady();
     // At AK09918_CONTINUOUS_** mode, check if data is skipped
@@ -109,7 +109,8 @@ class AK09918 {
     AK09918_err_type_t getData(int32_t* axis_x, int32_t* axis_y, int32_t* axis_z);
     // Get raw I2C magnet data
     AK09918_err_type_t getRawData(int32_t* axis_x, int32_t* axis_y, int32_t* axis_z);
-
+    // getHeading in I2Cdevlib
+    void getHeading(int16_t *x, int16_t *y, int16_t *z);
 
     // Return the working mode of AK09918
     AK09918_mode_type_t getMode();
