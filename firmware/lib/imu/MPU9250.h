@@ -38,50 +38,8 @@ THE SOFTWARE.
 #define _MPU9250_H_
 
 #include "I2Cdev.h"
-
-// Tom Carpenter's conditional PROGMEM code
-// http://forum.arduino.cc/index.php?topic=129407.0
 #ifdef __AVR__
     #include <avr/pgmspace.h>
-#else
-    // Teensy 3.0 library conditional PROGMEM code from Paul Stoffregen
-    #ifndef __PGMSPACE_H_
-        #define __PGMSPACE_H_ 1
-        #include <inttypes.h>
-
-        #define PROGMEM
-        #define PGM_P  const char *
-        #define PSTR(str) (str)
-        #define F(x) x
-
-        typedef void prog_void;
-        typedef char prog_char;
-        typedef unsigned char prog_uchar;
-        typedef int8_t prog_int8_t;
-        typedef uint8_t prog_uint8_t;
-        typedef int16_t prog_int16_t;
-        typedef uint16_t prog_uint16_t;
-        typedef int32_t prog_int32_t;
-        typedef uint32_t prog_uint32_t;
-
-        #define strcpy_P(dest, src) strcpy((dest), (src))
-        #define strcat_P(dest, src) strcat((dest), (src))
-        #define strcmp_P(a, b) strcmp((a), (b))
-
-        #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
-        #define pgm_read_word(addr) (*(const unsigned short *)(addr))
-        #define pgm_read_dword(addr) (*(const unsigned long *)(addr))
-        #define pgm_read_float(addr) (*(const float *)(addr))
-
-        #define pgm_read_byte_near(addr) pgm_read_byte(addr)
-        #define pgm_read_word_near(addr) pgm_read_word(addr)
-        #define pgm_read_dword_near(addr) pgm_read_dword(addr)
-        #define pgm_read_float_near(addr) pgm_read_float(addr)
-        #define pgm_read_byte_far(addr) pgm_read_byte(addr)
-        #define pgm_read_word_far(addr) pgm_read_word(addr)
-        #define pgm_read_dword_far(addr) pgm_read_dword(addr)
-        #define pgm_read_float_far(addr) pgm_read_float(addr)
-    #endif
 #endif
 
 //Magnetometer Registers
@@ -103,18 +61,28 @@ THE SOFTWARE.
 #define MPU9250_RA_X_FINE_GAIN      0x03 //[7:0] X_FINE_GAIN
 #define MPU9250_RA_Y_FINE_GAIN      0x04 //[7:0] Y_FINE_GAIN
 #define MPU9250_RA_Z_FINE_GAIN      0x05 //[7:0] Z_FINE_GAIN
-#define MPU9250_RA_XA_OFFS_H        0x06 //[15:0] XA_OFFS
-#define MPU9250_RA_XA_OFFS_L_TC     0x07
-#define MPU9250_RA_YA_OFFS_H        0x08 //[15:0] YA_OFFS
-#define MPU9250_RA_YA_OFFS_L_TC     0x09
-#define MPU9250_RA_ZA_OFFS_H        0x0A //[15:0] ZA_OFFS
-#define MPU9250_RA_ZA_OFFS_L_TC     0x0B
+
+#define MPU9250_RA_XA_OFFS_H        0x77 //[15:0] XA_OFFS
+#define MPU9250_RA_XA_OFFS_L_TC     0x78
+#define MPU9250_RA_YA_OFFS_H        0x7A //[15:0] YA_OFFS
+#define MPU9250_RA_YA_OFFS_L_TC     0x7B
+#define MPU9250_RA_ZA_OFFS_H        0x7D //[15:0] ZA_OFFS
+#define MPU9250_RA_ZA_OFFS_L_TC     0x7E
+
+//#define MPU9250_RA_XA_OFFS_H        0x06 //[15:0] XA_OFFS
+//#define MPU9250_RA_XA_OFFS_L_TC     0x07
+//#define MPU9250_RA_YA_OFFS_H        0x08 //[15:0] YA_OFFS
+//#define MPU9250_RA_YA_OFFS_L_TC     0x09
+//#define MPU9250_RA_ZA_OFFS_H        0x0A //[15:0] ZA_OFFS
+//#define MPU9250_RA_ZA_OFFS_L_TC     0x0B
+
 #define MPU9250_RA_XG_OFFS_USRH     0x13 //[15:0] XG_OFFS_USR
 #define MPU9250_RA_XG_OFFS_USRL     0x14
 #define MPU9250_RA_YG_OFFS_USRH     0x15 //[15:0] YG_OFFS_USR
 #define MPU9250_RA_YG_OFFS_USRL     0x16
 #define MPU9250_RA_ZG_OFFS_USRH     0x17 //[15:0] ZG_OFFS_USR
 #define MPU9250_RA_ZG_OFFS_USRL     0x18
+
 #define MPU9250_RA_SMPLRT_DIV       0x19
 #define MPU9250_RA_CONFIG           0x1A
 #define MPU9250_RA_GYRO_CONFIG      0x1B
@@ -440,11 +408,8 @@ THE SOFTWARE.
 #define MPU9250_BANKSEL_MEM_SEL_BIT         4
 #define MPU9250_BANKSEL_MEM_SEL_LENGTH      5
 
-#define MPU9250_WHO_AM_I_BIT        6
-//TODO: VERIFY THIS!
-// #define MPU9250_WHO_AM_I_LENGTH     8
-#define MPU9250_WHO_AM_I_LENGTH     6
-
+#define MPU9250_WHO_AM_I_BIT        8
+#define MPU9250_WHO_AM_I_LENGTH     8
 
 #define MPU9250_DMP_MEMORY_BANKS        8
 #define MPU9250_DMP_MEMORY_BANK_SIZE    256
@@ -639,8 +604,6 @@ class MPU9250 {
 
         // TEMP_OUT_* registers
         int16_t getTemperature();
-
-        void getHeading(int16_t* mx, int16_t* my, int16_t* mz);
 
         // GYRO_*OUT_* registers
         void getRotation(int16_t* x, int16_t* y, int16_t* z);
