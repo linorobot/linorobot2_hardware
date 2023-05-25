@@ -371,6 +371,12 @@ void publishData()
     odom_msg = odometry.getData();
     imu_msg = imu.getData();
     mag_msg = mag.getData();
+#ifdef MAG_BIAS
+    const float mag_bias[3] = MAG_BIAS;
+    mag_msg.magnetic_field.x -= mag_bias[0];
+    mag_msg.magnetic_field.y -= mag_bias[1];
+    mag_msg.magnetic_field.z -= mag_bias[2];
+#endif
 
     struct timespec time_stamp = getTime();
 
