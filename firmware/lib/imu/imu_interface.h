@@ -27,6 +27,7 @@ class IMUInterface
 
         float accel_cov_ = 0.00001;
         float gyro_cov_ = 0.00001;
+        float ori_cov_ = 0.00001;
         const int sample_size_ = 40;
 
         geometry_msgs__msg__Vector3 gyro_cal_;
@@ -93,6 +94,10 @@ class IMUInterface
             imu_msg_.linear_acceleration_covariance[0] = accel_cov_;
             imu_msg_.linear_acceleration_covariance[4] = accel_cov_;
             imu_msg_.linear_acceleration_covariance[8] = accel_cov_;
+
+            imu_msg_.orientation_covariance[0] = ori_cov_;
+            imu_msg_.orientation_covariance[4] = ori_cov_;
+            imu_msg_.orientation_covariance[8] = ori_cov_;
 
             return imu_msg_;
         }

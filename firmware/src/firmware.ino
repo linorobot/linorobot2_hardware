@@ -377,6 +377,25 @@ void publishData()
     mag_msg.magnetic_field.y -= mag_bias[1];
     mag_msg.magnetic_field.z -= mag_bias[2];
 #endif
+    // https://github.com/hiwad-aziz/ros2_mpu9250_driver
+    // Calculate Euler angles
+    double roll, pitch, yaw;
+    roll = atan2(imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z);
+    pitch = atan2(-imu_msg.linear_acceleration.y,
+                (sqrt(imu_msg.linear_acceleration.y * imu_msg.linear_acceleration.y +
+                      imu_msg.linear_acceleration.z * imu_msg.linear_acceleration.z)));
+    yaw = atan2(mag_msg.magnetic_field.y, mag_msg.magnetic_field.x);
+    // Convert to quaternion
+    double cy = cos(yaw * 0.5);
+    double sy = sin(yaw * 0.5);
+    double cp = cos(pitch * 0.5);
+    double sp = sin(pitch * 0.5);
+    double cr = cos(roll * 0.5);
+    double sr = sin(roll * 0.5);
+    imu_msg.orientation.x = cy * cp * sr - sy * sp * cr;
+    imu_msg.orientation.y = sy * cp * sr + cy * sp * cr;
+    imu_msg.orientation.z = sy * cp * cr - cy * sp * sr;
+    imu_msg.orientation.w = cy * cp * cr + sy * sp * sr;
 
     struct timespec time_stamp = getTime();
 
