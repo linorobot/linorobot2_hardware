@@ -34,6 +34,11 @@
 // #define USE_MPU9150_IMU
 // #define USE_MPU9250_IMU
 // #define USE_QMI8658_IMU
+// #define USE_HMC5883L_MAG
+// #define USE_AK8963_MAG
+// #define USE_AK8975_MAG
+// #define USE_AK09918_MAG
+// #define USE_QMC5883L_MAG
 
 #define K_P 0.6                             // P constant
 #define K_I 0.8                             // I constant
