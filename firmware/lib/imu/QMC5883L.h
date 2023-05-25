@@ -10,12 +10,20 @@ public:
   
   int readHeading();
   int readRaw( int16_t *x, int16_t *y, int16_t *z, int16_t *t );
+  void getHeading(int16_t *x, int16_t *y, int16_t *z) {
+    int16_t tt;
+    readRaw(x, y, z, &tt);
+  }
 
   void resetCalibration();
 
   void setSamplingRate( int rate );
   void setRange( int range );
   void setOversampling( int ovl );
+  void initialize() {
+    init();
+    setSamplingRate(200);
+  }
   
 private:
   int16_t xhigh, xlow;
