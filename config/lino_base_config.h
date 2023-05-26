@@ -191,4 +191,9 @@ ROBOT ORIENTATION
 #define APP_NAME "hardware"
 #define BAUDRATE 115200
 
+// battery voltage ADC pin
+// #define BATTERY_PIN 33
+// 3.3V ref, 12 bits ADC, 33k + 10k voltage divider
+#define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (33 + 10) / 10))
+
 #endif
