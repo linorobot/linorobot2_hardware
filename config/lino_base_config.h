@@ -190,6 +190,8 @@ ROBOT ORIENTATION
 #define DEVICE_HOSTNAME "linorobot2"
 #define APP_NAME "hardware"
 #define BAUDRATE 115200
+// #define SDA_PIN 44 // specify I2C pins
+// #define SCL_PIN 45
 
 // battery voltage ADC pin
 // #define BATTERY_PIN 33

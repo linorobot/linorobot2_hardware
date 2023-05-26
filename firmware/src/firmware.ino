@@ -120,6 +120,14 @@ void setup()
 {
     Serial.begin(BAUDRATE);
     pinMode(LED_PIN, OUTPUT);
+#ifdef SDA_PIN // specify I2C pins
+#ifdef ESP32
+    Wire.begin(SDA_PIN, SCL_PIN);
+#else // teensy
+    Wire.setSDA(SDA_PIN);
+    Wire.setSCL(SCL_PIN);
+#endif
+#endif
 
     bool imu_ok = imu.init();
     if(!imu_ok)
