@@ -24,6 +24,7 @@
 #include <sensor_msgs/msg/imu.h>
 #include <sensor_msgs/msg/magnetic_field.h>
 #include <sensor_msgs/msg/battery_state.h>
+#include <sensor_msgs/msg/range.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 
@@ -39,6 +40,7 @@
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
 #include "battery.h"
+#include "range.h"
 
 #ifdef USE_ARDUINO_OTA
 #include <ArduinoOTA.h>
@@ -65,12 +67,14 @@ rcl_publisher_t imu_publisher;
 rcl_publisher_t mag_publisher;
 rcl_subscription_t twist_subscriber;
 rcl_publisher_t battery_publisher;
+rcl_publisher_t range_publisher;
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
 sensor_msgs__msg__MagneticField mag_msg;
 geometry_msgs__msg__Twist twist_msg;
 sensor_msgs__msg__BatteryState battery_msg;
+sensor_msgs__msg__Range range_msg;
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -78,6 +82,7 @@ rcl_allocator_t allocator;
 rcl_node_t node;
 rcl_timer_t control_timer;
 rcl_timer_t battery_timer;
+rcl_timer_t range_timer;
 
 unsigned long long time_offset = 0;
 unsigned long prev_cmd_time = 0;
@@ -253,6 +258,19 @@ void batteryCallback(rcl_timer_t * timer, int64_t last_call_time)
     }
 }
 
+void rangeCallback(rcl_timer_t * timer, int64_t last_call_time)
+{
+    RCLC_UNUSED(last_call_time);
+    if (timer != NULL)
+    {
+        range_msg = getRange();
+	struct timespec time_stamp = getTime();
+	range_msg.header.stamp.sec = time_stamp.tv_sec;
+	range_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+	RCSOFTCHECK(rcl_publish(&range_publisher, &range_msg, NULL));
+    }
+}
+
 void twistCallback(const void * msgin) 
 {
     digitalWrite(LED_PIN, !digitalRead(LED_PIN));
@@ -295,6 +313,13 @@ bool createEntities()
 	ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
 	TOPIC_PREFIX "battery"
     ));
+    // create range pyblisher
+    RCCHECK(rclc_publisher_init_default(
+	&range_publisher,
+	&node,
+	ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Range),
+	TOPIC_PREFIX "ultrasound"
+    ));
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_default( 
         &twist_subscriber, 
@@ -317,8 +342,15 @@ bool createEntities()
         RCL_MS_TO_NS(battery_timer_timeout),
         batteryCallback
     ));
+    const unsigned int range_timer_timeout = 100;
+    RCCHECK(rclc_timer_init_default(
+        &range_timer,
+        &support,
+        RCL_MS_TO_NS(range_timer_timeout),
+        rangeCallback
+    ));
     executor = rclc_executor_get_zero_initialized_executor();
-    RCCHECK(rclc_executor_init(&executor, &support.context, 3, & allocator));
+    RCCHECK(rclc_executor_init(&executor, &support.context, 4, & allocator));
     RCCHECK(rclc_executor_add_subscription(
         &executor, 
         &twist_subscriber, 
@@ -328,6 +360,7 @@ bool createEntities()
     ));
     RCCHECK(rclc_executor_add_timer(&executor, &control_timer));
     RCCHECK(rclc_executor_add_timer(&executor, &battery_timer));
+    RCCHECK(rclc_executor_add_timer(&executor, &range_timer));
 
     // synchronize time with the agent
     syncTime();
@@ -346,9 +379,11 @@ bool destroyEntities()
     rcl_publisher_fini(&imu_publisher, &node);
     rcl_publisher_fini(&mag_publisher, &node);
     rcl_publisher_fini(&battery_publisher, &node);
+    rcl_publisher_fini(&range_publisher, &node);
     rcl_subscription_fini(&twist_subscriber, &node);
     rcl_timer_fini(&control_timer);
     rcl_timer_fini(&battery_timer);
+    rcl_timer_fini(&range_timer);
     rclc_executor_fini(&executor);
     rcl_node_fini(&node);
     rclc_support_fini(&support);
