@@ -143,6 +143,7 @@ void setup()
     }
     mag.init();
     initBattery();
+    initRange();
 
 #ifdef USE_WIFI_TRANSPORT
     set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
