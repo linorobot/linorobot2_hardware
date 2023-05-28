@@ -20,6 +20,9 @@
 #include "encoder.h"
 #include "kinematics.h"
 
+#ifndef BAUDRATE
+#define BAUDRATE 9600
+#endif
 #define SAMPLE_TIME 10 //s
 
 Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
@@ -50,7 +53,7 @@ String labels[4] = {"FRONT LEFT - M1: ", "FRONT RIGHT - M2: ", "REAR LEFT - M3: 
 
 void setup()
 {
-    Serial.begin(9600);
+    Serial.begin(BAUDRATE);
     while (!Serial) {
     }
     Serial.println("Sampling process will spin the motors at its maximum RPM.");
