@@ -53,6 +53,10 @@ String labels[4] = {"FRONT LEFT - M1: ", "FRONT RIGHT - M2: ", "REAR LEFT - M3: 
 
 void setup()
 {
+#ifdef BOARD_INIT
+    BOARD_INIT;
+#endif
+
     Serial.begin(BAUDRATE);
     while (!Serial) {
     }
