@@ -127,6 +127,10 @@ MAG mag;
 
 void setup() 
 {
+#ifdef BOARD_INIT // board specific setup
+    BOARD_INIT;
+#endif
+
     Serial.begin(BAUDRATE);
     pinMode(LED_PIN, OUTPUT);
 #ifdef SDA_PIN // specify I2C pins
