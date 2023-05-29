@@ -17,6 +17,7 @@
 
 #include <Arduino.h>
 #include <Servo.h> 
+#include "config.h"
 #ifdef ESP32
 inline void analogWriteFrequency(uint8_t pin, double frequency)
 {
@@ -72,6 +73,10 @@ class Generic2: public MotorInterface
         void brake() override
         {
             analogWrite(pwm_pin_, 0);
+#ifdef USE_SHORT_BRAKE
+            digitalWrite(in_a_pin_, HIGH); // short brake
+            digitalWrite(in_b_pin_, HIGH);
+#endif
         }
 };
 
@@ -124,6 +129,7 @@ class BTS7960: public MotorInterface
     private:
         int in_a_pin_;
         int in_b_pin_;
+        int pwm_max_;
 
     protected:
         void forward(int pwm) override
@@ -144,6 +150,7 @@ class BTS7960: public MotorInterface
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin)
         {
+            pwm_max_ = (1 << pwm_bits) - 1;
             pinMode(in_a_pin_, OUTPUT);
             pinMode(in_b_pin_, OUTPUT);
 
@@ -165,6 +172,7 @@ class BTS7960: public MotorInterface
             in_a_pin_(in_a_pin),
             in_b_pin_(in_b_pin)
         {
+            pwm_max_ = (1 << pwm_bits) - 1;
             pinMode(in_a_pin_, OUTPUT);
             pinMode(in_b_pin_, OUTPUT);
 
@@ -183,8 +191,13 @@ class BTS7960: public MotorInterface
 
         void brake() override
         {
+#ifdef USE_SHORT_BRAKE
+            analogWrite(in_a_pin_, pwm_max_);
+            analogWrite(in_b_pin_, pwm_max_); // short brake
+#else
             analogWrite(in_b_pin_, 0);
             analogWrite(in_a_pin_, 0);            
+#endif
         }
 };
 

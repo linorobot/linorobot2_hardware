@@ -201,5 +201,6 @@ ROBOT ORIENTATION
 // #define USE_INA219
 // #define TRIG_PIN 31 // ultrasonic sensor HC-SR04
 // #define ECHO_PIN 32
+// #define USE_SHORT_BRAKE // for shorter stopping distance
 
 #endif
