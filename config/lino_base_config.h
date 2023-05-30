@@ -202,5 +202,6 @@ ROBOT ORIENTATION
 // #define TRIG_PIN 31 // ultrasonic sensor HC-SR04
 // #define ECHO_PIN 32
 // #define USE_SHORT_BRAKE // for shorter stopping distance
+// #define WDT_TIMEOUT 30 // Sec
 
 #endif

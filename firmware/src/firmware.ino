@@ -45,6 +45,9 @@
 #ifdef USE_ARDUINO_OTA
 #include <ArduinoOTA.h>
 #endif
+#ifdef WDT_TIMEOUT
+#include <esp_task_wdt.h>
+#endif
 
 #ifndef BAUDRATE
 #define BAUDRATE 115200
@@ -140,6 +143,10 @@ void setup()
     Wire.setSDA(SDA_PIN);
     Wire.setSCL(SCL_PIN);
 #endif
+#endif
+#ifdef WDT_TIMEOUT
+    esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
+    esp_task_wdt_add(NULL); //add current thread to WDT watch
 #endif
 
     bool imu_ok = imu.init();
@@ -238,6 +245,9 @@ void loop() {
     }
 #ifdef USE_ARDUINO_OTA
     ArduinoOTA.handle();
+#endif
+#ifdef WDT_TIMEOUT
+    esp_task_wdt_reset();
 #endif
 }
 
