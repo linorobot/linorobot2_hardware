@@ -505,24 +505,42 @@ void publishData()
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
 }
 
-void syncTime()
+bool syncTime()
 {
+    const int timeout_ms = 1000;
+    if (rmw_uros_epoch_synchronized()) return true; // synchronized previously
     // get the current time from the agent
-    RCCHECK(rmw_uros_sync_session(10));
-    unsigned long long ros_time_ms = rmw_uros_epoch_millis(); 
-    // now we can find the difference between ROS time and uC time
-    time_offset = ros_time_ms - millis();
+    RCCHECK(rmw_uros_sync_session(timeout_ms));
+    if (rmw_uros_epoch_synchronized()) {
+#if (_POSIX_TIMERS > 0)
+        // Get time in milliseconds or nanoseconds
+        int64_t time_ns = rmw_uros_epoch_nanos();
+	timespec tp;
+	tp.tv_sec = time_ns / 1000000000;
+	tp.tv_nsec = time_ns % 1000000000;
+	clock_settime(CLOCK_REALTIME, &tp);
+#else
+	unsigned long long ros_time_ms = rmw_uros_epoch_millis();
+	// now we can find the difference between ROS time and uC time
+	time_offset = ros_time_ms - millis();
+#endif
+	return true;
+    }
+    return false;
 }
 
 struct timespec getTime()
 {
     struct timespec tp = {0};
+#if (_POSIX_TIMERS > 0)
+    clock_gettime(CLOCK_REALTIME, &tp);
+#else
     // add time difference between uC time and ROS time to
     // synchronize time with ROS
     unsigned long long now = millis() + time_offset;
     tp.tv_sec = now / 1000;
     tp.tv_nsec = (now % 1000) * 1000000;
-
+#endif
     return tp;
 }
 
