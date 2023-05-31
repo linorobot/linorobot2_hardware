@@ -204,4 +204,10 @@ ROBOT ORIENTATION
 // #define USE_SHORT_BRAKE // for shorter stopping distance
 // #define WDT_TIMEOUT 30 // Sec
 
+#ifdef USE_SYSLOG
+#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){ \
+    syslog(LOG_ERR, "%s RCCHECK failed %d", __FUNCTION__, temp_rc); \
+    return false; }}
+#endif
+
 #endif

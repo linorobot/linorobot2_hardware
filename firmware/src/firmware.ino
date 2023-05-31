@@ -57,8 +57,12 @@
 #define TOPIC_PREFIX
 #endif
 
+#ifndef RCCHECK
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
+#endif
+#ifndef RCSOFTCHECK
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+#endif
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile int64_t init = -1; \
   if (init == -1) { init = uxr_millis();} \
