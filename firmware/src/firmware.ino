@@ -228,6 +228,8 @@ void loop() {
             }
             break;
         case AGENT_DISCONNECTED:
+            syslog(LOG_INFO, "%s disconnected %lu", __FUNCTION__, millis());
+            fullStop();
             destroyEntities();
             state = WAITING_AGENT;
             break;
