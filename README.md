@@ -239,10 +239,10 @@ Constants' Meaning:
 - **BAUDRATE** - serial baudrate. default 115200 is a bit tight. recommanded 230400.
 - **SDA_PIN/SCL_PIN** - I2C pins assignment
 - **TOPIC_PREFIX** - Namespace prefix to topic, eg "turtle1/". Useful when there are multiple robots running.
-- **BATTERY_PIN** - ADC pin for battery voltage measurement through a resistors voltage divider.
+- **BATTERY_PIN** - ADC pin for battery voltage measurement through a 33K/10K resistors voltage divider.
 - **BATTERY_ADJUST** - ADC reading adjustment to battery voltage.
 - **USE_INA219** - use INA219 chip for battery voltage measurement.
-- **TRIG_PIN/ECHO_PIN** - HC-SR04 Ultrasonic sensor trigger and echo pins. hard coded timeout 5000uS in driver.
+- **TRIG_PIN/ECHO_PIN** - HC-SR04 Ultrasonic sensor trigger and echo pins. The echo pin needs a 6.8K/10K voltage divider, because the esp32 I/O pins are 3.3V tolerance. The pulse width reading is hard coded timeout 5000uS in driver, so it is roughly 75cm range.
 - **USE_SHORT_BRAKE** - Short brake for shorter stopping distance, only for generic_2 BT6612
 - **WDT_TIMEOUT** - Hardware watchdog timeout period, only for esp32.
 
