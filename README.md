@@ -74,6 +74,14 @@ Supported IMUs:
 - **MPU9150**
 - **MPU9250**
 
+Supported MAGs:
+
+- **HMC5883L**
+- **AK8963**
+- **AK8975**
+- **AK09918**
+- **QMC5883L**
+
 ### 4. Connection Diagram
 Below are connection diagrams you can follow for each supported motor driver and IMU. For simplicity, only one motor connection is provided but the same diagram can be used to connect the rest of the motors. You are free to decide which microcontroller pin to use just ensure that the following are met:
 
@@ -153,6 +161,18 @@ Constants' Meaning:
 
 - **USE_MPU9250_IMU** - MPU9250 IMUs.
 
+- **USE_HMC5883L_IMU** - HMC5883L MAGs.
+
+- **USE_AK8963_MAG** - AK8963 MAGs.
+
+- **USE_AK8975_MAG** - AK8975 MAGs.
+
+- **USE_AK09918_MAG** - AK09918 MAGs.
+
+- **USE_QMC5883L_MAG** - QMC5883L MAGs.
+
+- **MAG_BIAS** - Magnetometer calibration, eg { -352, -382, -10 }.
+
 Next, fill in the robot settings accordingly:
 
     #define K_P 0.6
@@ -201,6 +221,30 @@ Constants' Meaning:
 - **PWM_BITS** - Number of bits in generating the PWM signal. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
 - **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
+
+*WIFI related settings, only for esp32*
+- **USE_WIFI_TRANSPORT** - use micro ros wifi transport.
+- **AGENT_IP** - micro ros agent IP. eg. { 192, 168, 1, 100 }
+- **AGENT_PORT** - micro ros agent port. default 8888
+- **WIFI_SSID**
+- **WIFI_PASSWORD**
+- **USE_ARDUINO_OTA** - Arduino OTA up load protocol support
+- **USE_SYSLOG** - logging to remote syslog server.
+- **SYSLOG_SERVER** - syslog server name or IP.
+- **SYSLOG_PORT** - syslog server udp port. default 514
+- **DEVICE_HOSTNAME** - my device name to syslog. default "linorobot2"
+- **APP_NAME** - my app name to syslog. default "hardware"
+
+*Optional settings*
+- **BAUDRATE** - serial baudrate. default 115200 is a bit tight. recommanded 230400.
+- **SDA_PIN/SCL_PIN** - I2C pins assignment
+- **TOPIC_PREFIX** - Namespace prefix to topic, eg "turtle1/". Useful when there are multiple robots running.
+- **BATTERY_PIN** - ADC pin for battery voltage measurement through a resistors voltage divider.
+- **BATTERY_ADJUST** - ADC reading adjustment to battery voltage.
+- **USE_INA219** - use INA219 chip for battery voltage measurement.
+- **TRIG_PIN/ECHO_PIN** - HC-SR04 Ultrasonic sensor trigger and echo pins. hard coded timeout 5000uS in driver.
+- **USE_SHORT_BRAKE** - Short brake for shorter stopping distance, only for generic_2 BT6612
+- **WDT_TIMEOUT** - Hardware watchdog timeout period, only for esp32.
 
 ### 2. Hardware Pin Assignments
 Only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
@@ -286,13 +330,18 @@ Available Teensy boards:
 - teensy40
 - teensy41
 
+Available ESP32 boards:
+- esp32   (generic esp32 dev board)
+- gendrv  (Waveshare General driver for Robots)
+
 Some Linux machines might encounter a problem related to libusb. If so, install libusb-dev:
 
     sudo apt install libusb-dev
+    sudo apt remove brltty  (conflict with some UART adaptor)
 
 Start spinning the motors by running:
     
-    screen /dev/ttyACM0
+    screen /dev/ttyACM0   (ttyUSB0 for esp32)
 
 On the terminal type `spin` and press the enter key.
 
@@ -346,9 +395,13 @@ Run:
 
 This will allow the robot to receive Twist messages to control the robot, and publish odometry and IMU data straight from the microcontroller. Compared to Linorobot's ROS1 version, the odometry and IMU data published from the microcontroller use standard ROS2 messages and do not require any relay nodes to reconstruct the data to complete [sensor_msgs/Imu](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Imu.html) and [nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html) messages.
 
-Run the agent:
+Run the agent for serial transport:
 
     ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0
+
+Or for wifi transport:
+
+    ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 
 ### 2. Drive around
 
@@ -364,11 +417,14 @@ Check if the odom and IMU data are published:
 
 Now you should see the following topics:
 
+    /battery
     /cmd_vel
     /imu/data
+    /imu/mag
     /odom/unfiltered
     /parameter_events
     /rosout
+    /ultrasound
 
 Echo odometry data:
 
@@ -377,8 +433,38 @@ Echo odometry data:
 Echo IMU data:
 
     ros2 topic echo /imu/data
+    ros2 topic echo /imu/mag
 
+Echo battery state:
 
+    ros2 topic echo /battery
+
+Echo Ultrasonic range:
+
+    ros2 topic echo /ultrasound
+
+## Magnetometer calibration
+Magnetometer calibration should be taken on board with all hardware installed, inlcuding all connectors, battery and motors. The calibration package will rotate the robot slowly for 60 sec. And compute the hard iron bias. Enter the bias into the configuration file, MAG_BIAS. More info [here](https://github.com/mikeferguson/robot_calibration#the-magnetometer_calibration-node).
+```
+sudo apt-get install ros-humble-robot-calibration -y
+ros2 run robot_calibration magnetometer_calibration
+```
+## syslog
+The syslog(...) call will send logging messages to a remote server like this,  
+/var/log/linorobot2/hardware.log
+```
+2023-05-23T10:25:48.305354-07:00 linorobot2 hardware ﻿setup Ready 4281
+2023-05-23T10:25:48.810242-07:00 linorobot2 hardware ﻿createEntities 4788
+```    
+Example server config /etc/rsyslog.conf
+```
+# provides UDP syslog reception
+module(load="imudp")
+input(type="imudp" port="514")
+ 
+$template Incoming-logs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
+*.* ?Incoming-logs
+```
 ## URDF
 Once the hardware is done, you can go back to [linorobot2](https://github.com/linorobot/linorobot2#urdf) package and start defining the robot's URDF.
 
