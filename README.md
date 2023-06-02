@@ -127,8 +127,18 @@ A more advanced setup with a 19V powered computer and USB hub connected to senso
 For bigger robots, you can add an emergency switch in between the motor drivers' power supply and motor drivers.
 
 ## Setting up the firmware
+
+After installed the build enviroment, before touching any code, try building a sample firmware to verify everything is setup properly.
+
+    cd firmware
+    pio run -e teensy41
+    # Or if you are using esp32
+    pio run -e esp32
+
+Then create a custom configuration for your robot. This will minimize the merge conflicts from future pulling the upstream. Follow the commit "add custom gendrv config for Waveshare General Driver for Robots board". Add an entry to platformio.ini and ../config/config.h. Take the lino_base_config.h as a template and add your custom configuration file to ../config/custom/ . Make changes to your custom configuration file.
+
 ### 1. Robot Settings
-Go to the config folder and open lino_base_config.h. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
+Open your custom configuration file. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
 
     #define LINO_BASE DIFFERENTIAL_DRIVE
     #define USE_GENERIC_2_IN_MOTOR_DRIVER
