@@ -380,6 +380,60 @@ Type `sample` and press the enter key. Verify if all encoder values are now **po
 
 On the previous instruction where you check the encoder reads for each motor, you'll see that there's also COUNTS PER REVOLUTION values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L55-L58) to have a more accurate model of the encoder.
 
+## Test the motors and all the sensors
+
+This step is an alternative to the calibration process described above. There are two diagnosis utilities for the testing of motors and all the sensors, including encoder, IMU, MAG, battery and ultrasonic range sensors. These two utilites build with the same configuration of the (micro ros) firmware. So you don't need to create custom project configuration of them.
+
+### test the motors and encoders
+
+Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**.
+
+The test_motors utility will spin the motors forward and backward alternately without user intervetion. This is different from the calibration utitily described above, which waits user input. The motors will run one by one after power on. Then it will display the motors speed.
+    
+Build and upload with,
+
+```
+cd test_motors
+pio run -e myrobot -t upload
+pio device monitor -b baudrate
+```
+
+Output
+
+    MOTOR0 FWD RPM    156.3     -4.6      0.0      0.0
+    ...
+    MOTOR0 FWD RPM    161.2      0.0      0.0      0.0
+    MOTOR1 FWD RPM      3.7    165.5      0.0      0.0
+    ...
+    MOTOR1 FWD RPM      0.0    170.6      0.0      0.0
+    MOTOR0 REV RPM   -160.1      4.8      0.0      0.0
+    ...
+    MOTOR0 REV RPM   -165.1      0.0      0.0      0.0
+    MOTOR1 REV RPM     -3.9   -161.1      0.0      0.0
+    ...
+    MOTOR1 REV RPM      0.0   -167.2      0.0      0.0
+
+Make sure the motors are running at the correct direction and the encoders get the correct speed reading, which is the maximum speed of the motor.
+
+### test all the other sensors
+
+The test_sensors utility will display IMU, MAG, battery and range sensors data every second, in x y z sequence.
+
+Build and upload with,
+
+```
+cd test_sensors
+pio run -e myrobot -t upload
+pio device monitor -b baudrate
+```
+
+Output
+
+    ACC -0.77  0.69  9.47 GYR  0.00 -0.01  0.00 MAG -239.00 -326.00 -3.00
+     BAT 12.59V RANGE  0.22m
+
+Move the robot forward and backward quickly. And rotate the robot in all direction to see the IMU reading changed. Make sure the IMU and MAG sensors reading is in the correct orientaion.
+
 ## Upload the firmware
 Ensure that the robot pass all the requirements before uploading the firmware:
 
