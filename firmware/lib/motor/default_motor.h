@@ -143,15 +143,25 @@ class BTS7960: public MotorInterface
         void forward(int pwm) override
         {
 	    if (in_a_pin_ < 0) return;
+#ifdef USE_SHORT_BRAKE
+            analogWrite(in_a_pin_, pwm_max_ - abs(pwm));
+            analogWrite(in_b_pin_, pwm_max_); // short brake
+#else
             analogWrite(in_a_pin_, 0);
             analogWrite(in_b_pin_, abs(pwm));
+#endif
         }
 
         void reverse(int pwm) override
         {
 	    if (in_a_pin_ < 0) return;
+#ifdef USE_SHORT_BRAKE
+            analogWrite(in_b_pin_, pwm_max_ - abs(pwm));
+            analogWrite(in_a_pin_, pwm_max_); // short brake
+#else
             analogWrite(in_b_pin_, 0);
             analogWrite(in_a_pin_, abs(pwm));
+#endif
         }
 
     public:
