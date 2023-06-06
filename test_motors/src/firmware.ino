@@ -126,7 +126,7 @@ void loop() {
     float current_rpm3 = motor3_encoder.getRPM();
     float current_rpm4 = motor4_encoder.getRPM();
     printf("MOTOR%d %s RPM %8.1f %8.1f %8.1f %8.1f\n",
-	   current_motor, direction ? "REV" : "FWD",
+	   current_motor + 1, direction ? "REV" : "FWD",
 	   current_rpm1, current_rpm2, current_rpm3, current_rpm4);
     tk++;
 }
