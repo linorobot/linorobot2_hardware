@@ -53,6 +53,9 @@
 #define BAUDRATE 115200
 #endif
 
+#ifndef NODE_NAME
+#define NODE_NAME "linorobot_base_node"
+#endif
 #ifndef TOPIC_PREFIX
 #define TOPIC_PREFIX
 #endif
@@ -305,7 +308,7 @@ bool createEntities()
     //create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
     // create node
-    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
+    RCCHECK(rclc_node_init_default(&node, NODE_NAME, "", &support));
     // create odometry publisher
     RCCHECK(rclc_publisher_init_default( 
         &odom_publisher, 
