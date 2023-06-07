@@ -485,6 +485,7 @@ void publishData()
     mag_msg.magnetic_field.y -= mag_bias[1];
     mag_msg.magnetic_field.z -= mag_bias[2];
 #endif
+#if 0
     // https://github.com/hiwad-aziz/ros2_mpu9250_driver
     // Calculate Euler angles
     double roll, pitch, yaw;
@@ -504,6 +505,7 @@ void publishData()
     imu_msg.orientation.y = sy * cp * sr + cy * sp * cr;
     imu_msg.orientation.z = sy * cp * cr - cy * sp * sr;
     imu_msg.orientation.w = cy * cp * cr + sy * sp * sr;
+#endif
 
     struct timespec time_stamp = getTime();
 
