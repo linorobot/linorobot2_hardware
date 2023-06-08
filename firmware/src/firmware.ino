@@ -41,6 +41,7 @@
 #include "encoder.h"
 #include "battery.h"
 #include "range.h"
+#include "lidar.h"
 
 #ifdef USE_ARDUINO_OTA
 #include <ArduinoOTA.h>
@@ -167,6 +168,7 @@ void setup()
     mag.init();
     initBattery();
     initRange();
+    initLidar();
 
 #ifdef USE_WIFI_TRANSPORT
     set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
@@ -482,6 +484,7 @@ void publishData()
     odom_msg = odometry.getData();
     imu_msg = imu.getData();
     mag_msg = mag.getData();
+    pushLidar();
 #ifdef MAG_BIAS
     const float mag_bias[3] = MAG_BIAS;
     mag_msg.magnetic_field.x -= mag_bias[0];
