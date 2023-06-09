@@ -30,10 +30,6 @@
     #include "custom/dev_config.h"
 #endif
 
-#ifdef USE_GENDRV_CONFIG
-    #include "custom/gendrv_config.h"
-#endif
-
 // this should be the last one
 #ifndef LINO_BASE
     #include "lino_base_config.h"

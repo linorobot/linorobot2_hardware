@@ -135,7 +135,54 @@ After installed the build enviroment, before touching any code, try building a s
     # Or if you are using esp32
     pio run -e esp32
 
-Then create a custom configuration for your robot. This will minimize the merge conflicts from future pulling the upstream. Follow the commit "add custom gendrv config for Waveshare General Driver for Robots board". Add an entry to platformio.ini and ../config/config.h. Take the lino_base_config.h as a template and add your custom configuration file to ../config/custom/ . Make changes to your custom configuration file.
+Then create a custom configuration for your robot. This will minimize the merge conflicts from future pulling the upstream. Add an entry to the end of platformio.ini. Add an entry to ../config/config.h before the LINO_BASE. Take the lino_base_config.h as a template and add your custom configuration file to ../config/custom/ . Make changes to your custom configuration file. The following is an example for esp32 project.
+
+platformio.ini
+```
+[env:myrobot]
+platform = espressif32
+board = esp32dev
+board_build.f_flash = 80000000L
+board_build.flash_mode = qio
+upload_port = /dev/ttyUSB0
+upload_protocol = esptool
+lib_deps =
+    ${env.lib_deps}
+    https://github.com/RoboticsBrno/ServoESP32
+    https://github.com/madhephaestus/ESP32Encoder
+build_flags =
+    -I ../config
+    -D USE_MYROBOT_CONFIG
+```
+
+../config/config.h
+```
+#ifdef USE_DEV_CONFIG
+    #include "custom/dev_config.h"
+#endif
+
+// Add myrobot here
+#ifdef USE_MYROBOT_CONFIG
+    #include "custom/myrobot_config.h"
+#endif
+
+// this should be the last one
+#ifndef LINO_BASE
+    #include "lino_base_config.h"
+#endif
+```
+
+../config/custom/myrobot_config.h
+```
+#ifndef MYROBOT_CONFIG_H
+#define MYROBOT_CONFIG_H
+
+#define LED_PIN 2 //used for debugging status
+...
+...
+#endif
+```
+
 
 ### 1. Robot Settings
 Open your custom configuration file. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
@@ -342,7 +389,6 @@ Available Teensy boards:
 
 Available ESP32 boards:
 - esp32   (generic esp32 dev board)
-- gendrv  (Waveshare General driver for Robots)
 
 Some Linux machines might encounter a problem related to libusb. If so, install libusb-dev:
 
