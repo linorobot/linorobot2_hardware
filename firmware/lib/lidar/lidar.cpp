@@ -23,12 +23,31 @@
 #ifdef USE_LIDAR_UDP
 #include <HardwareSerial.h>
 #include <WiFiUdp.h>
-#define RX_BUFSIZE 2048
-#define BUFSIZE 1460
+#define BUFSIZE 512
 
 HardwareSerial comm(LIDAR_SERIAL);
 WiFiUDP udp;
 uint8_t buf[BUFSIZE];
+
+void rx_err_callback(hardwareSerial_error_t err)
+{
+  syslog(LOG_INFO, "%s err %d", __FUNCTION__, err);
+}
+
+size_t len = 0;
+void rx_callback(void)
+{
+  size_t cc = comm.read(buf + len, BUFSIZE - len);
+  // syslog(LOG_INFO, "%s recv %d", __FUNCTION__, cc);
+  // send larger UDP packet
+  if ((len += cc) && (len > 128)) {
+      udp.beginPacket(LIDAR_SERVER, LIDAR_PORT);
+      udp.write(buf, len);
+      udp.endPacket();
+      // syslog(LOG_INFO, "%s send %d", __FUNCTION__, len);
+      len = 0;
+  }
+}
 
 void initLidar(void) {
   pinMode(LIDAR_RXD, INPUT);
@@ -37,21 +56,10 @@ void initLidar(void) {
   analogWrite(LIDAR_PWM, 1 << PWM_BITS -1);
 #endif
   comm.begin(LIDAR_BAUDRATE, SERIAL_8N1, LIDAR_RXD);
-  comm.setRxBufferSize(RX_BUFSIZE);
+  comm.setRxBufferSize(1024);
+  comm.onReceiveError(rx_err_callback);
+  comm.onReceive(rx_callback);
 };
-
-size_t len = 0;
-void pushLidar(void) {
-  // send larger UDP packet
-  if ((len += comm.read(buf + len, BUFSIZE - len)) && (len > 800)) {
-      udp.beginPacket(LIDAR_SERVER, LIDAR_PORT);
-      udp.write(buf, len);
-      udp.endPacket();
-      // syslog(LOG_INFO, "%s send %lu", __FUNCTION__, len);
-      len = 0;
-  }
-};
-
 #else
 void initLidar(void) {};
 void pushLidar(void) {};

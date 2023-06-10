@@ -168,7 +168,6 @@ void setup()
     mag.init();
     initBattery();
     initRange();
-    initLidar();
 
 #ifdef USE_WIFI_TRANSPORT
     set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
@@ -220,6 +219,7 @@ void setup()
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
 #endif
+    initLidar(); // after wifi connected
     syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
 
@@ -484,7 +484,6 @@ void publishData()
     odom_msg = odometry.getData();
     imu_msg = imu.getData();
     mag_msg = mag.getData();
-    pushLidar();
 #ifdef MAG_BIAS
     const float mag_bias[3] = MAG_BIAS;
     mag_msg.magnetic_field.x -= mag_bias[0];

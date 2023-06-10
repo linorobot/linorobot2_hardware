@@ -15,6 +15,5 @@
 #define LIDAR_H
 
 void initLidar(void);
-void pushLidar(void);
 
 #endif
