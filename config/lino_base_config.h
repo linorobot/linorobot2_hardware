@@ -211,6 +211,7 @@ ROBOT ORIENTATION
 // #define ECHO_PIN 32
 // #define USE_SHORT_BRAKE // for shorter stopping distance
 // #define WDT_TIMEOUT 30 // Sec
+// #define BOARD_INIT sleep(5) // wait to begin IMU calibration
 
 #ifdef USE_SYSLOG
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){ \
