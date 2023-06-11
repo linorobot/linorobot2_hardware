@@ -49,6 +49,35 @@
 #ifdef WDT_TIMEOUT
 #include <esp_task_wdt.h>
 #endif
+#if defined(USE_WIFI_TRANSPORT) && !defined(WIFI_AP_LIST) // fixup old wifi config
+#define WIFI_AP_LIST {{WIFI_SSID, WIFI_PASSWORD}, {NULL}}
+#endif
+#ifdef WIFI_AP_LIST
+#include <WiFiMulti.h>
+#ifndef LOW_RSSI
+#define LOW_RSSI -75 // when wifi signal is too low, disconnect current ap and scan for strongest signal
+#endif
+const char *wifi_ap_list[][2] = WIFI_AP_LIST;
+WiFiMulti wifiMulti;
+#endif
+#ifdef USE_WIFI_TRANSPORT
+// remove wifi initialization code from wifi transport
+static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agent_port)
+{
+    static struct micro_ros_agent_locator locator;
+    locator.address = agent_ip;
+    locator.port = agent_port;
+
+    rmw_uros_set_custom_transport(
+        false,
+        (void *) &locator,
+        platformio_transport_open,
+        platformio_transport_close,
+        platformio_transport_write,
+        platformio_transport_read
+    );
+}
+#endif
 
 #ifndef BAUDRATE
 #define BAUDRATE 115200
@@ -156,6 +185,17 @@ void setup()
     esp_task_wdt_init(WDT_TIMEOUT, true); //enable panic so ESP32 restarts
     esp_task_wdt_add(NULL); //add current thread to WDT watch
 #endif
+#ifdef WIFI_AP_LIST
+    for (int i = 0; wifi_ap_list[i][0] != NULL; i++) {
+        wifiMulti.addAP(wifi_ap_list[i][0], wifi_ap_list[i][1]);
+    }
+    while (wifiMulti.run() != WL_CONNECTED) {
+        delay(500);
+    }
+    Serial.println("WIFI connected");
+    Serial.print("IP address: ");
+    Serial.println(WiFi.localIP());
+#endif
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -168,9 +208,10 @@ void setup()
     mag.init();
     initBattery();
     initRange();
+    initLidar(); // after wifi connected
 
 #ifdef USE_WIFI_TRANSPORT
-    set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
+    set_microros_net_transports(AGENT_IP, AGENT_PORT);
 #else
     set_microros_serial_transports(Serial);
 #endif
@@ -215,11 +256,7 @@ void setup()
 	});
 
     ArduinoOTA.begin();
-    Serial.println("Ready");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
 #endif
-    initLidar(); // after wifi connected
     syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
 
@@ -230,6 +267,7 @@ void loop() {
             EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
             break;
         case AGENT_AVAILABLE:
+            syslog(LOG_INFO, "%s agent available %lu", __FUNCTION__, millis());
             state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
             if (state == WAITING_AGENT) 
             {
@@ -244,7 +282,7 @@ void loop() {
             }
             break;
         case AGENT_DISCONNECTED:
-            syslog(LOG_INFO, "%s disconnected %lu", __FUNCTION__, millis());
+            syslog(LOG_INFO, "%s agent disconnected %lu", __FUNCTION__, millis());
             fullStop();
             destroyEntities();
             state = WAITING_AGENT;
@@ -254,6 +292,14 @@ void loop() {
     }
 #ifdef USE_ARDUINO_OTA
     ArduinoOTA.handle();
+#endif
+#ifdef WIFI_AP_LIST // when wifi signal is too weak, disconnect current ap and scan for strongest signal
+    EXECUTE_EVERY_N_MS(120000, syslog(LOG_INFO, "%s wifi ssid %s rssi %d", __FUNCTION__, WiFi.SSID(), WiFi.RSSI()));
+    static uint8_t dis_bssid[6]; // check previous disconnected bssid to avoid repeated disconnection
+    uint8_t *bssid;
+    EXECUTE_EVERY_N_MS(2000, (WiFi.RSSI() < LOW_RSSI && (bssid = WiFi.BSSID(), memcmp(dis_bssid, bssid, 6))) ? \
+		       (memcpy(dis_bssid, bssid, 6), WiFi.disconnect(false,false)) : 0);
+    wifiMulti.run();
 #endif
 #ifdef WDT_TIMEOUT
     esp_task_wdt_reset();

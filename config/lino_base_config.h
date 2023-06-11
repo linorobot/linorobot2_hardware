@@ -181,8 +181,8 @@ ROBOT ORIENTATION
 // #define USE_WIFI_TRANSPORT  // use micro ros wifi transport
 #define AGENT_IP { 192, 168, 1, 1 }
 #define AGENT_PORT 8888
-#define WIFI_SSID "WIFI_SSID"
-#define WIFI_PASSWORD "WIFI_PASSWORD"
+// Enable WiFi with null terminated list of multiple APs SSID and password
+// #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
 // #define USE_ARDUINO_OTA
 // #define USE_SYSLOG
 #define SYSLOG_SERVER { 192, 168, 1, 1 }
