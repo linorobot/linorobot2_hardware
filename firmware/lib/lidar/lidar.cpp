@@ -55,10 +55,10 @@ void initLidar(void) {
   pinMode(LIDAR_PWM, OUTPUT);
   analogWrite(LIDAR_PWM, 1 << PWM_BITS -1);
 #endif
-  comm.begin(LIDAR_BAUDRATE, SERIAL_8N1, LIDAR_RXD);
   comm.setRxBufferSize(1024);
   comm.onReceiveError(rx_err_callback);
   comm.onReceive(rx_callback);
+  comm.begin(LIDAR_BAUDRATE, SERIAL_8N1, LIDAR_RXD);
 };
 #else
 void initLidar(void) {};
