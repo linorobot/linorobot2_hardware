@@ -1,5 +1,6 @@
 ## Installation
-All software mentioned in this guide must be installed on the robot computer.
+
+Depend on your use case, for esp32, the robot can run micro ros wifi transport without a robot computer (eg Pi 4) on it. All the software will be installed on your desktop computer. In other case, all software mentioned in this guide should be installed on the robot computer.
 
 ### 1. ROS2 and linorobot2 installation
 It is assumed that you already have ROS2 and linorobot2 package installed. If you haven't, go to [linorobot2](https://github.com/linorobot/linorobot2) package for installation guide.
@@ -594,7 +595,74 @@ Magnetometer calibration should be taken on board with all hardware installed, i
 sudo apt-get install ros-humble-robot-calibration -y
 ros2 run robot_calibration magnetometer_calibration
 ```
+
+## Use case of esp32 with micro ros wifi transport, OTA and syslog
+
+The esp32 can run micro ros wifi transport. The robot can be built without a robot computer on it. All the ROS2 packages and Platformio are running on the desktop computer. The lidar data can be pushed to a UDP  server, which will decode the data and publish laser scan message. The following is the project ini, pins wiring and custom configuration changes. The first build and upload will use USB serial port. After the esp32 connected to wifi. Read the esp32 IP address from device monitor/terminal. Modify the project configuration ini with the esp32 IP address. Then esp32 can be uploaded remotely with OTA.
+
+change in 1st run ini, upoad with serial port
+```
+[env:myrobot]
+upload_port = /dev/ttyUSB0
+upload_protocol = esptool
+board_microros_transport = wifi
+```
+change in ../config/custom/myrobot_config.h
+```
+#define USE_WIFI_TRANSPORT  // use micro ros wifi transport
+#define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+#define USE_ARDUINO_OTA
+#define USE_SYSLOG
+#define USE_LIDAR_UDP
+#define USE_SHORT_BRAKE // for shorter stopping distance
+#define WDT_TIMEOUT 60 // Sec
+```
+
+pio device monitor
+```
+WIFI connected
+IP address: 192.168.1.101
+```
+
+change in 2nd run and above ini to upload with OTA
+```
+[env:myrobot]
+; upload_port = /dev/ttyUSB0
+; upload_protocol = esptool
+upload_protocol = espota
+upload_port = 192.168.1.101   <- replace with the esp32 IP address
+board_microros_transport = wifi
+```
+
+## Lidar UDP transport
+
+The UDP client on the esp32 should work with most Lidar. For the server side, only LdLidar is supported. Only LD19 launch file is tested. Conenct VCC and GND to Lidar. Connect Lidar TXD wire to LIDAR_RXD pin of esp32.
+
+change in ../config/custom/myrobot_config.h
+```
+#define USE_LIDAR_UDP
+#define LIDAR_RXD 14 // you may use any available input pin
+// #define LIDAR_PWM 15  // do not use, the PWM control loop is not implememted yet
+#define LIDAR_SERIAL 1 // uart number, 1 or 2
+#define LIDAR_BAUDRATE 230400 // the Lidar serial buadrate
+#define LIDAR_SERVER { 192, 168, 1, 100 }  // eg your desktop IP addres
+#define LIDAR_PORT 8889 // the UDP port on server
+```
+
+Build and launch the UDP server
+```
+cd ~
+mkdir -p ldlidar_ros2_ws/src
+cd ldlidar_ros2_ws/src
+git clone  https://github.com/hippo5329/ldlidar_stl_ros2.git
+cd ..
+colcon build
+source install/setup.bash
+ros2 launch ldlidar_stl_ros2 ld19_udp_server.launch.py
+```
+
 ## syslog
+
 The syslog(...) call will send logging messages to a remote server like this,  
 /var/log/linorobot2/hardware.log
 ```
@@ -610,6 +678,7 @@ input(type="imudp" port="514")
 $template Incoming-logs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
 *.* ?Incoming-logs
 ```
+
 ## URDF
 Once the hardware is done, you can go back to [linorobot2](https://github.com/linorobot/linorobot2#urdf) package and start defining the robot's URDF.
 
