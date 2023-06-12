@@ -404,6 +404,9 @@ Constants' Meaning:
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
 ## Calibration
+
+**The calibration utility does not work on esp32. Please use test_motors and test_sensors.**
+
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 5.1
 ### 1. Motor Check
