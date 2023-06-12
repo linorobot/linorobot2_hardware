@@ -183,6 +183,7 @@ ROBOT ORIENTATION
 #define AGENT_PORT 8888
 // Enable WiFi with null terminated list of multiple APs SSID and password
 // #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+// #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
 // #define USE_ARDUINO_OTA
 // #define USE_SYSLOG
 #define SYSLOG_SERVER { 192, 168, 1, 1 }
