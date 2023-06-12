@@ -37,6 +37,9 @@
 #include "encoder.h"
 #include "battery.h"
 #include "range.h"
+#include "lidar.h"
+#include "wifis.h"
+#include "ota.h"
 
 #ifndef BAUDRATE
 #define BAUDRATE 115200
@@ -95,6 +98,8 @@ void setup()
     Wire.setSCL(SCL_PIN);
 #endif
 #endif
+    initWifis();
+    initOta();
 
     imu.init();
     mag.init();
@@ -120,7 +125,7 @@ void loop() {
     motor3_controller.spin((current_motor == 2) ? (direction ? -pwm_max : pwm_max) : 0);
     motor4_controller.spin((current_motor == 3) ? (direction ? -pwm_max : pwm_max) : 0);
 
-    sleep(1);
+    delay(1000);
     float current_rpm1 = motor1_encoder.getRPM();
     float current_rpm2 = motor2_encoder.getRPM();
     float current_rpm3 = motor3_encoder.getRPM();
@@ -128,5 +133,10 @@ void loop() {
     printf("MOTOR%d %s RPM %8.1f %8.1f %8.1f %8.1f\n",
 	   current_motor + 1, direction ? "REV" : "FWD",
 	   current_rpm1, current_rpm2, current_rpm3, current_rpm4);
+    syslog(LOG_INFO, "MOTOR%d %s RPM %8.1f %8.1f %8.1f %8.1f\n",
+	   current_motor + 1, direction ? "REV" : "FWD",
+	   current_rpm1, current_rpm2, current_rpm3, current_rpm4);
     tk++;
+    runWifis();
+    runOta();
 }
