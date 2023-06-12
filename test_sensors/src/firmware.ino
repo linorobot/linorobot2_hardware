@@ -36,6 +36,9 @@
 #include "encoder.h"
 #include "battery.h"
 #include "range.h"
+#include "lidar.h"
+#include "wifis.h"
+#include "ota.h"
 
 #ifndef BAUDRATE
 #define BAUDRATE 115200
@@ -68,6 +71,8 @@ void setup()
     Wire.setSCL(SCL_PIN);
 #endif
 #endif
+    initWifis();
+    initOta();
 
     imu.init();
     mag.init();
@@ -76,7 +81,7 @@ void setup()
 }
 
 void loop() {
-    sleep(1);
+    delay(1000);
     imu_msg = imu.getData();
     mag_msg = mag.getData();
 #ifdef MAG_BIAS
@@ -93,4 +98,12 @@ void loop() {
 	   imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.x,
 	   mag_msg.magnetic_field.x, mag_msg.magnetic_field.y, mag_msg.magnetic_field.z,
 	   battery_msg.voltage, range_msg.range);
+    syslog(LOG_INFO, "ACC %5.2f %5.2f %5.2f GYR %5.2f %5.2f %5.2f MAG %5.2f %5.2f %5.2f\n"
+	   " BAT %5.2fV RANGE %5.2fm\n",
+	   imu_msg.linear_acceleration.x, imu_msg.linear_acceleration.y, imu_msg.linear_acceleration.z,
+	   imu_msg.angular_velocity.x, imu_msg.angular_velocity.y, imu_msg.angular_velocity.x,
+	   mag_msg.magnetic_field.x, mag_msg.magnetic_field.y, mag_msg.magnetic_field.z,
+	   battery_msg.voltage, range_msg.range);
+    runWifis();
+    runOta();
 }
