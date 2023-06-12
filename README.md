@@ -280,28 +280,60 @@ Constants' Meaning:
 - **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
 *WIFI related settings, only for esp32*
+
 - **USE_WIFI_TRANSPORT** - use micro ros wifi transport.
+
 - **AGENT_IP** - micro ros agent IP. eg. { 192, 168, 1, 100 }
+
 - **AGENT_PORT** - micro ros agent port. default 8888
-- **WIFI_SSID**
-- **WIFI_PASSWORD**
+
+- **WIFI_AP_LIST** - Enable WiFi with null terminated list of multiple APs SSID and password. eg. {{"WIFI_SSID1", "WIFI_PASSWORD1"}, {"WIFI_SSID2", "WIFI_PASSWORD2"}, {NULL}} . The AP with strongest signal will be used. When wifi signal is too low, the current AP will be disconnected and reconnect the AP with the strongest signal.
+
 - **USE_ARDUINO_OTA** - Arduino OTA up load protocol support
+
 - **USE_SYSLOG** - logging to remote syslog server.
+
 - **SYSLOG_SERVER** - syslog server name or IP.
+
 - **SYSLOG_PORT** - syslog server udp port. default 514
+
 - **DEVICE_HOSTNAME** - my device name to syslog. default "linorobot2"
+
 - **APP_NAME** - my app name to syslog. default "hardware"
 
+- **USE_LIDAR_UDP** - push Lidar data to UDP server, which will decode the data and publish laser scan message.
+
+- **LIDAR_RXD** - RXD pin for serial data from Lidar
+
+- **LIDAR_BAUDRATE**
+
+- **LIDAR_SERVER** - Lidar server IP address, eg. { 192, 168, 1, 100 }
+
+- **LIDAR_PORT** - Lidar server UDP port, eg. 8889
+
 *Optional settings*
+
 - **BAUDRATE** - serial baudrate. default 115200 is a bit tight. recommanded 230400.
+
+- **NODE_NAME** - ROS2 node name. default "linorobot_base_node"
+
 - **SDA_PIN/SCL_PIN** - I2C pins assignment
+
 - **TOPIC_PREFIX** - Namespace prefix to topic, eg "turtle1/". Useful when there are multiple robots running.
+
 - **BATTERY_PIN** - ADC pin for battery voltage measurement through a 33K/10K resistors voltage divider.
+
 - **BATTERY_ADJUST** - ADC reading adjustment to battery voltage.
+
 - **USE_INA219** - use INA219 chip for battery voltage measurement.
+
 - **TRIG_PIN/ECHO_PIN** - HC-SR04 Ultrasonic sensor trigger and echo pins. The echo pin needs a 6.8K/10K voltage divider, because the esp32 I/O pins are 3.3V tolerance. The pulse width reading is hard coded timeout 5000uS in driver, so it is roughly 75cm range.
+
 - **USE_SHORT_BRAKE** - Short brake for shorter stopping distance, only for generic_2 BT6612
+
 - **WDT_TIMEOUT** - Hardware watchdog timeout period, only for esp32.
+
+- **BOARD_INIT** - board specific setup, eg I/O ports mode or extra startup delay, sleep(5)
 
 ### 2. Hardware Pin Assignments
 Only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
