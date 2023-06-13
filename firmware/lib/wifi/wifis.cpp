@@ -37,6 +37,8 @@ void initWifis(void)
     Serial.println("WIFI connected");
     Serial.print("IP address: ");
     Serial.println(WiFi.localIP());
+    syslog(LOG_INFO, "%s ssid %s rssi %d ip %s", __FUNCTION__, WiFi.SSID(), WiFi.RSSI(),
+	   WiFi.localIP().toString().c_str());
 }
 
 void runWifis(void)
@@ -45,7 +47,7 @@ void runWifis(void)
     uint8_t *bssid;
 
 #ifdef WIFI_MONITOR
-    EXECUTE_EVERY_N_MS(WIFI_MONITOR * 60 * 1000, syslog(LOG_INFO, "%s wifi ssid %s rssi %d", \
+    EXECUTE_EVERY_N_MS(WIFI_MONITOR * 60 * 1000, syslog(LOG_INFO, "%s ssid %s rssi %d", \
 							__FUNCTION__, WiFi.SSID(), WiFi.RSSI()));
 #endif
     // when wifi signal is too weak, disconnect current ap and scan for strongest signal
