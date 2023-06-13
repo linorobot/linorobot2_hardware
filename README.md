@@ -464,14 +464,14 @@ On the previous instruction where you check the encoder reads for each motor, yo
 
 ## Test the motors and all the sensors
 
-This step is an alternative to the calibration process described above. There are two diagnosis utilities for the testing of motors and all the sensors, including encoder, IMU, MAG, battery and ultrasonic range sensors. These two utilites build with the same configuration of the (micro ros) firmware. So you don't need to create custom project configuration of them.
+This step is an alternative to the calibration process described above. There are two diagnosis utilities for the testing of motors and all the sensors, including encoder, IMU, MAG, battery and ultrasonic range sensors. These two utilites build with the same configuration of the (micro ros) firmware. So you don't need to create custom project configuration of them. The syslog and OTA is supported in these two utilities. You may switch between firmwares with OTA and read the result from syslog without an USB cable connected.
 
 ### test the motors and encoders
 
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**.
 
-The test_motors utility will spin the motors forward and backward alternately without user intervetion. This is different from the calibration utitily described above, which waits user input. The motors will run one by one after power on. Then it will display the motors speed.
-    
+The test_motors utility will spin the motors forward and backward alternately without user intervetion. This is different from the calibration utitily described above, which waits user input. The motors will run one by one after power on. Then it will display the motors speed. If you have enough space, you may put the robot on the ground to see it spin.
+
 Build and upload with,
 
 ```
@@ -596,35 +596,94 @@ sudo apt-get install ros-humble-robot-calibration -y
 ros2 run robot_calibration magnetometer_calibration
 ```
 
-## Use case of esp32 with micro ros wifi transport, OTA and syslog
+## Use esp32 with micro ros wifi transport, OTA, syslog and Lidar UDP transport
 
-The esp32 can run micro ros wifi transport. The robot can be built without a robot computer on it. All the ROS2 packages and Platformio are running on the desktop computer. The lidar data can be pushed to a UDP  server, which will decode the data and publish laser scan message. The following is the project ini, pins wiring and custom configuration changes. The first build and upload will use USB serial port. After the esp32 connected to wifi. Read the esp32 IP address from device monitor/terminal. Modify the project configuration ini with the esp32 IP address. Then esp32 can be uploaded remotely with OTA.
+The esp32 can run micro ros wifi transport. The robot can be built without a robot computer on it. All the ROS2 packages and Platformio are running on the desktop computer. The build will be much faster than a robot computer like Pi4.
 
-change in 1st run ini, upoad with serial port
+### Start the micro ros wifi transport agent.
+```
+ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+```
+### syslog server setup
+```
+# edit syslog config
+sudo nano /etc/rsyslog.conf
+```
+```
+# provides UDP syslog reception
+module(load="imudp")
+input(type="imudp" port="514")
+
+$template Incoming-logs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
+*.* ?Incoming-logs
+```
+```
+# restart the syslog service
+sudo systemctl restart rsyslog
+```
+### Modify custom configuration
+The following is the project ini, pins wiring and custom configuration changes. The first build and upload will use USB serial port.
+
+Change in ../config/custom/myrobot_config.h
+```
+#define USE_WIFI_TRANSPORT  // use micro ros wifi transport
+#define AGENT_IP { 192, 168, 1, 100 }  // eg your desktop IP addres
+#define AGENT_PORT 8888
+#define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+#define USE_ARDUINO_OTA
+#define USE_SYSLOG
+#define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg your desktop IP addres
+#define SYSLOG_PORT 514
+#define DEVICE_HOSTNAME "myrobot"
+#define APP_NAME "hardware"
+```
+
+Change ini for 1st run, upoad with serial port.
 ```
 [env:myrobot]
 upload_port = /dev/ttyUSB0
 upload_protocol = esptool
 board_microros_transport = wifi
 ```
-change in ../config/custom/myrobot_config.h
+
+### Build and upload.
 ```
-#define USE_WIFI_TRANSPORT  // use micro ros wifi transport
-#define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
-#define USE_ARDUINO_OTA
-#define USE_SYSLOG
-#define USE_LIDAR_UDP
-#define USE_SHORT_BRAKE // for shorter stopping distance
-#define WDT_TIMEOUT 60 // Sec
+pio run -e myrobot -t upload
+pio device monitor -b <baudrate>
 ```
 
-pio device monitor
+The serial will print the IP of esp32 after connected to wifi.
 ```
 WIFI connected
 IP address: 192.168.1.101
 ```
 
-change in 2nd run and above ini to upload with OTA
+The IP address is also displayed in the micro ros wifi agent messge.
+```
+[1686587945.807239] info     | UDPv4AgentLinux.cpp | init                     | running...             | port: 8888
+[1686587945.807411] info     | Root.cpp           | set_verbose_level        | logger setup           | verbose_level: 4
+[1686588315.310850] info     | Root.cpp           | create_client            | create                 | client_key: 0x0C7BC5A9, session_id: 0x81
+[1686588315.310892] info     | SessionManager.hpp | establish_session        | session established    | client_key: 0x0C7BC5A9, address: 192.168.1.101:47138
+[1686588315.327314] info     | ProxyClient.cpp    | create_participant       | participant created    | client_key: 0x0C7BC5A9, participant_id: 0x000(1)
+[1686588315.332840] info     | ProxyClient.cpp    | create_topic             | topic created          | client_key: 0x0C7BC5A9, topic_id: 0x000(2), participant_
+```
+
+And the syslog.
+```
+sudo cat /var/log/myrobot/hardware.log
+```
+```
+2023-06-13T14:34:41.978640-07:00 myrobot hardware ﻿initWifis ssid SSID rssi -44 ip 192.168.1.101
+2023-06-13T14:34:44.042429-07:00 myrobot hardware ﻿setup Ready 9344
+2023-06-13T14:34:44.548896-07:00 myrobot hardware ﻿loop agent available 9852
+2023-06-13T14:34:44.549019-07:00 myrobot hardware ﻿createEntities 9852
+
+```
+
+### OTA upload
+After the esp32 connected to wifi. Read the esp32 IP address. Modify the project configuration ini with the esp32 IP address. Then esp32 can be uploaded remotely with OTA.
+
+Change ini for 2nd run to upload with OTA.
 ```
 [env:myrobot]
 ; upload_port = /dev/ttyUSB0
@@ -633,10 +692,31 @@ upload_protocol = espota
 upload_port = 192.168.1.101   <- replace with the esp32 IP address
 board_microros_transport = wifi
 ```
+```
+Configuring upload protocol...
+AVAILABLE: cmsis-dap, esp-bridge, esp-prog, espota, esptool, iot-bus-jtag, jlink, minimodule, olimex-arm-usb-ocd, olimex-arm-usb-ocd-h, olimex-arm-usb-tiny-h, olimex-jtag-tiny, tumpa
+CURRENT: upload_protocol = espota
+Uploading .pio/build/myrobot/firmware.bin
+14:34:22 [DEBUG]: Options: {'esp_ip': '192.168.1.101', 'host_ip': '0.0.0.0', 'esp_port': 3232, 'host_port': 54252, 'auth': '', 'image': '.pio/build/myrobot/firmware.bin', 'spiffs': False, 'debug': True, 'progress': True, 'timeout': 10}
+14:34:22 [INFO]: Starting on 0.0.0.0:54252
+14:34:22 [INFO]: Upload size: 951408
+Sending invitation to 192.168.1.101
+14:34:22 [INFO]: Waiting for device...
 
-## Lidar UDP transport
+Uploading: [                                                            ] 0%
+Uploading: [=                                                           ] 0%
+...
+Uploading: [============================================================] 99%
+Uploading: [============================================================] 100% Done...
 
-The UDP client on the esp32 should work with most Lidar. For the server side, only LdLidar is supported. Only LD19 launch file is tested. Conenct VCC and GND to Lidar. Connect Lidar TXD wire to LIDAR_RXD pin of esp32.
+14:34:33 [INFO]: Waiting for result...
+14:34:34 [INFO]: Result: OK
+14:34:34 [INFO]: Success
+========================= [SUCCESS] Took 20.84 seconds =========================
+```
+
+### setup the Lidar UDP transport
+The lidar data can be pushed to a UDP  server, which will decode the data and publish laser scan message. The UDP client on the esp32 should work with most Lidar. For the server side, only LdLidar is supported. Only LD19 launch file is tested. Conenct VCC and GND to Lidar. Connect Lidar TXD wire to LIDAR_RXD pin of esp32.
 
 change in ../config/custom/myrobot_config.h
 ```
@@ -659,24 +739,6 @@ cd ..
 colcon build
 source install/setup.bash
 ros2 launch ldlidar_stl_ros2 ld19_udp_server.launch.py
-```
-
-## syslog
-
-The syslog(...) call will send logging messages to a remote server like this,  
-/var/log/linorobot2/hardware.log
-```
-2023-05-23T10:25:48.305354-07:00 linorobot2 hardware ﻿setup Ready 4281
-2023-05-23T10:25:48.810242-07:00 linorobot2 hardware ﻿createEntities 4788
-```    
-Example server config /etc/rsyslog.conf
-```
-# provides UDP syslog reception
-module(load="imudp")
-input(type="imudp" port="514")
- 
-$template Incoming-logs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
-*.* ?Incoming-logs
 ```
 
 ## URDF
