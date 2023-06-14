@@ -179,29 +179,29 @@ ROBOT ORIENTATION
 #endif
 
 // #define USE_WIFI_TRANSPORT  // use micro ros wifi transport
-#define AGENT_IP { 192, 168, 1, 1 }
+#define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define AGENT_PORT 8888
 // Enable WiFi with null terminated list of multiple APs SSID and password
 // #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
 // #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
 // #define USE_ARDUINO_OTA
 // #define USE_SYSLOG
-#define SYSLOG_SERVER { 192, 168, 1, 1 }
+#define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define SYSLOG_PORT 514
 #define DEVICE_HOSTNAME "linorobot2"
 #define APP_NAME "hardware"
-// #define USE_LIDAR_UDP
+// #define USE_LIDAR_UDP  // send lidar data to udp server
 #define LIDAR_RXD 4
 // #define LIDAR_PWM 5
 #define LIDAR_SERIAL 1 // uart number
 #define LIDAR_BAUDRATE 230400
-#define LIDAR_SERVER { 192, 168, 1, 1 }
+#define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define LIDAR_PORT 8889
 #define BAUDRATE 115200
 // #define SDA_PIN 44 // specify I2C pins
 // #define SCL_PIN 45
 #define NODE_NAME "linorobot_base_node"
-// #define TOPIC_PREFIX "turtle1/"
+// #define TOPIC_PREFIX "myrobot/"
 
 // battery voltage ADC pin
 // #define BATTERY_PIN 33
