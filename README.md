@@ -330,7 +330,7 @@ Constants' Meaning:
 
 - **TRIG_PIN/ECHO_PIN** - HC-SR04 Ultrasonic sensor trigger and echo pins. The echo pin needs a 6.8K/10K voltage divider, because the esp32 I/O pins are 3.3V tolerance. The pulse width reading is hard coded timeout 5000uS in driver, so it is roughly 75cm range.
 
-- **USE_SHORT_BRAKE** - Short brake for shorter stopping distance, only for generic_2 BT6612
+- **USE_SHORT_BRAKE** - Short brake for shorter stopping distance, only for generic_2 BT6612 and BTS7960 like motor drivers
 
 - **WDT_TIMEOUT** - Hardware watchdog timeout period, only for esp32.
 
@@ -404,98 +404,71 @@ Constants' Meaning:
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
-## Calibration
-
-**The calibration utility does not work on esp32. Please use test_motors and test_sensors.**
-
-Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
-5.1
-### 1. Motor Check
-Go to calibration folder and upload the firmware:
-
-    cd linorobot2_hardware/calibration
-    pio run --target upload -e <your_teensy_board>
-
-Available Teensy boards:
-- teensy31
-- teensy35
-- teensy36
-- teensy40
-- teensy41
-
-Available ESP32 boards:
-- esp32   (generic esp32 dev board)
-
-Some Linux machines might encounter a problem related to libusb. If so, install libusb-dev:
-
-    sudo apt install libusb-dev
-    sudo apt remove brltty  (conflict with some UART adaptor)
-
-Start spinning the motors by running:
-    
-    screen /dev/ttyACM0   (ttyUSB0 for esp32)
-
-On the terminal type `spin` and press the enter key.
-
-The wheels will spin one by one for 10 seconds from Motor1 to Motor4. Check if each wheel's direction is spinning **forward** and take note of the motors that are spinning in the opposite direction. Set MOTORX_INV constant in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L71-L74) to `true` to invert the motor's direction. Reupload the calibration firmware once you're done. Press `Ctrl` + `a` + `d` to exit the screen terminal.
-
-    cd linorobot2_hardware/calibration
-    pio run --target upload -e <your_teensy_board>
-
-### 2. Encoder Check
-
-Open your terminal and run:
-
-    screen /dev/ttyACM0
-
-Type `sample` and press the enter key. Verify if all the wheels are spinning **forward**. Redo the previous step if there are motors still spinning in the opposite direction.
-
-You'll see a summary of the total encoder readings and counts per revolution after the motors have been sampled. If you see any negative number in the MOTOR ENCODER READINGS section, invert the encoder pin by setting `MOTORX_ENCODER_INV` in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L65-L68) to `true`. Reupload the calibration firmware to check if the encoder pins have been reconfigured properly:
-
-    cd linorobot2_hardware/calibration
-    pio run --target upload -e <your_teensy_board>
-    screen /dev/ttyACM0
-
-Type `sample` and press the enter key. Verify if all encoder values are now **positive**. Redo this step if you missed out any.
-
-### 3. Counts Per Revolution
-
-On the previous instruction where you check the encoder reads for each motor, you'll see that there's also COUNTS PER REVOLUTION values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L55-L58) to have a more accurate model of the encoder.
 
 ## Test the motors and all the sensors
 
-This step is an alternative to the calibration process described above. There are two diagnosis utilities for the testing of motors and all the sensors, including encoder, IMU, MAG, battery and ultrasonic range sensors. These two utilites build with the same configuration of the (micro ros) firmware. So you don't need to create custom project configuration of them. The syslog and OTA is supported in these two utilities. You may switch between firmwares with OTA and read the result from syslog without an USB cable connected.
+There are two diagnosis utilities for the testing of motors and all the sensors, including encoder, IMU, MAG, battery and ultrasonic range sensors. The syslog and OTA are supported in these two utilities. You may switch between firmwares with OTA and read the result from syslog without an USB cable connected.
 
 ### test the motors and encoders
 
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**.
 
-The test_motors utility will spin the motors forward and backward alternately without user intervetion. This is different from the calibration utitily described above, which waits user input. The motors will run one by one after power on. Then it will display the motors speed. If you have enough space, you may put the robot on the ground to see it spin.
+The test_motors utility will spin the motors forward and backward alternately without user intervetion. The motors will run one by one after power on. Then it will display the motors linear velocity, angular velocity and stopping distance. Make sure the motors are running at the correct direction and the encoders get the correct speed reading, which is the maximum speed of the motors. If you have enough space, you may put the robot on the ground to watch it spin.
 
 Build and upload with,
 
 ```
 cd test_motors
 pio run -e myrobot -t upload
-pio device monitor -b baudrate
+pio device monitor -b <baudrate>
 ```
+Result with USE_SHORT_BRAKE.
+```
+MOTOR1 FWD RPM    155.2     -8.3      0.0      0.0
+MOTOR1 FWD RPM    160.9      0.0      0.0      0.0
+MOTOR1 FWD RPM    160.6      0.0      0.0      0.0
+MOTOR1 FWD RPM    161.2      0.0      0.0      0.0
+MOTOR1 FWD RPM    160.9      0.0      0.0      0.0
+MOTOR1 FWD RPM    160.7      0.0      0.0      0.0
+MOTOR1 FWD RPM    158.6      0.0      0.0      0.0
+MOTOR1 FWD RPM    157.8      0.0      0.0      0.0
+MOTOR1 SPEED   0.46 m/s   4.13 rad/s STOP  0.014 m
+MOTOR2 FWD RPM      4.8    143.2      0.0      0.0
+MOTOR2 FWD RPM      0.0    166.9      0.0      0.0
+MOTOR2 FWD RPM      0.0    166.9      0.0      0.0
+MOTOR2 FWD RPM      0.0    166.8      0.0      0.0
+MOTOR2 FWD RPM      0.0    166.8      0.0      0.0
+MOTOR2 FWD RPM      0.0    166.8      0.0      0.0
+MOTOR2 FWD RPM      0.0    166.8      0.0      0.0
+MOTOR2 FWD RPM      0.0    166.5      0.0      0.0
+MOTOR2 SPEED   0.49 m/s   4.36 rad/s STOP  0.024 m
+MOTOR1 REV RPM   -153.1      8.2      0.0      0.0
+MOTOR1 REV RPM   -159.8      0.0      0.0      0.0
+MOTOR1 REV RPM   -159.4      0.0      0.0      0.0
+MOTOR1 REV RPM   -159.9      0.0      0.0      0.0
+MOTOR1 REV RPM   -159.8      0.0      0.0      0.0
+MOTOR1 REV RPM   -159.8      0.0      0.0      0.0
+MOTOR1 REV RPM   -159.8      0.0      0.0      0.0
+MOTOR1 REV RPM   -159.9      0.0      0.0      0.0
+MOTOR1 SPEED  -0.47 m/s  -4.19 rad/s STOP -0.014 m
+MOTOR2 REV RPM     -4.7   -122.6      0.0      0.0
+MOTOR2 REV RPM      0.0   -162.1      0.0      0.0
+MOTOR2 REV RPM      0.0   -162.0      0.0      0.0
+MOTOR2 REV RPM      0.0   -162.0      0.0      0.0
+MOTOR2 REV RPM      0.0   -162.2      0.0      0.0
+MOTOR2 REV RPM      0.0   -162.7      0.0      0.0
+MOTOR2 REV RPM      0.0   -162.4      0.0      0.0
+MOTOR2 REV RPM      0.0   -162.3      0.0      0.0
+MOTOR2 SPEED  -0.48 m/s  -4.25 rad/s STOP -0.023 m
+MOTOR1 FWD RPM    154.6     -7.8      0.0      0.0
+```
+Result without USE_SHORT_BRAKE.
+```
+﻿MOTOR1 SPEED   0.46 m/s   4.10 rad/s STOP  0.135 m
+﻿MOTOR2 SPEED   0.49 m/s   4.40 rad/s STOP  0.171 m
+```
+You can see that the stopping distance is much longer without USE_SHORT_BRAKE. It can be dangerous in some case. The short brake also provides better speed control.
 
-Output
-
-    MOTOR0 FWD RPM    156.3     -4.6      0.0      0.0
-    ...
-    MOTOR0 FWD RPM    161.2      0.0      0.0      0.0
-    MOTOR1 FWD RPM      3.7    165.5      0.0      0.0
-    ...
-    MOTOR1 FWD RPM      0.0    170.6      0.0      0.0
-    MOTOR0 REV RPM   -160.1      4.8      0.0      0.0
-    ...
-    MOTOR0 REV RPM   -165.1      0.0      0.0      0.0
-    MOTOR1 REV RPM     -3.9   -161.1      0.0      0.0
-    ...
-    MOTOR1 REV RPM      0.0   -167.2      0.0      0.0
-
-Make sure the motors are running at the correct direction and the encoders get the correct speed reading, which is the maximum speed of the motor.
 
 ### test all the other sensors
 
