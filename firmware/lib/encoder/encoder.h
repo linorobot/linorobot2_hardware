@@ -78,6 +78,63 @@ public:
 	        encoder_.setCount(p);
 	}
 };
+#elif defined(PICO)
+#include <Arduino.h>
+#include "pico/stdlib.h"
+#include "hardware/pio.h"
+#include "quadrature.pio.h"
+PIO pio = pio0;
+
+class Encoder
+{
+private:
+	int counts_per_rev_ = -1;
+	unsigned long prev_update_time_;
+        int32_t prev_encoder_ticks_;
+        uint offset_;
+        uint sm_;
+public:
+	Encoder(int pin1, int pin2, int counts_per_rev, bool invert = false) {
+		int temp_pin = pin1;
+		if (pin1 < 0 || pin2 < 0) return; // unused encoder
+		if(invert)
+		{
+			pin1 = pin2;
+			pin2 = temp_pin;
+		}
+		counts_per_rev_ = counts_per_rev;
+		offset_ = pio_add_program(pio, &quadrature_program);
+                sm_ = pio_claim_unused_sm(pio, true);
+		quadrature_program_init(pio, sm_, offset_, pin1, pin2);
+ 	}
+	float getRPM() {
+	        if (counts_per_rev_ < 0) return 0.0;
+		int32_t encoder_ticks = read();
+		//this function calculates the motor's RPM based on encoder ticks and delta time
+		unsigned long current_time = micros();
+		unsigned long dt = current_time - prev_update_time_;
+
+		//convert the time from milliseconds to minutes
+		double dtm = (double)dt / 60000000;
+		int64_t delta_ticks = encoder_ticks - prev_encoder_ticks_;
+
+		//calculate wheel's speed (RPM)
+		prev_update_time_ = current_time;
+		prev_encoder_ticks_ = encoder_ticks;
+
+		return (((double) delta_ticks / counts_per_rev_) / dtm);
+	}
+	inline int32_t read() {
+	        if (counts_per_rev_ < 0) return 0;
+		pio_sm_exec_wait_blocking(pio, sm_, pio_encode_in(pio_x, 32));
+		return pio_sm_get_blocking(pio, sm_);
+	}
+        inline void write(int32_t p) {
+	        if (counts_per_rev_ < 0) return;
+		pio_sm_exec(pio, sm_, pio_encode_set(pio_x, p));
+	        // encoder_.setCount(p);
+	}
+};
 #else
 
 #if defined(ARDUINO) && ARDUINO >= 100

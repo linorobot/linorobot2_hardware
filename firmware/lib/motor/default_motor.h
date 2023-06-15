@@ -23,6 +23,15 @@ inline void analogWriteFrequency(uint8_t pin, double frequency)
 {
   analogWriteFrequency(frequency);
 }
+#elif defined(PICO)
+inline void analogWriteFrequency(double frequency)
+{
+  analogWriteFreq(frequency);
+}
+inline void analogWriteFrequency(uint8_t pin, double frequency)
+{
+  analogWriteFreq(frequency);
+}
 #endif
 
 #include "motor_interface.h"
