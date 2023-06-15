@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <Arduino.h>
+#include <WiFi.h>
 #include "config.h"
 #include "syslog.h"
 #include "wifis.h"
@@ -45,14 +46,21 @@ void runWifis(void)
 {
     static uint8_t dis_bssid[6]; // check previous disconnected bssid to avoid repeated disconnection
     uint8_t *bssid;
+    uint8_t bssidv[6];
 
 #ifdef WIFI_MONITOR
     EXECUTE_EVERY_N_MS(WIFI_MONITOR * 60 * 1000, syslog(LOG_INFO, "%s ssid %s rssi %d", \
 							__FUNCTION__, WiFi.SSID(), WiFi.RSSI()));
 #endif
+#ifdef PICO // WiFi.BSSID api is different
+    // when wifi signal is too weak, disconnect current ap and scan for strongest signal
+    EXECUTE_EVERY_N_MS(2000, (WiFi.RSSI() < LOW_RSSI && (bssid = WiFi.BSSID(bssidv), memcmp(dis_bssid, bssid, 6))) ? \
+		       (memcpy(dis_bssid, bssid, 6), WiFi.disconnect()) : 0);
+#else
     // when wifi signal is too weak, disconnect current ap and scan for strongest signal
     EXECUTE_EVERY_N_MS(2000, (WiFi.RSSI() < LOW_RSSI && (bssid = WiFi.BSSID(), memcmp(dis_bssid, bssid, 6))) ? \
-		       (memcpy(dis_bssid, bssid, 6), WiFi.disconnect(false,false)) : 0);
+		       (memcpy(dis_bssid, bssid, 6), WiFi.disconnect()) : 0);
+#endif
     wifiMulti.run();
 }
 #endif // WIFI_AP_LIST
