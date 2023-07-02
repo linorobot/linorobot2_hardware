@@ -1,0 +1,93 @@
+name: PlatformIO CI
+
+on:
+  push:
+  pull_request: 
+  workflow_dispatch:
+    
+jobs:
+  build-calibration:
+    name: Build Calibration
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Build Calibration
+        run: |
+          cd calibration
+          pio run
+
+
+  pio-fw-matrix:
+    name: Parse firmware/platformio.ini
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Parse platformio.ini
+        id: set-matrix
+        run: |
+          echo "matrix=$(python .github/parse_platformio.py)" >> $GITHUB_OUTPUT
+
+  build-firmware:
+    needs: pio-fw-matrix
+    runs-on: ubuntu-latest
+    name: Build ${{ matrix.env }} firmware
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{fromJson(needs.pio-fw-matrix.outputs.matrix)}}
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Install PIO in Home
+        run: |
+          python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+          echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
+          source $HOME/.bashrc
+
+      - name: Install required pip packages
+        run: |
+          source $HOME/.platformio/penv/bin/activate
+          pip install --upgrade catkin_pkg
+          pip uninstall em
+          pip install empy lark
+
+      - name: Build Firmware
+        env:
+            ROS_DISTRO: rolling
+        run: |
+          cd firmware
+          pio run -e ${{ matrix.env }}
