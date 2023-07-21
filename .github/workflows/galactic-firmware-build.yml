@@ -1,0 +1,21 @@
+name: ROS Galactic Firmware Build
+
+on:
+  pull_request:
+    branches:
+      - galactic
+  push:
+    branches:
+      - galactic
+  schedule:
+    # Run every morning to detect flakiness and broken dependencies
+    - cron: '03 1 * * *'
+  workflow_dispatch:
+
+
+jobs:
+  firmware:
+    uses: ./.github/workflows/reusable-platformio-ci.yml
+    with:
+      ros_distro: galactic
+      reference: galactic

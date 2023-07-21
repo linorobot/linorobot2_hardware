@@ -1,0 +1,25 @@
+name: ROS Rolling Firmware Build
+
+# TODO rename main branch of repo to rolling and then fix
+on:
+  # using branches-ignore to avoid running on unrelated branches but still in dev
+  pull_request:
+    branches-ignore:
+      - foxy
+      - humble
+  push:
+    branches-ignore:
+      - foxy
+      - humble
+  schedule:
+    # Run every morning to detect flakiness and broken dependencies
+    - cron: '03 1 * * *'
+  workflow_dispatch:
+
+
+jobs:
+  firmware:
+    uses: ./.github/workflows/reusable-platformio-ci.yml
+    with:
+      ros_distro: rolling
+      reference: galactic
