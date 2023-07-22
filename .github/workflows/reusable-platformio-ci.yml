@@ -1,0 +1,133 @@
+name: Reusable PlatformIO CI
+
+# Controls when this action will run.
+on:
+  workflow_call:
+    inputs:
+      ros_distro:
+        description: 'ROS_DISTRO variable'
+        required: true
+        type: string
+
+      reference:
+        description: 'Branch or tag of repo to checkout for build.'
+        default: ''
+        required: false
+        type: string
+
+    
+jobs:
+  # This job is used to build the calibration firmware
+  build-calibration:
+    name: Build Calibration
+    runs-on: ubuntu-latest
+
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.reference }}
+
+      # Cache dependencies to speed up workflows
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Build Calibration
+        run: |
+          cd calibration
+          pio run
+
+
+  # This job parses the firmware/platformio.ini file
+  pio-fw-matrix:
+    name: Parse firmware/platformio.ini
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+
+    steps:
+      # check out the repository
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.reference }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      # run the python script to parse the platformio.ini file and output as json to a matrix
+      # pass the ros distros desired as arguments
+      - name: Parse platformio.ini
+        id: set-matrix
+        run: |
+          echo "matrix=$(python .github/parse_platformio.py)" >> $GITHUB_OUTPUT
+
+
+  # This job builds the firmware for each environment parsed from the platformio.ini file
+  build-firmware:
+    # require the pio-fw-matrix job to complete before running
+    needs: pio-fw-matrix
+    runs-on: ubuntu-latest
+    name: Build ${{ matrix.env }} firmware on ROS ${{ inputs.ros_distro }}
+    strategy:
+      # don't stop all jobs if one fails
+      fail-fast: false
+      # Build the firmware for each environment from parsing job in parallel
+      matrix:
+        include: ${{fromJson(needs.pio-fw-matrix.outputs.matrix)}}
+
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.reference }}
+
+      # speed up workflows by caching dependencies
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install PlatformIO Core
+        run: pip install --upgrade platformio
+
+      - name: Install PIO in Home
+        run: |
+          python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+          echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
+          source $HOME/.bashrc
+
+      # NOTE all req. PIO pip packages should already be installed, but found these to be necessary
+      # Missing packages determined from error messages
+      - name: Install required pip packages
+        run: |
+          source $HOME/.platformio/penv/bin/activate
+          pip install --upgrade catkin_pkg
+          pip uninstall em
+          pip install empy lark
+
+      # Build the firmware for each environment in parallel
+      - name: Build Firmware
+        env:
+          ROS_DISTRO: ${{ inputs.ros_distro }}
+        run: |
+          cd firmware
+          pio run -e ${{ matrix.env }}
