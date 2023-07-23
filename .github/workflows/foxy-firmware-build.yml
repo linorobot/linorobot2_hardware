@@ -3,9 +3,11 @@ name: ROS Foxy Firmware Build
 on:
   pull_request:
     branches:
+      - foxy
       - foxy*
   push:
     branches:
+      - foxy
       - foxy*
   schedule:
     # Run every morning to detect flakiness and broken dependencies
