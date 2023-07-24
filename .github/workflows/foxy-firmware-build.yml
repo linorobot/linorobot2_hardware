@@ -20,4 +20,3 @@ jobs:
     uses: ./.github/workflows/reusable-platformio-ci.yml
     with:
       ros_distro: foxy
-      reference: foxy
