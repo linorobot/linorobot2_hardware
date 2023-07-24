@@ -67,6 +67,9 @@ jobs:
         with:
           python-version: '3.9'
 
+      - name: DEBUG look at environment
+        run: ls -laR
+
       # run the python script to parse the platformio.ini file and output as json to a matrix
       # pass the ros distros desired as arguments
       - name: Parse platformio.ini
