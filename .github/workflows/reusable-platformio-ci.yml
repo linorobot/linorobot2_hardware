@@ -111,7 +111,7 @@ jobs:
         
       - name: Initialize PlatformIO and create penv
         run: |
-          pio --venv
+          pio --version
           if [ ! -d ~/.platformio ]; then
             mkdir ~/.platformio
           fi
