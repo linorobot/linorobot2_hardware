@@ -2,10 +2,10 @@
 <!-- Build Status populated by Github Actions runs -->
 ROS 2 Distro | Branch | Build status
 :----------: | :----: | :----------:
-**Rolling** | [`galactic`](https://github.com/linorobot/linorobot2_hardware/tree/galactic) | [![Rolling Firmware Build](https://github.com/linorobot/linorobot2_hardware/actions/workflows/rolling-firmware-build.yml/badge.svg?branch=galactic)](https://github.com/linorobot/linorobot2_hardware/actions/workflows/rolling-firmware-build.yml?branch=galactic)
-**Humble** | [`humble`](https://github.com/linorobot/linorobot2_hardware/tree/humble) | [![Humble Firmware Build](https://github.com/linorobot/linorobot2_hardware/actions/workflows/humble-firmware-build.yml/badge.svg?branch=humble)](https://github.com/linorobot/linorobot2_hardware/actions/workflows/humble-firmware-build.yml?branch=humble)
-**Galactic** | [`galactic`](https://github.com/linorobot/linorobot2_hardware/tree/galactic) | [![Galactic Firmware Build](https://github.com/linorobot/linorobot2_hardware/actions/workflows/galactic-firmware-build.yml/badge.svg?branch=galactic)](https://github.com/linorobot/linorobot2_hardware/actions/workflows/galactic-firmware-build.yml?branch=galactic)
-**Foxy** | [`foxy`](https://github.com/linorobot/linorobot2_hardware/tree/foxy) | [![Foxy Firmware Build](https://github.com/linorobot/linorobot2_hardware/actions/workflows/foxy-firmware-build.yml/badge.svg?branch=foxy)](https://github.com/linorobot/linorobot2_hardware/actions/workflows/foxy-firmware-build.yml?branch=foxy)
+**Rolling** | [`master`](../../tree/master) | [![Rolling Firmware Build](../../actions/workflows/rolling-firmware-build.yml/badge.svg?branch=master)](../../actions/workflows/rolling-firmware-build.yml?branch=master)
+**Humble** | [`humble`](../../tree/humble) | [![Humble Firmware Build](../../actions/workflows/humble-firmware-build.yml/badge.svg?branch=humble)](../../actions/workflows/humble-firmware-build.yml?branch=humble)
+**Galactic** | [`galactic`](../../tree/galactic) | [![Galactic Firmware Build](../../actions/workflows/galactic-firmware-build.yml/badge.svg?branch=galactic)](../../actions/workflows/galactic-firmware-build.yml?branch=galactic)
+**Foxy** | [`foxy`](../../tree/foxy) | [![Foxy Firmware Build](../../actions/workflows/foxy-firmware-build.yml/badge.svg?branch=foxy)](../../actions/workflows/foxy-firmware-build.yml?branch=foxy)
 
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.

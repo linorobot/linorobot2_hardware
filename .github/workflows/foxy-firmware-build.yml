@@ -4,9 +4,21 @@ on:
   pull_request:
     branches:
       - foxy*
+    paths-ignore:
+      - 'docs/**'
+      - .gitignore
+      - LICENSE
+      - README.md
+  
   push:
     branches:
       - foxy*
+    paths-ignore:
+      - 'docs/**'
+      - .gitignore
+      - LICENSE
+      - README.md
+  
   schedule:
     # Run every morning to detect flakiness and broken dependencies
     - cron: '03 1 * * *'

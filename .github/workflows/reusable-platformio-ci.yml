@@ -104,25 +104,15 @@ jobs:
       
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install PlatformIO Core
-        run: pip install --upgrade platformio
+        run: pip3 install --upgrade platformio
 
-      - name: Install PIO in Home
+      - name: Manually create penv
         run: |
-          python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
-          echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
-          source $HOME/.bashrc
-
-      # NOTE all req. PIO pip packages should already be installed, but found these to be necessary
-      # Missing packages determined from error messages
-      - name: Install required pip packages
-        run: |
-          source $HOME/.platformio/penv/bin/activate
-          pip install --upgrade catkin_pkg
-          pip uninstall em
-          pip install empy lark
+          cd ~/.platformio
+          python3 -m venv penv
 
       # Build the firmware for each environment in parallel
       - name: Build Firmware

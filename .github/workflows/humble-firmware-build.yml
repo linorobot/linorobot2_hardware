@@ -4,9 +4,21 @@ on:
   pull_request:
     branches:
       - humble*
+    paths-ignore:
+      - 'docs/**'
+      - .gitignore
+      - LICENSE
+      - README.md
+  
   push:
     branches:
       - humble*
+    paths-ignore:
+      - 'docs/**'
+      - .gitignore
+      - LICENSE
+      - README.md
+
   schedule:
     # Run every morning to detect flakiness and broken dependencies
     - cron: '03 1 * * *'
