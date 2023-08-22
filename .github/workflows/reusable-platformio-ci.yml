@@ -108,9 +108,13 @@ jobs:
 
       - name: Install PlatformIO Core
         run: pip3 install --upgrade platformio
-
-      - name: Manually create penv
+        
+      - name: Initialize PlatformIO and create penv
         run: |
+          pio --venv
+          if [ ! -d ~/.platformio ]; then
+            mkdir ~/.platformio
+          fi
           cd ~/.platformio
           python3 -m venv penv
 
