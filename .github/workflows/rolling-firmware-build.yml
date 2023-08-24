@@ -1,10 +1,14 @@
-name: ROS Foxy Firmware Build
+name: ROS Rolling Firmware Build
+
+# Get the default branch name from the repository settings
+env:
+  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
 
 on:
   pull_request:
-    # Run on PRs only to branches starting with 'foxy'
+    # Run only on PRs to the default branch (usually main or master)
     branches:
-      - foxy*
+      - DEFAULT_BRANCH
     # Don't run when the following files are changed which don't effect firmware.
     paths-ignore:
       - 'docs/**'
@@ -13,8 +17,11 @@ on:
       - README.md
   
   push:
-    # Run on pushes only to branches starting with 'foxy'
-    branches:
+    # Run on pushes to any branches except these distro-specific branches
+    branches-ignore:
+      - iron*
+      - humble*
+      - galactic*
       - foxy*
     # Don't run when the following files are changed which don't effect firmware.
     paths-ignore:
@@ -22,7 +29,7 @@ on:
       - .gitignore
       - LICENSE
       - README.md
-  
+    
   # Run daily at midnight to detect flakiness and broken dependencies
   schedule:
     - cron: '0 0 * * *'
@@ -36,6 +43,6 @@ jobs:
     # The current file calls the firmware workflow with the following parameters
     uses: ./.github/workflows/reusable-platformio-ci.yml
     with:
-      ros_distro: foxy
-      # The reference field will be set to 'foxy' only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
-      reference: ${{ github.event_name == 'schedule' && 'foxy' || '' }}
+      ros_distro: rolling
+      # The reference field will be set to the default branch only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
+      reference: ${{ github.event_name == 'schedule' && github.event.repository.default_branch || '' }}

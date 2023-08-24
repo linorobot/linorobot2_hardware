@@ -1,10 +1,10 @@
-name: ROS Foxy Firmware Build
+name: ROS Galactic Firmware Build
 
 on:
   pull_request:
-    # Run on PRs only to branches starting with 'foxy'
+    # Run on PRs only to branches starting with 'galactic'
     branches:
-      - foxy*
+      - galactic*
     # Don't run when the following files are changed which don't effect firmware.
     paths-ignore:
       - 'docs/**'
@@ -13,9 +13,9 @@ on:
       - README.md
   
   push:
-    # Run on pushes only to branches starting with 'foxy'
+    # Run on pushes only to branches starting with 'galactic'
     branches:
-      - foxy*
+      - galactic*
     # Don't run when the following files are changed which don't effect firmware.
     paths-ignore:
       - 'docs/**'
@@ -36,6 +36,6 @@ jobs:
     # The current file calls the firmware workflow with the following parameters
     uses: ./.github/workflows/reusable-platformio-ci.yml
     with:
-      ros_distro: foxy
-      # The reference field will be set to 'foxy' only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
-      reference: ${{ github.event_name == 'schedule' && 'foxy' || '' }}
+      ros_distro: galactic
+      # The reference field will be set to 'galactic' only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
+      reference: ${{ github.event_name == 'schedule' && 'galactic' || '' }}
