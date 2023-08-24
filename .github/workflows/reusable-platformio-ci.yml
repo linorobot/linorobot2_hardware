@@ -1,10 +1,20 @@
-name: PlatformIO CI
+name: Reusable PlatformIO CI
 
 # Controls when this action will run.
 on:
-  push:
-  pull_request: 
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ros_distro:
+        description: 'ROS_DISTRO variable'
+        required: true
+        type: string
+
+      reference:
+        description: 'Branch or tag of repo to checkout for build.'
+        default: ''
+        required: false
+        type: string
+
     
 jobs:
   # This job is used to build the calibration firmware
@@ -15,6 +25,8 @@ jobs:
     steps:
       # Check out the repository
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.reference }}
 
       # Cache dependencies to speed up workflows
       - uses: actions/cache@v3
@@ -47,6 +59,8 @@ jobs:
     steps:
       # check out the repository
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.reference }}
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -54,6 +68,7 @@ jobs:
           python-version: '3.9'
 
       # run the python script to parse the platformio.ini file and output as json to a matrix
+      # pass the ros distros desired as arguments
       - name: Parse platformio.ini
         id: set-matrix
         run: |
@@ -65,7 +80,7 @@ jobs:
     # require the pio-fw-matrix job to complete before running
     needs: pio-fw-matrix
     runs-on: ubuntu-latest
-    name: Build ${{ matrix.env }} firmware
+    name: Build ${{ matrix.env }} firmware on ROS ${{ inputs.ros_distro }}
     strategy:
       # don't stop all jobs if one fails
       fail-fast: false
@@ -76,6 +91,8 @@ jobs:
     steps:
       # Check out the repository
       - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.reference }}
 
       # speed up workflows by caching dependencies
       - uses: actions/cache@v3
@@ -87,30 +104,20 @@ jobs:
       
       - uses: actions/setup-python@v4
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: Install PlatformIO Core
-        run: pip install --upgrade platformio
+        run: pip3 install --upgrade platformio
 
-      - name: Install PIO in Home
+      - name: Manually create penv
         run: |
-          python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
-          echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
-          source $HOME/.bashrc
-
-      # NOTE all req. PIO pip packages should already be installed, but found these to be necessary
-      # Missing packages determined from error messages
-      - name: Install required pip packages
-        run: |
-          source $HOME/.platformio/penv/bin/activate
-          pip install --upgrade catkin_pkg
-          pip uninstall em
-          pip install empy lark
+          cd ~/.platformio
+          python3 -m venv penv
 
       # Build the firmware for each environment in parallel
       - name: Build Firmware
         env:
-            ROS_DISTRO: rolling
+          ROS_DISTRO: ${{ inputs.ros_distro }}
         run: |
           cd firmware
           pio run -e ${{ matrix.env }}
