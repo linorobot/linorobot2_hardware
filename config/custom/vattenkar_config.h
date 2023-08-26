@@ -12,31 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SQUARE_CONFIG_H
-#define SQUARE_CONFIG_H
+#ifndef VATTENKAR_CONFIG_H
+#define VATTENKAR_CONFIG_H
 
 #define LED_PIN 13 
 
-#define LINO_BASE DIFFERENTIAL_DRIVE 
+#define LINO_BASE SKID_STEER 
 
-#define USE_GENERIC_2_IN_MOTOR_DRIVER 
+#define USE_GENERIC_1_IN_MOTOR_DRIVER 
 #define USE_GY85_IMU
 
-#define K_P 20.                           
+#define K_P 0.6                             
 #define K_I 0.8                             
-#define K_D 5.                             
+#define K_D 0.5                             
 
-#define MOTOR_MAX_RPM 100
-#define MAX_RPM_RATIO 0.8
-#define MOTOR_OPERATING_VOLTAGE 12
-#define MOTOR_POWER_MAX_VOLTAGE 12
-#define MOTOR_POWER_MEASURED_VOLTAGE 11.67                         
-#define COUNTS_PER_REV1 2513
-#define COUNTS_PER_REV2 2580
-#define COUNTS_PER_REV3 2421
-#define COUNTS_PER_REV4 2501
-#define WHEEL_DIAMETER 0.09               
-#define LR_WHEELS_DISTANCE 0.24            
+#define MOTOR_MAX_RPM 140
+#define MAX_RPM_RATIO 0.85
+#define MOTOR_OPERATING_VOLTAGE 24
+#define MOTOR_POWER_MAX_VOLTAGE 14.6
+#define MOTOR_POWER_MEASURED_VOLTAGE 14.6                         
+#define COUNTS_PER_REV1 144384
+#define COUNTS_PER_REV2 140777
+#define COUNTS_PER_REV3 148326
+#define COUNTS_PER_REV4 144495
+#define WHEEL_DIAMETER 0.152               
+#define LR_WHEELS_DISTANCE 0.271            
 #define PWM_BITS 10                        
 #define PWM_FREQUENCY 20000
 
@@ -58,24 +58,24 @@
 #define MOTOR4_ENCODER_INV false 
 
 // Motor Pins
-#define MOTOR1_PWM 1
+#define MOTOR1_PWM 21
 #define MOTOR1_IN_A 20
-#define MOTOR1_IN_B 21
+#define MOTOR1_IN_B -1 
 #define MOTOR1_INV false
 
 #define MOTOR2_PWM 5
 #define MOTOR2_IN_A 6
-#define MOTOR2_IN_B 8
+#define MOTOR2_IN_B -1 
 #define MOTOR2_INV true
 
 #define MOTOR3_PWM 22
 #define MOTOR3_IN_A 23
-#define MOTOR3_IN_B 0
+#define MOTOR3_IN_B -1
 #define MOTOR3_INV false
 
 #define MOTOR4_PWM 4
 #define MOTOR4_IN_A 3
-#define MOTOR4_IN_B 2
+#define MOTOR4_IN_B -1
 #define MOTOR4_INV false
 
 #define PWM_MAX pow(2, PWM_BITS) - 1
