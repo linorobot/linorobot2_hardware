@@ -1,3 +1,12 @@
+## Build status
+<!-- Build Status populated by Github Actions runs -->
+ROS 2 Distro | Branch | Build status
+:----------: | :----: | :----------:
+**Rolling** | [`master`](../../tree/master) | [![Rolling Firmware Build](../../actions/workflows/rolling-firmware-build.yml/badge.svg?branch=master)](../../actions/workflows/rolling-firmware-build.yml?branch=master)
+**Humble** | [`humble`](../../tree/humble) | [![Humble Firmware Build](../../actions/workflows/humble-firmware-build.yml/badge.svg?branch=humble)](../../actions/workflows/humble-firmware-build.yml?branch=humble)
+**Galactic** | [`galactic`](../../tree/galactic) | [![Galactic Firmware Build](../../actions/workflows/galactic-firmware-build.yml/badge.svg?branch=galactic)](../../actions/workflows/galactic-firmware-build.yml?branch=galactic)
+**Foxy** | [`foxy`](../../tree/foxy) | [![Foxy Firmware Build](../../actions/workflows/foxy-firmware-build.yml/badge.svg?branch=foxy)](../../actions/workflows/foxy-firmware-build.yml?branch=foxy)
+
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 
@@ -428,3 +437,6 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 ### 9. The robot rotates after braking
 - This happens due to the same reason as 7. When the motor hits its maximum rpm and fails to reach the target velocity, the PID controller's error continously increases. The abrupt turning motion is due to the PID controller's attempt to further compensate the accumulated error. To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors while moving to avoid huge accumulative errors when the robot stops.
 
+## Developers
+#### Adding firmware compilation tests for a new ROS distro
+To add a new distro to the CI tests, modify the `master` (default) branch. Inside of `.github/workflows`, duplicate an existing distro workflow YAML file. For example, to add ROS2 Iron support, one could copy `humble-firmware-build.yml` to `iron-firmware-build.yml`. Assuming that an `iron` branch exists (if not one could create one using the `master` branch as a base and modify as necessary), inside of `iron-firmware-build.yml`, rename all instances of the word `humble` with `iron`. It would be as simple as using 'find and replace' in many IDEs. Commit these changes to a feature branch, create a PR to merge into the `master` branch, and then backport the PR to other branches. It is only necessary to have `iron-firmware-build.yml` on the `master` and `iron` branch, however it may be simpler to keep the branches in sync by having every workflow file on all branches.

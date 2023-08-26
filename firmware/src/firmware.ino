@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <Arduino.h>
-#include <micro_ros_arduino.h>
+#include <micro_ros_platformio.h>
 #include <stdio.h>
 
 #include <rcl/rcl.h>
@@ -110,7 +110,8 @@ void setup()
         }
     }
     
-    set_microros_transports();
+    Serial.begin(115200);
+    set_microros_serial_transports(Serial);
 }
 
 void loop() {
