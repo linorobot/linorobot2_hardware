@@ -14,16 +14,8 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#ifdef USE_BEEBO_CONFIG
-    #include "custom/beebo_config.h"
-#endif
-
-#ifdef USE_BEEBO_M_CONFIG
-    #include "custom/beebo_m_config.h"
-#endif
-
-#ifdef USE_SQUARE_CONFIG
-    #include "custom/square_config.h"
+#ifdef USE_VATTENKAR_CONFIG
+    #include "custom/vattenkar_config.h"
 #endif
 
 #ifdef USE_DEV_CONFIG
