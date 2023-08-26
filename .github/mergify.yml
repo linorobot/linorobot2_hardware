@@ -1,0 +1,35 @@
+pull_request_rules:
+  - name: Backport to Humble at reviewer's discretion
+    conditions:
+      - base=master
+      - "label=backport-humble"
+    actions:
+      backport:
+        branches:
+          - humble
+
+  - name: Backport to Galactic at reviewer's discretion
+    conditions:
+      - base=master
+      - "label=backport-galactic"
+    actions:
+      backport:
+        branches:
+          - galactic
+
+  - name: Backport to Foxy at reviewer's discretion
+    conditions:
+      - base=master
+      - "label=backport-foxy"
+    actions:
+      backport:
+        branches:
+          - foxy
+
+  - name: Ask to resolve conflict
+    conditions:
+      - conflict
+      - author!=mergify
+    actions:
+        comment:
+          message: This pull request is in conflict. Could you fix it @{{author}}?
