@@ -12,23 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifdef USE_BEEBO_CONFIG
-    #include "custom/beebo_config.h"
-#endif
-
-#ifdef USE_BEEBO_M_CONFIG
-    #include "custom/beebo_m_config.h"
-#endif
-
-#ifdef USE_SQUARE_CONFIG
-    #include "custom/square_config.h"
+#ifdef USE_VATTENKAR_CONFIG
+    #include "custom/vattenkar_config.h"
 #endif
 
 #ifdef USE_DEV_CONFIG
     #include "custom/dev_config.h"
 #endif
 
-#if !defined (USE_BEEBO_CONFIG) && !defined (USE_DEV_CONFIG) && !defined (USE_SQUARE_CONFIG) && !defined (USE_BEEBO_M_CONFIG)
+#if !defined (USE_VATTENKAR_CONFIG)
     #include "lino_base_config.h"
 #endif
-
