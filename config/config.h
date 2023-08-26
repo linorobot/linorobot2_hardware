@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#ifdef USE_VATTENKAR_CONFIG
+    #include "custom/vattenkar_config.h"
+#endif
+
 #ifdef USE_DEV_CONFIG
     #include "custom/dev_config.h"
 #endif
@@ -19,4 +23,3 @@
 #if !defined (USE_VATTENKAR_CONFIG)
     #include "lino_base_config.h"
 #endif
-
