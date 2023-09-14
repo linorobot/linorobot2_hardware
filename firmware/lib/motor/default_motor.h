@@ -1,3 +1,11 @@
+/**
+ * @file default_motor.h
+ * @brief Definitions for various motor driver classes.
+ * 
+ * Contains classes for different motor drivers, each inheriting from MotorInterface.
+ */
+
+
 // Copyright (c) 2021 Juan Miguel Jimeno
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,9 +25,11 @@
 
 #include <Arduino.h>
 #include <Servo.h> 
+#include "motor_interface.h"  // Base class for motor drivers
 
-#include "motor_interface.h"
-
+/**
+ * @brief Motor drivers with 2 Direction Pins(INA, INB) and 1 PWM(ENABLE) pin ie. L298, L293, VNH5019
+ */
 class Generic2: public MotorInterface
 {
     private:
@@ -69,6 +79,9 @@ class Generic2: public MotorInterface
         }
 };
 
+/**
+ * @brief Motor drivers with 1 Direction Pin(INA) and 1 PWM(ENABLE) pin.
+ */
 class Generic1: public MotorInterface
 {
     private:
@@ -113,6 +126,9 @@ class Generic1: public MotorInterface
         }
 };
 
+/**
+ * @brief BTS7960 motor driver.
+ */
 class BTS7960: public MotorInterface
 {
     private:
@@ -182,6 +198,9 @@ class BTS7960: public MotorInterface
         }
 };
 
+/**
+ * @brief Motor Electronic Speed Controller (ESC) for brushless motors.
+ */
 class ESC: public MotorInterface
 {
     private:
@@ -216,4 +235,4 @@ class ESC: public MotorInterface
         }
 };
 
-#endif
+#endif  // DEFAULT_MOTOR_H

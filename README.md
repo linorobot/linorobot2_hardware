@@ -438,7 +438,26 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 - This happens due to the same reason as 7. When the motor hits its maximum rpm and fails to reach the target velocity, the PID controller's error continously increases. The abrupt turning motion is due to the PID controller's attempt to further compensate the accumulated error. To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors while moving to avoid huge accumulative errors when the robot stops.
 
 ## Developers
-#### Adding firmware compilation tests for a new ROS distro
+### Adding firmware compilation tests for a new ROS distro
 To add a new distro to the CI tests, modify the `rolling` (default) branch. Inside of `.github/workflows`, duplicate an existing distro workflow YAML file. For example, to add ROS2 Iron support, one could copy `humble-firmware-build.yml` to `iron-firmware-build.yml`. Assuming that an `iron` branch exists (if not one could create one using the `humble` branch as a base and modify as necessary), inside of `iron-firmware-build.yml`, rename all instances of the word `humble` with `iron`. It would be as simple as using 'find and replace' in many IDEs. Commit these changes to a feature branch, create a PR to merge into the `rolling` branch, and then backport the PR to other branches. It is only necessary to have `iron-firmware-build.yml` on the `rolling` and `iron` branch, however it may be simpler to keep the branches in sync by having every workflow file on all branches.
 
 Lastly, the new branch must be added to the CI table written in Markdown at the top of README.md that displays the status of each branch using badges. This table is organized with the most current ROS2 branch at the top, which is always `rolling`, and then in descending chronological order. Adding a new distro can be done by copying an existing row of the table, pasting in the appropriate position, and changing the titles and branch names in the relative paths. 
+
+### Unit Testing
+
+The functionality of each unit of code in this project is tested using PlatformIO and the Unity testing framework. Please refer to [PlatformIO Unit Testing](https://docs.platformio.org/en/stable/advanced/unit-testing/index.html) for details about PlatformIO, the Unity framework, and how to add/exclude tests from environments. The goal for this project is to test all units of code. This is an ongoing effort, and Pull Requests that add unit tests for existing code are highly encouraged.
+
+#### `native` vs `embedded`
+
+- `firmware/test/desktop` contains tests for code that can run without a connection to a microcontroller. These tests use the PlatformIO `native` environment and can be run with the command `pio test -e native`. An example of such code is the `pid` library.
+
+- `firmware/test/embedded` houses tests for code that depends on hardware-specific features, like the `digitalWrite()` function. For instance, the unit tests for the `motor` library are located in this directory due to their hardware dependencies. Currently, to run the `embedded` unit tests, a connection to a microcontroller is required. To execute these tests on a specific microcontroller (e.g., Teensy 4.1), use the command `pio test -e teensy41`.
+
+#### Testing in CI
+
+At the moment, only the `native` unit tests are executed in GitHub Actions during CI. There's potential to incorporate embedded unit testing into CI using [PlatformIO's Remote Test Runners](https://docs.platformio.org/en/stable/advanced/unit-testing/runner.html#remote-test-runner).
+
+#### Unit Testing For New Features
+
+Pull Requests introducing new features to the project should include corresponding unit tests. This ensures the functionality of the feature and helps prevent future regressions.
+

@@ -1,3 +1,10 @@
+/**
+ * @file pid.cpp
+ * @brief Implements the PID controller class.
+ *
+ * This file provides the implementation of the PID controller class methods.
+ */
+
 // Copyright (c) 2021 Juan Miguel Jimeno
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +22,9 @@
 #include "Arduino.h"
 #include "pid.h"
 
+/**
+ * @brief Construct a new PID:: PID object.
+ */
 PID::PID(float min_val, float max_val, float kp, float ki, float kd):
     min_val_(min_val),
     max_val_(max_val),
@@ -24,28 +34,39 @@ PID::PID(float min_val, float max_val, float kp, float ki, float kd):
 {
 }
 
+/**
+ * @brief Compute the PID output based on setpoint and measured value.
+ */
 double PID::compute(float setpoint, float measured_value)
 {
     double error;
     double pid;
 
-    //setpoint is constrained between min and max to prevent pid from having too much error
+    // Calculate error
     error = setpoint - measured_value;
+
+    // Update integral and derivative terms
     integral_ += error;
     derivative_ = error - prev_error_;
 
+    // Reset integral and derivative if setpoint and error are zero
     if(setpoint == 0 && error == 0)
     {
         integral_ = 0;
         derivative_ = 0;
     }
 
+    // Calculate PID output
     pid = (kp_ * error) + (ki_ * integral_) + (kd_ * derivative_);
     prev_error_ = error;
 
+    // Constrain PID output between min and max values
     return constrain(pid, min_val_, max_val_);
 }
 
+/**
+ * @brief Update the PID constants.
+ */
 void PID::updateConstants(float kp, float ki, float kd)
 {
     kp_ = kp;

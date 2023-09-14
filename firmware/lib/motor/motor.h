@@ -1,3 +1,15 @@
+/**
+ * @file motor.h
+ * @brief Configuration header for selecting motor driver.
+ * 
+ * This header allows users to select which motor driver they want to use.
+ * By defining a specific macro, the corresponding motor driver class will be selected.
+ * 
+ * To add a new motor config, include the header of your new driver and then create a config constant that you can
+ * use in lino_base_config.h. Pass your built-in class to Motor macro with a conditional define
+ */
+
+
 // Copyright (c) 2021 Juan Miguel Jimeno
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,29 +27,23 @@
 #ifndef MOTOR_H
 #define MOTOR_H
 
-// include the header of your new driver here similar to default_motor.h
-#include "default_motor.h"
+#include "default_motor.h" // Default motor driver definitions.
 
-// now you can create a config constant that you can use in lino_base_config.h
+// Define the motor driver based on user's macro definition.
 #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
-    // pass your built in class to Motor macro
-    #define Motor Generic2
+    #define Motor Generic2  ///< Use Generic2 motor driver.
 #endif
 
 #ifdef USE_GENERIC_1_IN_MOTOR_DRIVER
-    // pass your built in class to Motor macro
-    #define Motor Generic1
+    #define Motor Generic1  ///< Use Generic1 motor driver.
 #endif
 
 #ifdef USE_BTS7960_MOTOR_DRIVER
-    // pass your built in class to Motor macro
-    #define Motor BTS7960
+    #define Motor BTS7960   ///< Use BTS7960 motor driver.
 #endif
 
 #ifdef USE_ESC_MOTOR_DRIVER
-    // pass your built in class to Motor macro
-    #define Motor ESC
+    #define Motor ESC       ///< Use ESC motor driver.
 #endif
 
-
-#endif
+#endif  // MOTOR_H

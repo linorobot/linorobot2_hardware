@@ -1,3 +1,11 @@
+/**
+ * @file pid.h
+ * @brief Defines the PID controller class.
+ *
+ * This file provides the definition of the PID controller class, which is used to compute
+ * control outputs based on setpoints and measured values.
+ */
+
 // Copyright (c) 2021 Juan Miguel Jimeno
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,11 +25,39 @@
 
 #include "Arduino.h"
 
+/**
+ * @brief A Proportional-Integral-Derivative (PID) controller class.
+ */
 class PID
 {
     public:
+        /**
+         * @brief Construct a new PID object.
+         * 
+         * @param min_val Minimum output value.
+         * @param max_val Maximum output value.
+         * @param kp Proportional constant.
+         * @param ki Integral constant.
+         * @param kd Derivative constant.
+         */
         PID(float min_val, float max_val, float kp, float ki, float kd);
+
+        /**
+         * @brief Compute the PID output.
+         * 
+         * @param setpoint Desired setpoint.
+         * @param measured_value Current measured value.
+         * @return double PID output.
+         */
         double compute(float setpoint, float measured_value);
+
+        /**
+         * @brief Update the PID constants.
+         * 
+         * @param kp New proportional constant.
+         * @param ki New integral constant.
+         * @param kd New derivative constant.
+         */
         void updateConstants(float kp, float ki, float kd);
 
     private:

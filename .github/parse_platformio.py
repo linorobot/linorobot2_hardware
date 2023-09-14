@@ -12,7 +12,8 @@ environments = []
 for section in config.sections():
     if section.startswith("env:"):
         env_name = section.split("env:")[1]
-        environments.append({"env": env_name})
+        if env_name != "native":
+            environments.append({"env": env_name})
 
 # Output the environments as a JSON array
 print(json.dumps(environments))

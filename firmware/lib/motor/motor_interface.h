@@ -1,3 +1,11 @@
+/**
+ * @file motor_interface.h
+ * @brief Abstract base class for motor drivers.
+ * 
+ * Provides a common interface for all motor drivers.
+ */
+
+
 // Copyright (c) 2021 Juan Miguel Jimeno
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +23,11 @@
 #ifndef MOTOR_INTERFACE
 #define MOTOR_INTERFACE
 
+/**
+ * @brief Abstract base class for motor drivers.
+ * 
+ * Defines the common interface that all motor drivers must implement.
+ */
 class MotorInterface
 {
     bool invert_;
@@ -43,4 +56,4 @@ class MotorInterface
         }
 };
 
-#endif
+#endif // MOTOR_INTERFACE_H
