@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <Arduino.h>
-#include <WiFi.h>
 #include "config.h"
 #include "syslog.h"
 #include "wifis.h"
 
 #ifdef WIFI_AP_LIST
+#include <WiFi.h>
 #include <WiFiMulti.h>
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile unsigned long init = millis(); \
