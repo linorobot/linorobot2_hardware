@@ -27,6 +27,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ inputs.reference }}
+          path: repo
 
       # Cache dependencies to speed up workflows
       - uses: actions/cache@v3
@@ -36,16 +37,13 @@ jobs:
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio
 
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Install PlatformIO Core
-        run: pip install --upgrade platformio
+      - name: Install environment
+        uses: ./repo/.github/actions/platformio-env
 
       - name: Build Calibration
         run: |
-          cd calibration
+          export PATH=$PATH:~/.platformio/penv/bin
+          cd repo/calibration
           pio run
 
 
@@ -93,38 +91,25 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ inputs.reference }}
+          path: repo
 
-      # speed up workflows by caching dependencies
+      # Cache dependencies to speed up workflows
       - uses: actions/cache@v3
         with:
           path: |
             ~/.cache/pip
             ~/.platformio/.cache
           key: ${{ runner.os }}-pio
-      
-      - uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
 
-      - name: Install PlatformIO Core
-        run: pip3 install --upgrade platformio
-
-      - name: Initialize Platformio, manually create .platformio and penv if needed
-        run: |
-          pio --version
-          if [ ! -d ~/.platformio ]; then
-            mkdir ~/.platformio
-          fi
-          
-          if [ ! -d ~/.platformio/penv ]; then
-            cd ~/.platformio
-            python3 -m venv penv
-          fi
+      - name: Install environment
+        uses: ./repo/.github/actions/platformio-env
           
       # Build the firmware for each environment in parallel
       - name: Build Firmware
         env:
           ROS_DISTRO: ${{ inputs.ros_distro }}
+        shell: bash
         run: |
-          cd firmware
+          export PATH=$PATH:~/.platformio/penv/bin
+          cd repo/firmware
           pio run -e ${{ matrix.env }}
