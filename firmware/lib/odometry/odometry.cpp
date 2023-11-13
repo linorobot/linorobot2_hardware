@@ -14,6 +14,9 @@
 
 #include "odometry.h"
 
+/**
+ * @brief Constructor implementation for the Odometry class.
+ */
 Odometry::Odometry():
     x_pos_(0.0),
     y_pos_(0.0),
@@ -23,6 +26,9 @@ Odometry::Odometry():
     odom_msg_.child_frame_id = micro_ros_string_utilities_set(odom_msg_.child_frame_id, "base_footprint");
 }
 
+/**
+ * @brief Update the odometry based on velocities.
+ */
 void Odometry::update(float vel_dt, float linear_vel_x, float linear_vel_y, float angular_vel_z)
 {
     float delta_heading = angular_vel_z * vel_dt; //radians
@@ -71,11 +77,17 @@ void Odometry::update(float vel_dt, float linear_vel_x, float linear_vel_y, floa
     odom_msg_.twist.covariance[35] = 0.0001;
 }
 
+/**
+ * @brief Get the current odometry data.
+ */
 nav_msgs__msg__Odometry Odometry::getData()
 {
     return odom_msg_;
 } 
 
+/**
+ * @brief Convert Euler angles to a quaternion.
+ */
 const void Odometry::euler_to_quat(float roll, float pitch, float yaw, float* q) 
 {
     float cy = cos(yaw * 0.5);

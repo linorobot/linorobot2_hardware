@@ -113,3 +113,52 @@ jobs:
           export PATH=$PATH:~/.platformio/penv/bin
           cd repo/firmware
           pio run -e ${{ matrix.env }}
+
+
+  # This job runs unit tests in the "native" (desktop/generic) environment
+  test-native:
+    runs-on: ubuntu-latest
+    strategy:
+        # don't stop all jobs if one fails
+        fail-fast: false
+
+    steps:
+      # Check out the repository
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.reference }}
+
+      # speed up workflows by caching dependencies
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio
+      
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install PlatformIO Core
+        run: pip3 install --upgrade platformio
+
+      - name: Initialize Platformio, manually create .platformio and penv if needed
+        run: |
+          pio --version
+          if [ ! -d ~/.platformio ]; then
+            mkdir ~/.platformio
+          fi
+          
+          if [ ! -d ~/.platformio/penv ]; then
+            cd ~/.platformio
+            python3 -m venv penv
+          fi
+
+      # Run unit tests for the native environment
+      - name: Run Unit Tests on native
+        env:
+          ROS_DISTRO: ${{ inputs.ros_distro }}
+        run: |
+          cd firmware
+          pio test -e native
