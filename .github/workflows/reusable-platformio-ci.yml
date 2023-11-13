@@ -109,9 +109,6 @@ jobs:
       - name: Install PlatformIO Core
         run: pip3 install --upgrade platformio
 
-      - name: Install catkin_pkg
-        run: pip install --upgrade catkin_pkg
-
       - name: Initialize Platformio, manually create .platformio and penv if needed
         run: |
           pio --version
@@ -123,7 +120,10 @@ jobs:
             cd ~/.platformio
             python3 -m venv penv
           fi
-          
+
+      - name: Install catkin_pkg
+        run: pip install --upgrade catkin_pkg
+
       # Build the firmware for each environment in parallel
       - name: Build Firmware
         env:
