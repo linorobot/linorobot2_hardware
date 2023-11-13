@@ -43,6 +43,9 @@ jobs:
       - name: Install PlatformIO Core
         run: pip install --upgrade platformio
 
+      - name: Install catkin_pkg
+        run: pip install --upgrade catkin_pkg
+
       - name: Build Calibration
         run: |
           cd calibration
