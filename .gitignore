@@ -1,2 +1,4 @@
-.pio
-.swp
+**/.pio/
+**/.swp/
+**/.vscode/
+**/.gitignore
