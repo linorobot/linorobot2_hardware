@@ -1,23 +1,83 @@
 # linorobot/linorobot2_hardware
 
-## Installation
+Depend on your use cases, you may choose where to install the softwares.
 
-Depend on your use case, for esp32, the robot can run micro ros wifi transport without a robot computer (eg Pi 4) on it. All the software will be installed on your desktop computer. In other case, all software mentioned in this guide should be installed on the robot computer.
+## Software installation on your laptop or desktop PC for the esp32
+
+With the WIFI capability of the esp32, the robot firmware can be developed on your laptop or desktop PC. After the firmware is written to the esp32 using USB cable, the following firmware updates can be performed remotely using ArduinoOTA. The debug messages can be read using remote syslog server. Using the WIFI transport of the micro ROS, the navigation packages NAV2 / SLAM and visulization tool RVIZ2 can be served on your laptop or desktop PC. This is a more comfortable development enviroment than the restricted robot computer. The cost of the robot will be a little cheaper, as no robot computer is needed on the robot.
+
+### 1. ROS2 installation
+
+Follow the ROS2 [Instation](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html).
+And walk through the tutorial [Beginner: CLI tools](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html).
+
+### 2. NAV2 installation
+
+Follow the NAV2 [Getting started](https://navigation.ros.org/getting_started/index.html#).
+And walk through the [First-Time Robot Setup Guide](https://navigation.ros.org/setup_guides/index.html).
+
+### 3. PlatformIO IDE for VSCode installation
+
+The VSCode is a powerful and popular IDE tool. Please follow the guide [PlatformIO IDE for VSCode](https://platformio.org/install/ide?install=vscode).
+The PlatformIO core CLI will be installed automatically.
+
+You may also install the C++, Gitlens, markdownlint and ROS extensions. They are very helpful.
+
+Be sure to enable [trailing whitespaces trimming](https://linux.how2shout.com/remove-trailing-spaces-automatically-in-visual-code-studio/).
+
+### 4. Enable remote syslog server
+
+Edit syslog server config
+
+    sudo nano /etc/rsyslog.conf
+
+    # provides UDP syslog reception
+    module(load="imudp")
+    input(type="imudp" port="514")
+
+    $template Incoming-logs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
+    *.* ?Incoming-logs
+
+Restart the syslog service
+
+    sudo systemctl restart rsyslog
+
+### 5. Build micro ROS agent
+
+Follow the [micro ROS agent](https://github.com/micro-ROS/micro_ros_setup?tab=readme-ov-file#building-micro-ros-agent)
+to setup and build agent. Skip the steps to build firmware, as we will build the firmware from another source.
+
+Then run the agent app,
+
+    # Run a micro-ROS agent
+    ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+
+### 6. Clone the linorobot2_hardware source
+
+    cd $HOME
+    git clone https://github.com/hippo5329/linorobot2_hardware.git
+
+In VSCOde, from the File pull-down menu, Open Folder, select the linorobot_hardware directory.
+
+## Software installation on the robot computer (if you have one and want to build firmware there)
 
 ### 1. ROS2 and linorobot2 installation
 
 It is assumed that you already have ROS2 and linorobot2 package installed. If you haven't, go to [linorobot2](https://github.com/linorobot/linorobot2) package for installation guide.
 
-### 2. Download linorobot2_hardware
+### 2. Clone the linorobot2_hardware git repo
 
     cd $HOME
-    git clone https://github.com/linorobot/linorobot2_hardware -b $ROS_DISTRO
+    git clone https://github.com/hippo5329/linorobot2_hardware.git
 
 ### 3. Install PlatformIO
 
 Download and install platformio. [Platformio](https://platformio.org/) allows you to develop, configure, and upload the firmware without the Arduino IDE. This means that you can upload the firmware remotely which is ideal on headless setup especially when all components have already been fixed.
 
-    python3 -c "$(curl -fsSL https://raw.githubusercontent.com/platformio/platformio/master/scripts/get-platformio.py)"
+    sudo apt-get install python3-venv
+
+    curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
+    python3 get-platformio.py
 
 Add platformio to your $PATH:
 
@@ -585,23 +645,6 @@ The esp32 can run micro ros wifi transport. The robot can be built without a rob
 ### Start the micro ros wifi transport agent
 
     ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
-
-### syslog server setup
-
-Edit syslog server config
-
-    sudo nano /etc/rsyslog.conf
-
-    # provides UDP syslog reception
-    module(load="imudp")
-    input(type="imudp" port="514")
-
-    $template Incoming-logs,"/var/log/%HOSTNAME%/%PROGRAMNAME%.log"
-    *.* ?Incoming-logs
-
-Restart the syslog service
-
-    sudo systemctl restart rsyslog
 
 ### Modify custom configuration
 
