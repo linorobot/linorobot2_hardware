@@ -1,11 +1,49 @@
-# linorobot/linorobot2_hardware
+# hippo5329/linorobot2_hardware
+
+This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorobot/linorobot2_hardware) project which builds firmware for micro-controllers to run micro ROS. The esp32 support is added to this fork. The WIFI capability of the esp32 can be used to build low-cost mobile robots with navigation control under ROS2.
+
+This is an open source project.
+Questions (via [Discussions](https://github.com/hippo5329/linorobot2_hardware/discussions)),
+bug reports (via [Issues](https://github.com/hippo5329/linorobot2_hardware/issues)) and
+code cotributions (via [Pull requests](https://github.com/hippo5329/linorobot2_hardware/pulls)) are welcome.
+
+Video of [A ROS2 robot tank built on esp32. Navigating..](https://www.youtube.com/watch?v=wmI4SzyXW6o)
 
 ## Supported micro-controllers
 
 - [teensy](https://www.pjrc.com/teensy/): the original micro-contoller supported in the linorobot/linorobot_hardware project. The teensy dose not support WIFI.
-- [esp32](https://en.wikipedia.org/wiki/ESP32): support added in this fork. There are many varients. The RISC-V varient esp32-c3 does not support PCNT (hardware pulse counters), which is needed for encoders. So the esp32-c3 is not re3commanded.
+- [esp32](https://en.wikipedia.org/wiki/ESP32): support added in this fork. There are many varients. The RISC-V varient esp32-c3 does not support PCNT (hardware pulse counters), which is needed for encoders. So the esp32-c3 is not recommanded.
 
-Please note, the pico-w is not supported. I added experimental configuration and code for pico-w. But they are not tested. I am not familiar with pico-w and I don't have pico-w boards to test. The size of memory storage on the pico-w might be too low to run micro ROS WIFI transport.
+Please note, the pico-w is not supported yet. I added experimental configuration and code for pico-w. But they are not tested. I am not familiar with pico-w and I don't have pico-w boards to test. The size of memory storage on the pico-w might be too low to run micro ROS WIFI transport.
+
+## Hardware requirements to build mobile robots with navigation control under ROS2
+
+### 1. odometry and localization sensors
+
+The following sensors are required for a typical navigation robot setup:
+
+- wheel encoder: eg. motor with hall-effect senosrs
+- IMU sensor: eg. MPU6050
+- lidar sensor: eg. ldlidar LD19
+
+The esp32 does not have the speed/space to process the lidar data. I wrote a driver to forward the serial raw data to server in udp. The server will reasemblly the lidar data to ROS2 messages. I used the ld19 from ldlidar because the server code is easier to use. So if you want to build an esp32 based robot without a robot computer on it, please note that only ldlidar is supported and only LD19 is tested.
+
+The [ldlidar LD19](https://www.amazon.com/gp/product/B0B1V8D36H/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1) which I used.
+
+### 2. power and movement
+
+- battery: eg. 3s (12.6V) or 2s (8.4V) li-ion rechageable batterys
+- motor driver: eg. A4950 (<40V), DRV8833 (<10V)
+- motors: eg. gear motors with encoder
+- wheels
+- chassis
+
+A low-cost [robot tank chassis](https://www.amazon.com/gp/product/B09KL2DP68/ref=ppx_yo_dt_b_search_asin_title?ie=UTF8&psc=1) which I used.
+
+### 3. controller board
+
+- all-in-one: eg. [waveshare general driver for robots](https://www.waveshare.com/general-driver-for-robots.htm) is recomamnded if you are new to esp32 and micro ROS. This board is supported using the *gendrv* configuration to build the firmware.
+- build-it-yourself: you may build controller on prototyping boards or design your own PCBs. This is the way for experiences designers. Please check the [esp32 pinout](https://randomnerdtutorials.com/esp32-pinout-reference-gpios/) for avaible pins. The popular esp32 modules may have 30 pins or 38 pins. Some have external WIFI antenna connectors, which will be helpful to extended ranges or when the controller is covered by metal chassis. You may create your own firmware configuration from the *esp32tank* configuration.
 
 ## Software installation on your laptop or desktop PC
 
