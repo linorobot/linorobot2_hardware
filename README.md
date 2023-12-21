@@ -1,29 +1,37 @@
 # linorobot/linorobot2_hardware
 
-Depend on your use cases, you may choose where to install the softwares.
+## Supported micro-controllers
 
-## Software installation on your laptop or desktop PC for the esp32
+- [teensy](https://www.pjrc.com/teensy/): the original micro-contoller supported in the linorobot/linorobot_hardware project. The teensy dose not support WIFI.
+- [esp32](https://en.wikipedia.org/wiki/ESP32): support added in this fork. There are many varients. The RISC-V varient esp32-c3 does not support PCNT (hardware pulse counters), which is needed for encoders. So the esp32-c3 is not re3commanded.
+
+Please note, the pico-w is not supported. I added experimental configuration and code for pico-w. But they are not tested. I am not familiar with pico-w and I don't have pico-w boards to test. The size of memory storage on the pico-w might be too low to run micro ROS WIFI transport.
+
+## Software installation on your laptop or desktop PC
+
+Depend on the use cases, you may choose where to install the softwares.
 
 With the WIFI capability of the esp32, the robot firmware can be developed on your laptop or desktop PC. After the firmware is written to the esp32 using USB cable, the following firmware updates can be performed remotely using ArduinoOTA. The debug messages can be read using remote syslog server. Using the WIFI transport of the micro ROS, the navigation packages NAV2 / SLAM and visulization tool RVIZ2 can be served on your laptop or desktop PC. This is a more comfortable development enviroment than the restricted robot computer. The cost of the robot will be a little cheaper, as no robot computer is needed on the robot.
 
-### 1. ROS2 installation
+### 1. PlatformIO IDE for VSCode installation
 
-Follow the ROS2 [Instation](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html).
-And walk through the tutorial [Beginner: CLI tools](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html).
+The VSCode is a powerful and popular IDE tool. Please follow the guide to install VSCode [VSCode and Docker](https://docs.ros.org/en/iron/How-To-Guides/Setup-ROS-2-with-VSCode-and-Docker-Container.html).
 
-### 2. NAV2 installation
-
-Follow the NAV2 [Getting started](https://navigation.ros.org/getting_started/index.html#).
-And walk through the [First-Time Robot Setup Guide](https://navigation.ros.org/setup_guides/index.html).
-
-### 3. PlatformIO IDE for VSCode installation
-
-The VSCode is a powerful and popular IDE tool. Please follow the guide [PlatformIO IDE for VSCode](https://platformio.org/install/ide?install=vscode).
-The PlatformIO core CLI will be installed automatically.
+Then follow the guide to install the PlatformIO extension [PlatformIO IDE for VSCode](https://platformio.org/install/ide?install=vscode). The PlatformIO core CLI will be installed automatically.
 
 You may also install the C++, Gitlens, markdownlint and ROS extensions. They are very helpful.
 
 Be sure to enable [trailing whitespaces trimming](https://linux.how2shout.com/remove-trailing-spaces-automatically-in-visual-code-studio/).
+
+### 2. ROS2 installation
+
+Follow the ROS2 [Instation](https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html).
+And walk through the tutorial [Beginner: CLI tools](https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools.html).
+
+### 3. NAV2 installation
+
+Follow the NAV2 [Getting started](https://navigation.ros.org/getting_started/index.html#).
+And walk through the [First-Time Robot Setup Guide](https://navigation.ros.org/setup_guides/index.html).
 
 ### 4. Enable remote syslog server
 
