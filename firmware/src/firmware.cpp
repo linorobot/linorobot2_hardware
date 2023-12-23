@@ -181,8 +181,8 @@ void rclErrorLoop()
 {
     while(true)
     {
-        flashLED(2);
-	runOta();
+        flashLED(2); // flash 2 times
+    	runOta();
     }
 }
 
@@ -503,11 +503,14 @@ void setup()
     initOta();
 
     bool imu_ok = imu.init();
-    if(!imu_ok)
+    if (!imu_ok) // take IMU failure as fatal
     {
-        while(1)
+        Serial.println("IMU init failed");
+        syslog(LOG_INFO, "%s IMU init failed %lu", __FUNCTION__, millis());
+        while (1)
         {
-            flashLED(3);
+            flashLED(3); // flash 3 times
+        	runOta();
         }
     }
     mag.init();
