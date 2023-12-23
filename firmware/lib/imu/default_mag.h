@@ -231,7 +231,6 @@ class QMC5883LMAG: public MAGInterface
             // here you can override startSensor() function and use the sensor's driver API
             // to initialize and test the sensor's connection during boot time
             Wire.begin();
-            bool ret;
             magnetometer_.initialize();
 
             return true;
