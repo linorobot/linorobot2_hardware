@@ -15,7 +15,7 @@ code contributions (via [Pull requests](https://github.com/hippo5329/linorobot2_
 
 ## Supported micro-controllers
 
-- [teensy](https://www.pjrc.com/teensy/) - the original micro-contoller supported in the linorobot/linorobot_hardware project. The teensy dose not support WIFI.
+- [teensy](https://www.pjrc.com/teensy/) - the original micro-controller supported in the linorobot/linorobot_hardware project. The teensy dose not support WIFI.
 - [esp32](https://en.wikipedia.org/wiki/ESP32) - support added in this fork. There are many varients. The RISC-V varient esp32-c3 does not support PCNT (hardware pulse counters), which is needed for encoders. So the esp32-c3 is not recommanded.
 - [pico-w](https://www.raspberrypi.com/documentation/microcontrollers/raspberry-pi-pico.html) - work-in-process. The configuration and code for pico-w are added. But they are not tested. The size of memory storage on the pico-w might be too low to run micro ROS WIFI transport.
 
@@ -24,11 +24,12 @@ code contributions (via [Pull requests](https://github.com/hippo5329/linorobot2_
 Install [PlatformIO IDE for VSCode](https://platformio.org/install/ide?install=vscode). The PlatformIO core CLI will be installed automatically.
 
     sudo apt update
+    sudo apt remove brltty -y
     sudo apt install python3-venv build-essential cmake git -y
     sudo apt install software-properties-common apt-transport-https wget -y
     wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add -
     sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
-    sudo apt install code
+    sudo apt install code -y
     code --install-extension platformio.platformio-ide
 
  Add platformio to $PATH in ~/.bashrc or ~/.profile .
