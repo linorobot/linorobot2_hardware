@@ -36,12 +36,12 @@ Motor motor3_controller(PWM_FREQUENCY, PWM_BITS, MOTOR3_INV, MOTOR3_PWM, MOTOR3_
 Motor motor4_controller(PWM_FREQUENCY, PWM_BITS, MOTOR4_INV, MOTOR4_PWM, MOTOR4_IN_A, MOTOR4_IN_B);
 
 Kinematics kinematics(
-    Kinematics::LINO_BASE, 
-    MOTOR_MAX_RPM, 
-    MAX_RPM_RATIO, 
-    MOTOR_OPERATING_VOLTAGE, 
-    MOTOR_POWER_MAX_VOLTAGE, 
-    WHEEL_DIAMETER, 
+    Kinematics::LINO_BASE,
+    MOTOR_MAX_RPM,
+    MAX_RPM_RATIO,
+    MOTOR_OPERATING_VOLTAGE,
+    MOTOR_POWER_MAX_VOLTAGE,
+    WHEEL_DIAMETER,
     LR_WHEELS_DISTANCE
 );
 
@@ -51,52 +51,53 @@ Motor *motors[4] = {&motor1_controller, &motor2_controller, &motor3_controller, 
 Encoder *encoders[4] = {&motor1_encoder, &motor2_encoder, &motor3_encoder, &motor4_encoder};
 String labels[4] = {"FRONT LEFT - M1: ", "FRONT RIGHT - M2: ", "REAR LEFT - M3: ", "REAR RIGHT - M4: "};
 
-void setup()
+void printSummary()
 {
-#ifdef BOARD_INIT
-    BOARD_INIT;
-#endif
+    Serial.println("\r\n================MOTOR ENCODER READINGS================");
+    Serial.print(labels[0]);
+    Serial.print(encoders[0]->read());
+    Serial.print(" ");
 
-    Serial.begin(BAUDRATE);
-    while (!Serial) {
-    }
-    Serial.println("Sampling process will spin the motors at its maximum RPM.");
-    Serial.println("Please ensure that the robot is ELEVATED and there are NO OBSTRUCTIONS to the wheels.");
+    Serial.print(labels[1]);
+    Serial.println(encoders[1]->read());
+
+    Serial.print(labels[2]);
+    Serial.print(encoders[2]->read());
+    Serial.print(" ");
+
+    Serial.print(labels[3]);
+    Serial.println(encoders[3]->read());
     Serial.println("");
-    Serial.println("Type 'spin' and press enter to spin the motors.");
-    Serial.println("Type 'sample' and press enter to spin the motors with motor summary.");
-    Serial.println("Press enter to clear command.");
+
+    Serial.println("================COUNTS PER REVOLUTION=================");
+    Serial.print(labels[0]);
+    Serial.print(counts_per_rev[0]);
+    Serial.print(" ");
+
+    Serial.print(labels[1]);
+    Serial.println(counts_per_rev[1]);
+
+    Serial.print(labels[2]);
+    Serial.print(counts_per_rev[2]);
+    Serial.print(" ");
+
+    Serial.print(labels[3]);
+    Serial.println(counts_per_rev[3]);
     Serial.println("");
-}
 
-void loop()
-{
-    static String cmd = "";
+    Serial.println("====================MAX VELOCITIES====================");
+    float max_rpm = kinematics.getMaxRPM();
 
-    while (Serial.available())
-    {
-        char character = Serial.read(); 
-        cmd.concat(character); 
-        Serial.print(character);
-        delay(1);
-        if(character == '\r' and cmd.equals("spin\r"))
-        {
-            cmd = "";
-            Serial.println("\r\n");
-            sampleMotors(0);
-        }
-        else if(character == '\r' and cmd.equals("sample\r"))
-        {
-            cmd = "";
-            Serial.println("\r\n");
-            sampleMotors(1);
-        }
-        else if(character == '\r')
-        {
-            Serial.println("");
-            cmd = "";
-        }
-    }
+    Kinematics::velocities max_linear = kinematics.getVelocities(max_rpm, max_rpm, max_rpm, max_rpm);
+    Kinematics::velocities max_angular = kinematics.getVelocities(-max_rpm, max_rpm,-max_rpm, max_rpm);
+
+    Serial.print("Linear Velocity: +- ");
+    Serial.print(max_linear.linear_x);
+    Serial.println(" m/s");
+
+    Serial.print("Angular Velocity: +- ");
+    Serial.print(max_angular.angular_z);
+    Serial.println(" rad/s");
 }
 
 void sampleMotors(bool show_summary)
@@ -136,58 +137,57 @@ void sampleMotors(bool show_summary)
 
             motors[i]->spin(PWM_MAX);
         }
-        
+
         counts_per_rev[i] = encoders[i]->read() / total_rev;
     }
     if(show_summary)
         printSummary();
 }
 
-void printSummary()
+void setup()
 {
-    Serial.println("\r\n================MOTOR ENCODER READINGS================");
-    Serial.print(labels[0]);
-    Serial.print(encoders[0]->read());
-    Serial.print(" ");
+#ifdef BOARD_INIT
+    BOARD_INIT;
+#endif
 
-    Serial.print(labels[1]);
-    Serial.println(encoders[1]->read());
-
-    Serial.print(labels[2]);
-    Serial.print(encoders[2]->read());
-    Serial.print(" ");
-
-    Serial.print(labels[3]);
-    Serial.println(encoders[3]->read());
+    Serial.begin(BAUDRATE);
+    while (!Serial) {
+    }
+    Serial.println("Sampling process will spin the motors at its maximum RPM.");
+    Serial.println("Please ensure that the robot is ELEVATED and there are NO OBSTRUCTIONS to the wheels.");
     Serial.println("");
-
-    Serial.println("================COUNTS PER REVOLUTION=================");
-    Serial.print(labels[0]);
-    Serial.print(counts_per_rev[0]);
-    Serial.print(" ");
-
-    Serial.print(labels[1]);
-    Serial.println(counts_per_rev[1]);
-    
-    Serial.print(labels[2]);
-    Serial.print(counts_per_rev[2]);
-    Serial.print(" ");
-
-    Serial.print(labels[3]);
-    Serial.println(counts_per_rev[3]);
+    Serial.println("Type 'spin' and press enter to spin the motors.");
+    Serial.println("Type 'sample' and press enter to spin the motors with motor summary.");
+    Serial.println("Press enter to clear command.");
     Serial.println("");
+}
 
-    Serial.println("====================MAX VELOCITIES====================");
-    float max_rpm = kinematics.getMaxRPM();
-    
-    Kinematics::velocities max_linear = kinematics.getVelocities(max_rpm, max_rpm, max_rpm, max_rpm);
-    Kinematics::velocities max_angular = kinematics.getVelocities(-max_rpm, max_rpm,-max_rpm, max_rpm);
+void loop()
+{
+    static String cmd = "";
 
-    Serial.print("Linear Velocity: +- ");
-    Serial.print(max_linear.linear_x);
-    Serial.println(" m/s");
-
-    Serial.print("Angular Velocity: +- ");
-    Serial.print(max_angular.angular_z);
-    Serial.println(" rad/s");
+    while (Serial.available())
+    {
+        char character = Serial.read();
+        cmd.concat(character);
+        Serial.print(character);
+        delay(1);
+        if(character == '\r' and cmd.equals("spin\r"))
+        {
+            cmd = "";
+            Serial.println("\r\n");
+            sampleMotors(0);
+        }
+        else if(character == '\r' and cmd.equals("sample\r"))
+        {
+            cmd = "";
+            Serial.println("\r\n");
+            sampleMotors(1);
+        }
+        else if(character == '\r')
+        {
+            Serial.println("");
+            cmd = "";
+        }
+    }
 }
