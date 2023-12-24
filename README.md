@@ -1,6 +1,12 @@
-# linorobot2_hardware
+# linorobot2_hardware with esp32 support
 
-This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorobot/linorobot2_hardware) project which builds firmware for micro-controllers to control mobile robots based on micro ROS. The esp32 support is added to this fork. The WIFI capability of the esp32 can be used to build low-cost mobile robots with navigation control under ROS2.
+This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorobot/linorobot2_hardware) project which builds firmware for micro-controllers to control mobile robots based on micro ROS. The esp32 support is added to this fork. 
+
+## Why esp32
+
+The WIFI capability of the esp32 can be used to build low-cost mobile robots with navigation control under ROS2.
+
+In traditional robot builds, there are robot computers (such as raspberry pi, jetson nono or PC) running the build tools and ROS2/NAV2 navigation stack. With the WIFI capability of the esp32, the robot firmware can be developed on your laptop or desktop PC. After the firmware is written to the esp32 using USB cable, the following firmware updates can be performed remotely using ArduinoOTA. The debug messages can be read using remote syslog server. Using the WIFI transport of the micro ROS, the navigation packages NAV2 / SLAM and visualization tool RVIZ2 can be served on your laptop or desktop PC. This is a more comfortable development environment than the more restricted robot computers. No robot computer is required on the robot now. Just an esp32 micro-controller will serve. And the cost of the robot will be a little cheaper.
 
 Please check the [Wiki](https://github.com/hippo5329/linorobot2_hardware/wiki) for configurations, guides and documents.
 Questions (via [Discussions](https://github.com/hippo5329/linorobot2_hardware/discussions)),
