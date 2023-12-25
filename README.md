@@ -6,12 +6,7 @@ This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorob
 
 The WIFI capability of the esp32 can be used to build low-cost mobile robots with navigation control under ROS2.
 
-In traditional robot builds, there are robot computers (such as raspberry pi, jetson nono or PC) running the build tools and ROS2/NAV2 navigation stack. With the WIFI capability of the esp32, the robot firmware can be developed on your laptop or desktop PC. After the firmware is written to the esp32 using USB cable, the following firmware updates can be performed remotely using ArduinoOTA. The debug messages can be read using remote syslog server. Using the WIFI transport of the micro ROS, the navigation packages NAV2 / SLAM and visualization tool RVIZ2 can be served on your laptop or desktop PC. This is a more comfortable development environment than the more restricted robot computers. No robot computer is required on the robot now. Just an esp32 micro-controller will serve. And the cost of the robot will be a little cheaper.
-
-Please check the [Wiki](https://github.com/hippo5329/linorobot2_hardware/wiki) for configurations, guides and documents.
-Questions (via [Discussions](https://github.com/hippo5329/linorobot2_hardware/discussions)),
-bug reports (via [Issues](https://github.com/hippo5329/linorobot2_hardware/issues)) and
-code contributions (via [Pull requests](https://github.com/hippo5329/linorobot2_hardware/pulls)) are welcome.
+In traditional robot builds, there are robot computers (such as raspberry pi, jetson nono or mini PC) running the build tools and ROS2/NAV2 navigation stack. With the WIFI capability of the esp32, the robot firmware can be developed on your laptop or desktop PC. After the firmware is written to the esp32 using USB cable, the following firmware updates can be performed remotely using ArduinoOTA. The debug messages can be read using remote syslog server. Using the WIFI transport of the micro ROS, the navigation packages NAV2 / SLAM and visualization tool RVIZ2 can be served on your laptop or desktop PC. This is a more comfortable development environment than the more restricted robot computers. No robot computer is required on the robot now. Just an esp32 micro-controller will serve. And the cost of the robot will be a little cheaper.
 
 ## Supported robot types
 
@@ -65,3 +60,18 @@ Build and upload with USB cable connected to the esp32 board.
 
     cd linorobot2_hardware/firmware
     pio run -e esp32tank -t upload
+
+You may try this on the esp32 dev board even before building the robot. The LED on the esp32 dev board may flash three times per second, that means the IMU (MPU6050) is not detected. Add the IMU, then the it will try to connect the micro ROS agent with wifi transport.
+
+    # Run a micro-ROS agent
+    ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+
+After it is connected to the agent, you may check the topics it published.
+
+    ros2 topic list
+    ros2 topic echo /imu/data
+
+Please check the [Wiki](https://github.com/hippo5329/linorobot2_hardware/wiki) for configurations, guides and documents.
+Questions (via [Discussions](https://github.com/hippo5329/linorobot2_hardware/discussions)),
+bug reports (via [Issues](https://github.com/hippo5329/linorobot2_hardware/issues)) and
+code contributions (via [Pull requests](https://github.com/hippo5329/linorobot2_hardware/pulls)) are welcome.
