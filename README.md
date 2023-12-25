@@ -1,6 +1,6 @@
 # linorobot2_hardware with esp32 support
 
-This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorobot/linorobot2_hardware) project which builds firmware for micro-controllers to control mobile robots based on micro ROS. The esp32 support is added to this fork. 
+This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorobot/linorobot2_hardware) project which builds firmware for micro-controllers to control mobile robots based on micro ROS. The esp32 support is added to this fork.
 
 ## Why esp32
 
@@ -26,23 +26,42 @@ code contributions (via [Pull requests](https://github.com/hippo5329/linorobot2_
 
 ## Quick start
 
-Install [PlatformIO IDE for VSCode](https://platformio.org/install/ide?install=vscode). The PlatformIO core CLI will be installed automatically.
+Install essential build tools. Remove brltty package which interferes with CH340 USB serial on some esp32 boards.
 
-    sudo apt update
     sudo apt remove brltty -y
-    sudo apt install python3-venv build-essential cmake git -y
-    sudo apt install software-properties-common apt-transport-https wget -y
-    wget -q https://packages.microsoft.com/keys/microsoft.asc -O- | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
-    sudo apt install code -y
-    code --install-extension platformio.platformio-ide
+    sudo apt install python3-venv build-essential cmake git curl -y
 
- Add platformio to $PATH in ~/.bashrc or ~/.profile .
+Install [PlatformIO CLI](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html#super-quick-macos-linux).
 
-    PATH="$PATH:$HOME/.platformio/penv/bin"
+    curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
+    python3 get-platformio.py
 
-You may use VSCode to clone the source, select robot configuration (e.g. *esp32tank*), build and upload. Or do it in command lines.
+Add platformio to $PATH in ~/.bashrc or ~/.profile .
+
+    echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
+    source $HOME/.bashrc
+
+Install [PlatformIO udev rules](https://docs.platformio.org/en/latest/core/installation/udev-rules.html).
+
+    curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/develop/platformio/assets/system/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules
+    sudo service udev restart
+    sudo usermod -a -G dialout $USER
+    sudo usermod -a -G plugdev $USER
+
+Clone the source.
 
     git clone https://github.com/hippo5329/linorobot2_hardware.git
+
+Assume we are using the esp32tank configuration. Update the configuration file with your wifi keys and servers IP.
+
+    linorobot2_hardware/config/custom/esp32tank_config.h
+
+    #define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
+    #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+    #define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
+    #define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
+
+Build and upload with USB cable connected to the esp32 board.
+
     cd linorobot2_hardware/firmware
     pio run -e esp32tank -t upload
