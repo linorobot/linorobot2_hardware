@@ -30,6 +30,10 @@
     #include "custom/esp32tank_config.h"
 #endif
 
+#ifdef USE_ESP32MECA_CONFIG
+    #include "custom/esp32meca_config.h"
+#endif
+
 // this should be the last one
 #ifndef LINO_BASE
     #include "lino_base_config.h"
