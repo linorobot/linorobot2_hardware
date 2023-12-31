@@ -197,7 +197,7 @@ ROBOT ORIENTATION
 #define LIDAR_BAUDRATE 230400
 #define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define LIDAR_PORT 8889
-// #define BAUDRATE 115200
+#define BAUDRATE 115200
 #define SDA_PIN 32 // specify I2C pins
 #define SCL_PIN 33
 #define NODE_NAME "gendrv"
