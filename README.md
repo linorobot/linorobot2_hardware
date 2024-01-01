@@ -1,6 +1,6 @@
 # linorobot2_hardware with esp32 support
 
-This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorobot/linorobot2_hardware) project which builds firmware for micro-controllers to control mobile robots based on micro ROS with various sensors support. The esp32 support is added in this fork.
+This is a fork of the [linorobot/linorobot2_hardware](https://github.com/linorobot/linorobot2_hardware) project which builds firmware for micro-controllers to control mobile robots based on micro-ROS with various sensors support. The esp32 support is added in this fork.
 
 ## Supported micro-controllers
 
@@ -50,11 +50,18 @@ The 2 PWM pins driver is recommended for esp32 to reduce the number of I/O pins 
 - ultrasonic - SR-04
 - lidar - ldlidar LD19/D300
 
-## configuration examples in linorobot2_hardware/config/custom/
+## Configuration examples
+
+The firmware is configured with a configuration file in the linorobot2_hardware/config/custom/ directory. There is a configuration file for each robot. The configuration file contains various C macro to define the options. The following are examples which you may modify or copy to create your own.
 
 - gendrv_config.h - 2WD, [waveshare general driver for robots](https://www.waveshare.com/general-driver-for-robots.htm) is an all-in-one esp32 board. It can save some work if you are new to esp32 and hardware stuff.
 - esp32tank_config.h - 2WD, esp32 dev board and MPU6050.
 - esp32meca_config.h - Mecanum, esp32 dev board and MPU6050.
+
+The esp32meca example can be modified to 4WD by changing the LINO_BASE macro,
+
+    #define LINO_BASE SKID_STEER            // 4WD robot
+    // #define LINO_BASE MECANUM               // Mecanum drive robot
 
 ## Quick start
 
@@ -63,7 +70,7 @@ Install essential build tools. Remove brltty package which interferes with CH340
     sudo apt remove brltty -y
     sudo apt install python3-venv build-essential cmake git curl -y
 
-Install [PlatformIO IDE for VSCode](https://platformio.org/install/ide?install=vscode) (which will install CLI automatically) or [PlatformIO CLI](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html#super-quick-macos-linux) as following.
+Install [PlatformIO IDE for VSCode](https://platformio.org/install/ide?install=vscode) (which will install PlatformIO CLI automatically). Or install only [PlatformIO CLI](https://docs.platformio.org/en/latest/core/installation/methods/installer-script.html#super-quick-macos-linux) with the following,
 
     curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
     python3 get-platformio.py
@@ -93,12 +100,17 @@ Assume we are using the esp32tank configuration. Update the configuration file w
     #define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
     #define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 
-Build and upload with USB cable connected to the esp32 board.
+Build and upload with USB cable connected to the esp32 board. You should try this on the esp32 dev board before building the robot.
 
     cd linorobot2_hardware/firmware
     pio run -e esp32tank -t upload
 
-You may try this on the esp32 dev board even before building the robot. The LED on the esp32 dev board may flash three times per second, that means the IMU (MPU6050) is not detected. Add the IMU, then the it will try to connect the [micro ROS agent](https://github.com/micro-ROS/micro_ros_setup?tab=readme-ov-file#building-micro-ros-agent) with wifi transport.
+The serial monitor will print the IP of esp32 (here 192.168.1.101) after connected to the wifi.
+
+    WIFI connected
+    IP address: 192.168.1.101
+
+The LED on the esp32 dev board may flash three times per second, that means the IMU (MPU6050) is not detected. Add the IMU, then the it will try to connect to the [micro-ROS agent](https://github.com/micro-ROS/micro_ros_setup?tab=readme-ov-file#building-micro-ros-agent) with wifi transport.
 
     # Run a micro-ROS agent
     ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
