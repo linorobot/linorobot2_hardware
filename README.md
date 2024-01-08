@@ -17,12 +17,12 @@ The WIFI capability of the esp32 can be used to build low-cost mobile robots wit
 - remote firmware update - with ArduinoOTA.
 - remote debug messages - with remote syslog.
 - remote lidar server - lidar raw data is forwarded to a server to publish laser scan data.
-- remote ROS2/NAV2 stack - with micro ROS wifi transport.
+- remote ROS2/NAV2 stack - with micro-ROS wifi transport.
 - no robot computer is required - a single esp32 will serve the robot.
 
-In traditional robot builds, there are robot computers (such as raspberry pi, jetson nono or mini PC) running the build tools and ROS2/NAV2 navigation stack. With the WIFI capability of the esp32, the robot firmware can be developed on your laptop or desktop PC. After the firmware is written to the esp32 using USB cable, the following firmware updates can be performed remotely using ArduinoOTA. The debug messages can be read using remote syslog server. Using the WIFI transport of the micro ROS, the navigation packages NAV2 / SLAM and visualization tool RVIZ2 can be served on your laptop or desktop PC. This is a more comfortable development environment than the more restricted robot computers. No robot computer is required on the robot now. Just an esp32 micro-controller will serve. And the cost of the robot will be a little cheaper.
+In traditional robot builds, there are robot computers (such as raspberry pi, jetson nono or mini PC) running the build tools and ROS2/NAV2 navigation stack. With the WIFI capability of the esp32, the robot firmware can be developed on your laptop or desktop PC. After the firmware is written to the esp32 using USB cable, the following firmware updates can be performed remotely using ArduinoOTA. The debug messages can be read using remote syslog server. Using the WIFI transport of the micro-ROS, the navigation packages NAV2 / SLAM and visualization tool RVIZ2 can be served on your laptop or desktop PC. This is a more comfortable development environment than the more restricted robot computers. No robot computer is required on the robot now. Just an esp32 micro-controller will serve. And the cost of the robot will be a little cheaper.
 
-If you are new to esp32, you may check the [guide to esp32](https://randomnerdtutorials.com/getting-started-with-esp32/) and others on this site.
+If you are new to esp32, you may check the [guide to esp32](https://randomnerdtutorials.com/getting-started-with-esp32/).
 
 ## Supported robot types
 
@@ -47,7 +47,7 @@ The 2 PWM pins driver is recommended for esp32 to reduce the number of I/O pins 
 - compass - HMC5883L, AK8963, AK 8975, AK09918, QMC5883L.
 - encoder - PCNT (hardware pulse counter on esp32), interrupt driven
 - battery - on-chip ADC, INA219
-- ultrasonic - SR-04
+- ultrasonic - HC-SR04
 - lidar - ldlidar LD19/D300
 
 ## Configuration examples
@@ -120,7 +120,8 @@ After it is connected to the agent, you may check the topics it published.
     ros2 topic list
     ros2 topic echo /imu/data
 
-Please check the [Wiki](https://github.com/hippo5329/linorobot2_hardware/wiki) for configurations, guides and documents.
+Please check the [Wiki](https://github.com/hippo5329/linorobot2_hardware/wiki) for more details.
+
 Questions (via [Discussions](https://github.com/hippo5329/linorobot2_hardware/discussions)),
 bug reports (via [Issues](https://github.com/hippo5329/linorobot2_hardware/issues)) and
 code contributions (via [Pull requests](https://github.com/hippo5329/linorobot2_hardware/pulls)) are welcome.
