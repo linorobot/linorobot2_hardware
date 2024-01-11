@@ -206,7 +206,7 @@ ROBOT ORIENTATION
 // battery voltage ADC pin
 #define BATTERY_PIN 33
 // 3.3V ref, 12 bits ADC, 33k + 10k voltage divider
-#define USE_ADC_LUT
+// #define USE_ADC_LUT
 #ifdef USE_ADC_LUT
 const int16_t ADC_LUT[4096] = { /* insert adc_calibrate data here */ };
 #define BATTERY_ADJUST(v) (ADC_LUT[v] * (3.3 / 4096 * (33 + 10) / 10 * 1.0))
