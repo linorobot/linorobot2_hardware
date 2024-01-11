@@ -15,7 +15,42 @@
 // #define GRAPH      // uncomment this for print on Serial Plotter
 // #define FLOAT_LUT     // uncomment this if you need float LUT
 
+#include <micro_ros_platformio.h>
+#include <stdio.h>
+
+#include <rcl/rcl.h>
+#include <rcl/error_handling.h>
+#include <rclc/rclc.h>
+#include <rclc/executor.h>
+
+#include <nav_msgs/msg/odometry.h>
+#include <sensor_msgs/msg/imu.h>
+#include <sensor_msgs/msg/magnetic_field.h>
+#include <sensor_msgs/msg/battery_state.h>
+#include <sensor_msgs/msg/range.h>
+#include <geometry_msgs/msg/twist.h>
+#include <geometry_msgs/msg/vector3.h>
+
 #include "config.h"
+#include "syslog.h"
+#include "motor.h"
+#include "kinematics.h"
+#include "pid.h"
+#include "odometry.h"
+#include "imu.h"
+#include "mag.h"
+#define ENCODER_USE_INTERRUPTS
+#define ENCODER_OPTIMIZE_INTERRUPTS
+#include "encoder.h"
+#include "battery.h"
+#include "range.h"
+#include "lidar.h"
+#include "wifis.h"
+#include "ota.h"
+
+#ifdef WDT_TIMEOUT
+#include <esp_task_wdt.h>
+#endif
 
 #ifndef BAUDRATE
 #define BAUDRATE 115200
@@ -49,10 +84,16 @@ void dumpRes2() {
 }
 
 void setup() {
+#ifdef BOARD_INIT // board specific setup
+    BOARD_INIT;
+#endif
+
+    Serial.begin(BAUDRATE);
+    pinMode(LED_PIN, OUTPUT);
+
     dac_output_enable(DAC_CHANNEL_1);    // pin 25
     dac_output_voltage(DAC_CHANNEL_1, 0);
     analogReadResolution(12);
-    Serial.begin(BAUDRATE);
     delay(1000);
 }
 
