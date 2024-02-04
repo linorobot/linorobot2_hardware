@@ -55,13 +55,7 @@ The 2 PWM pins driver is recommended for esp32 to reduce the number of I/O pins 
 The firmware is configured with a configuration file in the linorobot2_hardware/config/custom/ directory. There is a configuration file for each robot. The configuration file contains various C macro to define the options. The following are examples which you may modify or copy to create your own.
 
 - gendrv_config.h - 2WD, [waveshare general driver for robots](https://www.waveshare.com/general-driver-for-robots.htm) is an all-in-one esp32 board. It can save some work if you are new to esp32 and hardware stuff.
-- esp32tank_config.h - 2WD, esp32 dev board and MPU6050.
-- esp32meca_config.h - Mecanum, esp32 dev board and MPU6050.
-
-The esp32meca example can be modified to 4WD by changing the LINO_BASE macro,
-
-    #define LINO_BASE SKID_STEER            // 4WD robot
-    // #define LINO_BASE MECANUM               // Mecanum drive robot
+- esp32_config.h - 2WD, esp32 dev board and MPU6050.
 
 ## Quick start
 
@@ -91,9 +85,9 @@ Clone the source.
 
     git clone https://github.com/hippo5329/linorobot2_hardware.git
 
-Assume we are using the esp32tank configuration. Update the configuration file with your wifi keys and servers IP.
+Assume we are using the esp32 configuration. Update the configuration file with your wifi keys and servers IP.
 
-    linorobot2_hardware/config/custom/esp32tank_config.h
+    linorobot2_hardware/config/custom/esp32_config.h
 
     #define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
     #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
@@ -103,7 +97,7 @@ Assume we are using the esp32tank configuration. Update the configuration file w
 Build and upload with USB cable connected to the esp32 board. You should try this on the esp32 dev board before building the robot.
 
     cd linorobot2_hardware/firmware
-    pio run -e esp32tank -t upload
+    pio run -e esp32 -t upload
 
 The serial monitor will print the IP of esp32 (here 192.168.1.101) after connected to the wifi.
 

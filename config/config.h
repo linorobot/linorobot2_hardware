@@ -26,12 +26,8 @@
     #include "custom/gendrv_config.h"
 #endif
 
-#ifdef USE_ESP32TANK_CONFIG
-    #include "custom/esp32tank_config.h"
-#endif
-
-#ifdef USE_ESP32MECA_CONFIG
-    #include "custom/esp32meca_config.h"
+#ifdef USE_ESP32_CONFIG
+    #include "custom/esp32_config.h"
 #endif
 
 // this should be the last one

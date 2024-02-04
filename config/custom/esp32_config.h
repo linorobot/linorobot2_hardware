@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Juan Miguel Jimeno
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
+// you may not use this file except in compliance with the License.esp32
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ESP32TANK_CONFIG_H
-#define ESP32TANK_CONFIG_H
+#ifndef ESP32_CONFIG_H
+#define ESP32_CONFIG_H
 
 #define LED_PIN 2 //used for debugging status
 
@@ -87,11 +87,11 @@ ROBOT ORIENTATION
 #define MOTOR2_ENCODER_A 35
 #define MOTOR2_ENCODER_B 34
 
-#define MOTOR3_ENCODER_A -1
-#define MOTOR3_ENCODER_B -1
+#define MOTOR3_ENCODER_A 32
+#define MOTOR3_ENCODER_B 27
 
-#define MOTOR4_ENCODER_A -1
-#define MOTOR4_ENCODER_B -1
+#define MOTOR4_ENCODER_A 26
+#define MOTOR4_ENCODER_B 25
 
 // MOTOR PINS
 #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
@@ -146,12 +146,12 @@ ROBOT ORIENTATION
   #define MOTOR2_IN_B 17
 
   #define MOTOR3_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR3_IN_A -1
-  #define MOTOR3_IN_B -1
+  #define MOTOR3_IN_A 13
+  #define MOTOR3_IN_B 12
 
   #define MOTOR4_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR4_IN_A -1
-  #define MOTOR4_IN_B -1
+  #define MOTOR4_IN_A 4
+  #define MOTOR4_IN_B 23
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
   #define PWM_MIN -PWM_MAX
@@ -188,7 +188,7 @@ ROBOT ORIENTATION
 #define USE_SYSLOG
 #define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define SYSLOG_PORT 514
-#define DEVICE_HOSTNAME "esp32tank"
+#define DEVICE_HOSTNAME "esp32"
 #define APP_NAME "hardware"
 #define USE_LIDAR_UDP
 #define LIDAR_RXD 14
@@ -200,8 +200,8 @@ ROBOT ORIENTATION
 #define BAUDRATE 115200
 // #define SDA_PIN 21 // specify I2C pins
 // #define SCL_PIN 22
-#define NODE_NAME "esp32tank"
-// #define TOPIC_PREFIX "esp32tank/"
+#define NODE_NAME "esp32"
+// #define TOPIC_PREFIX "esp32/"
 
 // battery voltage ADC pin
 #define BATTERY_PIN 33
