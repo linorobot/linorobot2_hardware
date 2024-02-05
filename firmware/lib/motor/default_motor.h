@@ -79,6 +79,10 @@ class Generic2: public MotorInterface
         {
             if (in_a_pin_ < 0) return;
             analogWrite(pwm_pin_, 0);
+#ifdef USE_SHORT_BRAKE
+            digitalWrite(in_a_pin_, HIGH); // short brake
+            digitalWrite(in_b_pin_, HIGH);
+#endif
         }
 };
 
@@ -135,20 +139,31 @@ class BTS7960: public MotorInterface
     private:
         int in_a_pin_;
         int in_b_pin_;
+        int pwm_max_;
 
     protected:
         void forward(int pwm) override
         {
             if (in_a_pin_ < 0) return;
+#ifdef USE_SHORT_BRAKE
+            analogWrite(in_a_pin_, pwm_max_ - abs(pwm));
+            analogWrite(in_b_pin_, pwm_max_); // short brake
+#else
             analogWrite(in_a_pin_, 0);
             analogWrite(in_b_pin_, abs(pwm));
+#endif
         }
 
         void reverse(int pwm) override
         {
             if (in_a_pin_ < 0) return;
+#ifdef USE_SHORT_BRAKE
+            analogWrite(in_b_pin_, pwm_max_ - abs(pwm));
+            analogWrite(in_a_pin_, pwm_max_); // short brake
+#else
             analogWrite(in_b_pin_, 0);
             analogWrite(in_a_pin_, abs(pwm));
+#endif
         }
 
     public:
@@ -158,6 +173,7 @@ class BTS7960: public MotorInterface
             in_b_pin_(in_b_pin)
         {
             if (in_a_pin_ < 0) return;
+            pwm_max_ = (1 << pwm_bits) - 1;
             pinMode(in_a_pin_, OUTPUT);
             pinMode(in_b_pin_, OUTPUT);
 
@@ -180,6 +196,7 @@ class BTS7960: public MotorInterface
             in_b_pin_(in_b_pin)
         {
             if (in_a_pin_ < 0) return;
+            pwm_max_ = (1 << pwm_bits) - 1;
             pinMode(in_a_pin_, OUTPUT);
             pinMode(in_b_pin_, OUTPUT);
 
@@ -199,8 +216,13 @@ class BTS7960: public MotorInterface
         void brake() override
         {
             if (in_a_pin_ < 0) return;
+#ifdef USE_SHORT_BRAKE
+            analogWrite(in_a_pin_, pwm_max_);
+            analogWrite(in_b_pin_, pwm_max_); // short brake
+#else
             analogWrite(in_b_pin_, 0);
             analogWrite(in_a_pin_, 0);            
+#endif
         }
 };
 
