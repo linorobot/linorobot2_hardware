@@ -29,6 +29,57 @@
 #ifndef Encoder_h_
 #define Encoder_h_
 
+#ifdef ESP32
+#include "Arduino.h"
+#include <ESP32Encoder.h>
+class Encoder
+{
+private:
+	int counts_per_rev_ = -1;
+        ESP32Encoder encoder_;
+	unsigned long prev_update_time_;
+        int64_t prev_encoder_ticks_;
+public:
+	Encoder(int pin1, int pin2, int counts_per_rev, bool invert = false) {
+		int temp_pin = pin1;
+		if (pin1 < 0 || pin2 < 0) return; // unused encoder
+		if(invert)
+		{
+			pin1 = pin2;
+			pin2 = temp_pin;
+		}
+		counts_per_rev_ = counts_per_rev;
+		ESP32Encoder::useInternalWeakPullResistors = UP;
+		encoder_.attachHalfQuad(pin1, pin2);
+	}
+	float getRPM() {
+	        if (counts_per_rev_ < 0) return 0.0;
+		int64_t encoder_ticks = encoder_.getCount();
+		//this function calculates the motor's RPM based on encoder ticks and delta time
+		unsigned long current_time = micros();
+		unsigned long dt = current_time - prev_update_time_;
+
+		//convert the time from milliseconds to minutes
+		double dtm = (double)dt / 60000000;
+		int64_t delta_ticks = encoder_ticks - prev_encoder_ticks_;
+
+		//calculate wheel's speed (RPM)
+		prev_update_time_ = current_time;
+		prev_encoder_ticks_ = encoder_ticks;
+
+		return (((double) delta_ticks / counts_per_rev_) / dtm);
+	}
+	inline int32_t read() {
+	        if (counts_per_rev_ < 0) return 0;
+		return  encoder_.getCount();
+	}
+        inline void write(int32_t p) {
+	        if (counts_per_rev_ < 0) return;
+	        encoder_.setCount(p);
+	}
+};
+#else
+
 #if defined(ARDUINO) && ARDUINO >= 100
 #include "Arduino.h"
 #elif defined(WIRING)
@@ -1001,5 +1052,6 @@ ISR(INT7_vect) { Encoder::update(Encoder::interruptArgs[SCRAMBLE_INT_ORDER(7)]);
 #endif
 #endif // ENCODER_OPTIMIZE_INTERRUPTS
 
+#endif // ESP32
 
 #endif
