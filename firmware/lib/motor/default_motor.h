@@ -16,7 +16,15 @@
 #define DEFAULT_MOTOR
 
 #include <Arduino.h>
+#ifdef ESP32
+#include <ESP32Servo.h>
+inline void analogWriteFrequency(uint8_t pin, double frequency)
+{
+  analogWriteFrequency(frequency);
+}
+#else
 #include <Servo.h> 
+#endif
 #include "config.h"
 
 #include "motor_interface.h"
