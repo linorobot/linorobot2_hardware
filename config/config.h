@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#ifndef CONFIG_H
+#define CONFIG_H
 
 #ifdef USE_VATTENKAR_CONFIG
     #include "custom/vattenkar_config.h"
@@ -20,6 +22,13 @@
     #include "custom/dev_config.h"
 #endif
 
-#if !defined (USE_VATTENKAR_CONFIG)
+#ifdef USE_ESP32_CONFIG
+    #include "custom/esp32_config.h"
+#endif
+
+// this should be the last one
+#ifndef LINO_BASE
     #include "lino_base_config.h"
+#endif
+
 #endif
