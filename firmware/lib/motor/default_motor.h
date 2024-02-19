@@ -18,14 +18,25 @@
 #include <Arduino.h>
 #ifdef ESP32
 #include <ESP32Servo.h>
+#else
+#include <Servo.h>
+#endif
+#include "config.h"
+#ifdef ESP32
 inline void analogWriteFrequency(uint8_t pin, double frequency)
 {
   analogWriteFrequency(frequency);
 }
-#else
-#include <Servo.h> 
+#elif defined(PICO)
+inline void analogWriteFrequency(double frequency)
+{
+  analogWriteFreq(frequency);
+}
+inline void analogWriteFrequency(uint8_t pin, double frequency)
+{
+  analogWriteFreq(frequency);
+}
 #endif
-#include "config.h"
 
 #include "motor_interface.h"
 

@@ -26,6 +26,10 @@
     #include "custom/esp32_config.h"
 #endif
 
+#ifdef USE_PICO_CONFIG
+    #include "custom/pico_config.h"
+#endif
+
 // add maintainer configurations above this line
 // this barrier helps to reduce user merge conflict
 // add user configurations below this line
