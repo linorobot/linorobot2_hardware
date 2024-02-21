@@ -36,6 +36,7 @@
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
 #include "wifis.h"
+#include "ota.h"
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -104,6 +105,7 @@ void setup()
     pinMode(LED_PIN, OUTPUT);
     Serial.begin(115200);
     initWifis();
+    initOta();
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -148,6 +150,7 @@ void loop() {
         default:
             break;
     }
+    runOta();
     runWifis();
 }
 
