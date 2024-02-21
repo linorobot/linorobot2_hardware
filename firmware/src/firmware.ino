@@ -37,6 +37,7 @@
 #include "encoder.h"
 #include "wifis.h"
 #include "ota.h"
+#include "lidar.h"
 
 #ifdef USE_WIFI_TRANSPORT
 // remove wifi initialization code from wifi transport
@@ -136,6 +137,7 @@ void setup()
         }
     }
 
+    initLidar(); // after wifi connected
 #ifdef USE_WIFI_TRANSPORT
     set_microros_net_transports(AGENT_IP, AGENT_PORT);
 #else
