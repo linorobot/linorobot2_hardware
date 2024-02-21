@@ -134,6 +134,9 @@ void setup()
 {
     pinMode(LED_PIN, OUTPUT);
     Serial.begin(BAUDRATE);
+#ifdef BOARD_INIT // board specific setup
+    BOARD_INIT
+#endif
     initWifis();
     initOta();
 
@@ -153,6 +156,9 @@ void setup()
     set_microros_net_transports(AGENT_IP, AGENT_PORT);
 #else
     set_microros_serial_transports(Serial);
+#endif
+#ifdef BOARD_INIT_LATE // board specific setup
+    BOARD_INIT_LATE
 #endif
     syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
