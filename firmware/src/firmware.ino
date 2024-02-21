@@ -35,6 +35,7 @@
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
+#include "wifis.h"
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -101,6 +102,8 @@ IMU imu;
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
+    Serial.begin(115200);
+    initWifis();
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -112,7 +115,6 @@ void setup()
         }
     }
     
-    Serial.begin(115200);
     set_microros_serial_transports(Serial);
     syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
@@ -146,6 +148,7 @@ void loop() {
         default:
             break;
     }
+    runWifis();
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
