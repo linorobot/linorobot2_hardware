@@ -280,6 +280,52 @@ Constants' Meaning:
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
+### 3. WIFI related settings
+
+- **USE_WIFI_TRANSPORT** - use micro-ROS wifi transport.
+
+- **AGENT_IP** - micro-ROS agent IP. eg. { 192, 168, 1, 100 }
+
+- **AGENT_PORT** - micro-ROS agent port. default 8888
+
+- **WIFI_AP_LIST** - Enable WiFi with null terminated list of multiple APs SSID and password. eg. {{"WIFI_SSID1", "WIFI_PASSWORD1"}, {"WIFI_SSID2", "WIFI_PASSWORD2"}, {NULL}} . The AP with strongest signal will be used. When wifi signal is too low, the current AP will be disconnected and reconnect the AP with the strongest signal.
+
+- **USE_ARDUINO_OTA** - Arduino OTA up load protocol support
+
+- **USE_SYSLOG** - logging to remote syslog server.
+
+- **SYSLOG_SERVER** - syslog server name or IP.
+
+- **SYSLOG_PORT** - syslog server udp port. default 514
+
+- **DEVICE_HOSTNAME** - my device name to syslog. default "linorobot2"
+
+- **APP_NAME** - my app name to syslog. default "hardware"
+
+- **USE_LIDAR_UDP** - push Lidar data to UDP server, which will decode the data and publish laser scan message.
+
+- **LIDAR_RXD** - RXD pin for serial data from Lidar
+
+- **LIDAR_BAUDRATE**
+
+- **LIDAR_SERVER** - Lidar server IP address, eg. { 192, 168, 1, 100 }
+
+- **LIDAR_PORT** - Lidar server UDP port, eg. 8889
+
+### 4. Optional settings
+
+- **BAUDRATE** - serial baudrate. default 115200
+
+- **NODE_NAME** - ROS2 node name. default "linorobot_base_node"
+
+- **TOPIC_PREFIX** - Namespace prefix to topic, eg "turtle1/". Useful when there are multiple robots running.
+
+- **USE_SHORT_BRAKE** - Short brake for shorter distance to stop, only for generic_2 BT6612 and BTS7960 like motor drivers
+
+- **BOARD_INIT** - early board specific setup
+
+- **BOARD_INIT_LATE** - late board specific setup
+
 ## Calibration
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 5.1
