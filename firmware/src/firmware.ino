@@ -58,6 +58,10 @@ static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agen
 }
 #endif
 
+#ifndef BAUDRATE
+#define BAUDRATE 115200
+#endif
+
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
@@ -123,13 +127,14 @@ IMU imu;
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
-    Serial.begin(115200);
+    Serial.begin(BAUDRATE);
     initWifis();
     initOta();
 
     bool imu_ok = imu.init();
     if(!imu_ok)
     {
+        Serial.println("IMU init failed");
         syslog(LOG_INFO, "%s IMU init failed %lu", __FUNCTION__, millis());
         while(1)
         {
