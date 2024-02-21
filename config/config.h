@@ -26,6 +26,12 @@
     #include "custom/esp32_config.h"
 #endif
 
+// add maintainer configurations above this line
+// this barrier helps to reduce user merge conflict
+// add user configurations below this line
+
+
+// add user configurations above this line
 // this should be the last one
 #ifndef LINO_BASE
     #include "lino_base_config.h"
