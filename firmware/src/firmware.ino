@@ -26,6 +26,7 @@
 #include <geometry_msgs/msg/vector3.h>
 
 #include "config.h"
+#include "syslog.h"
 #include "motor.h"
 #include "kinematics.h"
 #include "pid.h"
@@ -104,6 +105,7 @@ void setup()
     bool imu_ok = imu.init();
     if(!imu_ok)
     {
+        syslog(LOG_INFO, "%s IMU init failed %lu", __FUNCTION__, millis());
         while(1)
         {
             flashLED(3);
@@ -112,6 +114,7 @@ void setup()
     
     Serial.begin(115200);
     set_microros_serial_transports(Serial);
+    syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
 
 void loop() {
@@ -121,6 +124,7 @@ void loop() {
             EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
             break;
         case AGENT_AVAILABLE:
+            syslog(LOG_INFO, "%s agent available %lu", __FUNCTION__, millis());
             state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
             if (state == WAITING_AGENT) 
             {
@@ -135,6 +139,7 @@ void loop() {
             }
             break;
         case AGENT_DISCONNECTED:
+            syslog(LOG_INFO, "%s agent disconnected %lu", __FUNCTION__, millis());
             destroyEntities();
             state = WAITING_AGENT;
             break;
@@ -162,6 +167,7 @@ void twistCallback(const void * msgin)
 
 bool createEntities()
 {
+    syslog(LOG_INFO, "%s %lu", __FUNCTION__, millis());
     allocator = rcl_get_default_allocator();
     //create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
@@ -216,6 +222,7 @@ bool createEntities()
 
 bool destroyEntities()
 {
+    syslog(LOG_INFO, "%s %lu", __FUNCTION__, millis());
     rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support.context);
     (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
