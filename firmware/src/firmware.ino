@@ -38,6 +38,25 @@
 #include "wifis.h"
 #include "ota.h"
 
+#ifdef USE_WIFI_TRANSPORT
+// remove wifi initialization code from wifi transport
+static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agent_port)
+{
+    static struct micro_ros_agent_locator locator;
+    locator.address = agent_ip;
+    locator.port = agent_port;
+
+    rmw_uros_set_custom_transport(
+        false,
+        (void *) &locator,
+        platformio_transport_open,
+        platformio_transport_close,
+        platformio_transport_write,
+        platformio_transport_read
+    );
+}
+#endif
+
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
@@ -116,8 +135,12 @@ void setup()
             flashLED(3);
         }
     }
-    
+
+#ifdef USE_WIFI_TRANSPORT
+    set_microros_net_transports(AGENT_IP, AGENT_PORT);
+#else
     set_microros_serial_transports(Serial);
+#endif
     syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
 
