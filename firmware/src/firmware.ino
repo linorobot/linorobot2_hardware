@@ -61,6 +61,12 @@ static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agen
 #ifndef BAUDRATE
 #define BAUDRATE 115200
 #endif
+#ifndef NODE_NAME
+#define NODE_NAME "linorobot_base_node"
+#endif
+#ifndef TOPIC_PREFIX
+#define TOPIC_PREFIX
+#endif
 
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
@@ -208,27 +214,27 @@ bool createEntities()
     //create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
     // create node
-    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
+    RCCHECK(rclc_node_init_default(&node, NODE_NAME, "", &support));
     // create odometry publisher
     RCCHECK(rclc_publisher_init_default( 
         &odom_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
-        "odom/unfiltered"
+        TOPIC_PREFIX "odom/unfiltered"
     ));
     // create IMU publisher
     RCCHECK(rclc_publisher_init_default( 
         &imu_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
-        "imu/data"
+        TOPIC_PREFIX "imu/data"
     ));
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_default( 
         &twist_subscriber, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "cmd_vel"
+        TOPIC_PREFIX "cmd_vel"
     ));
     // create timer for actuating the motors at 50 Hz (1000/20)
     const unsigned int control_timeout = 20;
