@@ -434,6 +434,27 @@ Echo IMU data:
 
     ros2 topic echo /imu/data
 
+## USB ports on esp32-s2 and esp32-s3
+
+The esp32-s2 and esp32-s3 have onchip USB CDC devices, which will be faster than USB uart bridge like CP2102. They will become default serial port /dev/ttyACM0 when enabled with the ARDUINO_USB_CDC_ON_BOOT build flag. But the serial driver of esp32-s2 has issue with micro-ROS serial transport, though there is no problem with wifi transport. There may be two USB ports on the dev boards, one marked as "USB" (the onchip CDC) and the other marked as "COM" (the usb uart bridge). You should use the one marked as "USB" for esp32-s3. And use "COM" for esp32-s2. If there is only one USB port, you should check the schematic to find out which is connected.
+
+esp32-s3
+
+- USB - /dev/ttyACM0 default, enabled with the ARDUINO_USB_CDC_ON_BOOT build flag
+- COM - /dev/ttyACM0
+
+esp32-s2
+
+- USB - /dev/ttyACM0 no use, enabled with the ARDUINO_USB_CDC_ON_BOOT build flag, but not stable with micro-ROS.
+- COM - /dev/ttyUSB0 default
+
+Build flag,
+
+    build_flags =
+        -I ../config
+        -D ARDUINO_USB_CDC_ON_BOOT
+        -D USE_ESP32S3_CONFIG
+
 ## Use esp32 with micro-ROS wifi transport, OTA, syslog and Lidar UDP transport
 
 The WIFI capability of the esp32 can be used to build low-cost mobile robots with navigation control under ROS2.
