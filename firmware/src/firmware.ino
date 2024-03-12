@@ -100,6 +100,9 @@ IMU imu;
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
+#ifdef BOARD_INIT // board specific setup
+    BOARD_INIT
+#endif
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -112,6 +115,9 @@ void setup()
     
     Serial.begin(115200);
     set_microros_serial_transports(Serial);
+#ifdef BOARD_INIT_LATE // board specific setup
+    BOARD_INIT_LATE
+#endif
 }
 
 void loop() {
@@ -141,6 +147,9 @@ void loop() {
         default:
             break;
     }
+#ifdef BOARD_LOOP // board specific loop
+    BOARD_LOOP
+#endif
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
