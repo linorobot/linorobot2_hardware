@@ -107,6 +107,9 @@ void setup()
 {
     pinMode(LED_PIN, OUTPUT);
     Serial.begin(BAUDRATE);
+#ifdef BOARD_INIT // board specific setup
+    BOARD_INIT
+#endif
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -121,6 +124,9 @@ void setup()
     set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
 #else
     set_microros_serial_transports(Serial);
+#endif
+#ifdef BOARD_INIT_LATE // board specific setup
+    BOARD_INIT_LATE
 #endif
 }
 
@@ -151,6 +157,9 @@ void loop() {
         default:
             break;
     }
+#ifdef BOARD_LOOP // board specific loop
+    BOARD_LOOP
+#endif
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 
