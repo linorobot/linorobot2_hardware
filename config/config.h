@@ -26,6 +26,10 @@
     #include "custom/esp32_config.h"
 #endif
 
+#ifdef USE_PICO_CONFIG
+    #include "custom/pico_config.h"
+#endif
+
 // this should be the last one
 #ifndef LINO_BASE
     #include "lino_base_config.h"
