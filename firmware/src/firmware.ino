@@ -35,7 +35,9 @@
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
 
+#ifndef RCCHECK
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
+#endif
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile int64_t init = -1; \
