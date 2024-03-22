@@ -274,11 +274,26 @@ Constants' Meaning:
 
 - **MOTORX_PWM** - Microcontroller pin that is connected to the PWM pin of the motor driver. This pin is usually labelled as EN or ENABLE pin on the motor driver board. 
 
+
 - **MOTORX_IN_A** - Microcontroller pin that is connected to one of the motor driver's direction pins. This pin is usually labelled as DIRA or DIR1 pin on the motor driver board. On BTS7960 driver, this is one of the two PWM pins connected to the driver (RPWM/LPWM).
 
 - **MOTORX_IN_B** - Microcontroller pin that is connected to one of the motor driver's direction pins. This pin is usually labelled as DIRB or DIR2 pin on the motor driver board. On BTS7960 driver, this is one of the two PWM pins connected to the driver (RPWM/LPWM).
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
+
+*WIFI related settings*
+
+- **AGENT_IP** - micro-ROS agent IP. eg. host IP, { 192, 168, 1, 100 }
+
+- **AGENT_PORT** - micro-ROS agent port. default 8888
+
+- **WIFI_SSID**
+
+- **WIFI_PASSWORD**
+
+The mirco-ROS wifi transport is selected with a setting in firmare/platformio.ini.
+
+    board_microros_transport = wifi
 
 ## Calibration
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
@@ -356,9 +371,13 @@ Run:
 
 This will allow the robot to receive Twist messages to control the robot, and publish odometry and IMU data straight from the microcontroller. Compared to Linorobot's ROS1 version, the odometry and IMU data published from the microcontroller use standard ROS2 messages and do not require any relay nodes to reconstruct the data to complete [sensor_msgs/Imu](http://docs.ros.org/en/noetic/api/sensor_msgs/html/msg/Imu.html) and [nav_msgs/Odometry](http://docs.ros.org/en/noetic/api/nav_msgs/html/msg/Odometry.html) messages.
 
-Run the agent:
+Run the serial transprot agent: (the serial device used for esp32 is /dev/ttyUSB0)
 
     ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyACM0
+
+Or run the wifi transport agent:
+
+    ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
 
 ### 2. Drive around
 

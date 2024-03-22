@@ -178,9 +178,10 @@ ROBOT ORIENTATION
   #define PWM_MIN -PWM_MAX
 #endif
 
-// #define USE_WIFI_TRANSPORT  // use micro ros wifi transport
 #define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define AGENT_PORT 8888
+#define WIFI_SSID "WIFI_SSID"
+#define WIFI_PASSWORD "WIFI_PASSWORD"
 // Enable WiFi with null terminated list of multiple APs SSID and password
 // #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
 #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog

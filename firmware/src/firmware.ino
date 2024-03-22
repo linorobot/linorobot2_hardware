@@ -113,7 +113,11 @@ void setup()
     }
     
     Serial.begin(115200);
+#ifdef MICRO_ROS_TRANSPORT_ARDUINO_WIFI
+    set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
+#else
     set_microros_serial_transports(Serial);
+#endif
 }
 
 void loop() {
