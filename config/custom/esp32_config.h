@@ -1,7 +1,7 @@
 // Copyright (c) 2021 Juan Miguel Jimeno
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.esp32
+// you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
@@ -15,7 +15,7 @@
 #ifndef ESP32_CONFIG_H
 #define ESP32_CONFIG_H
 
-#define LED_PIN 2 //used for debugging status
+#define LED_PIN LED_BUILTIN //used for debugging status
 
 //uncomment the base you're building
 #define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
@@ -59,10 +59,10 @@ ROBOT ORIENTATION
 #define MOTOR_OPERATING_VOLTAGE 12          // motor's operating voltage (used to calculate max RPM)
 #define MOTOR_POWER_MAX_VOLTAGE 12          // max voltage of the motor's power source (used to calculate max RPM)
 #define MOTOR_POWER_MEASURED_VOLTAGE 12     // current voltage reading of the power connected to the motor (used for calibration)
-#define COUNTS_PER_REV1 550                 // wheel1 encoder's no of ticks per rev
-#define COUNTS_PER_REV2 550                 // wheel2 encoder's no of ticks per rev
-#define COUNTS_PER_REV3 550                 // wheel3 encoder's no of ticks per rev
-#define COUNTS_PER_REV4 550                 // wheel4 encoder's no of ticks per rev
+#define COUNTS_PER_REV1 450                 // wheel1 encoder's no of ticks per rev
+#define COUNTS_PER_REV2 450                 // wheel2 encoder's no of ticks per rev
+#define COUNTS_PER_REV3 450                 // wheel3 encoder's no of ticks per rev
+#define COUNTS_PER_REV4 450                 // wheel4 encoder's no of ticks per rev
 #define WHEEL_DIAMETER 0.0560               // wheel's diameter in meters
 #define LR_WHEELS_DISTANCE 0.224            // distance between left and right wheels
 #define PWM_BITS 10                         // PWM Resolution of the microcontroller
@@ -95,7 +95,7 @@ ROBOT ORIENTATION
 
 // MOTOR PINS
 #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
-  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can swap it with pin no 1 instead.
+  #define MOTOR1_PWM 21
   #define MOTOR1_IN_A 20
   #define MOTOR1_IN_B 1
 
@@ -116,7 +116,7 @@ ROBOT ORIENTATION
 #endif
 
 #ifdef USE_GENERIC_1_IN_MOTOR_DRIVER
-  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can use pin no 1 instead.
+  #define MOTOR1_PWM 21
   #define MOTOR1_IN_A 20
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
 
@@ -138,8 +138,8 @@ ROBOT ORIENTATION
 
 #ifdef USE_BTS7960_MOTOR_DRIVER
   #define MOTOR1_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR1_IN_A 19 // Pin no 21 is not a PWM pin on Teensy 4.x, you can use pin no 1 instead.
-  #define MOTOR1_IN_B 18 // Pin no 20 is not a PWM pin on Teensy 4.x, you can use pin no 0 instead.
+  #define MOTOR1_IN_A 19
+  #define MOTOR1_IN_B 18
 
   #define MOTOR2_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR2_IN_A 16
@@ -158,7 +158,7 @@ ROBOT ORIENTATION
 #endif
 
 #ifdef USE_ESC_MOTOR_DRIVER
-  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x. You can use pin no 1 instead.
+  #define MOTOR1_PWM 21
   #define MOTOR1_IN_A -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
 
@@ -199,8 +199,8 @@ ROBOT ORIENTATION
 #define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define LIDAR_PORT 8889
 #define BAUDRATE 921600
-// #define SDA_PIN 21 // specify I2C pins
-// #define SCL_PIN 22
+#define SDA_PIN 21 // specify I2C pins
+#define SCL_PIN 22
 #define NODE_NAME "esp32"
 // #define TOPIC_PREFIX "esp32/"
 
@@ -219,7 +219,12 @@ const int16_t ADC_LUT[4096] = { /* insert adc_calibrate data here */ };
 // #define ECHO_PIN 32
 #define USE_SHORT_BRAKE // for shorter stopping distance
 // #define WDT_TIMEOUT 60 // Sec
-// #define BOARD_INIT sleep(5) // wait to begin IMU calibration
+#define BOARD_INIT { \
+    Wire.begin(SDA_PIN, SCL_PIN); \
+    Wire.setClock(400000); \
+}
+// #define BOARD_INIT_LATE {}
+// #define BOARD_LOOP {}
 
 #ifdef USE_SYSLOG
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){ \
