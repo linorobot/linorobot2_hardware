@@ -223,11 +223,11 @@ const int16_t ADC_LUT[4096] = { /* insert adc_calibrate data here */ };
 #ifdef USE_SYSLOG
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){ \
     syslog(LOG_ERR, "%s RCCHECK failed %d", __FUNCTION__, temp_rc); \
-    return false; }}
+    }}
 #else
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){ \
     flashLED(3); \
-    return false; }} // do not block
+    }} // do not block
 #endif
 
 #endif
