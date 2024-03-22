@@ -99,9 +99,14 @@ Kinematics kinematics(
 Odometry odometry;
 IMU imu;
 
+#ifndef BAUDRATE
+#define BAUDRATE 115200
+#endif
+
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
+    Serial.begin(BAUDRATE);
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -111,8 +116,7 @@ void setup()
             flashLED(3);
         }
     }
-    
-    Serial.begin(115200);
+
 #ifdef MICRO_ROS_TRANSPORT_ARDUINO_WIFI
     set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
 #else
