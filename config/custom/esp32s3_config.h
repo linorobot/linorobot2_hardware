@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ESP32_CONFIG_H
-#define ESP32_CONFIG_H
+#ifndef ESP32S3_CONFIG_H
+#define ESP32S3_CONFIG_H
 
 #define LED_PIN LED_BUILTIN //used for debugging status
 
@@ -81,17 +81,17 @@ ROBOT ORIENTATION
 #define MOTOR4_INV false
 
 // ENCODER PINS
-#define MOTOR1_ENCODER_A 36
-#define MOTOR1_ENCODER_B 39
+#define MOTOR1_ENCODER_A 4
+#define MOTOR1_ENCODER_B 5
 
-#define MOTOR2_ENCODER_A 35
-#define MOTOR2_ENCODER_B 34
+#define MOTOR2_ENCODER_A 6
+#define MOTOR2_ENCODER_B 7
 
-#define MOTOR3_ENCODER_A 32
-#define MOTOR3_ENCODER_B 27
+#define MOTOR3_ENCODER_A 39
+#define MOTOR3_ENCODER_B 40
 
-#define MOTOR4_ENCODER_A 26
-#define MOTOR4_ENCODER_B 25
+#define MOTOR4_ENCODER_A 41
+#define MOTOR4_ENCODER_B 42
 
 // MOTOR PINS
 #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
@@ -138,20 +138,20 @@ ROBOT ORIENTATION
 
 #ifdef USE_BTS7960_MOTOR_DRIVER
   #define MOTOR1_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR1_IN_A 19
-  #define MOTOR1_IN_B 18
+  #define MOTOR1_IN_A 10
+  #define MOTOR1_IN_B 11
 
   #define MOTOR2_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR2_IN_A 16
-  #define MOTOR2_IN_B 17
+  #define MOTOR2_IN_A 12
+  #define MOTOR2_IN_B 13
 
   #define MOTOR3_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR3_IN_A 13
-  #define MOTOR3_IN_B 12
+  #define MOTOR3_IN_A 14
+  #define MOTOR3_IN_B 15
 
   #define MOTOR4_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR4_IN_A 4
-  #define MOTOR4_IN_B 23
+  #define MOTOR4_IN_A 16
+  #define MOTOR4_IN_B 17
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
   #define PWM_MIN -PWM_MAX
@@ -189,23 +189,23 @@ ROBOT ORIENTATION
 // #define USE_SYSLOG
 #define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define SYSLOG_PORT 514
-#define DEVICE_HOSTNAME "esp32"
+#define DEVICE_HOSTNAME "esp32s3"
 #define APP_NAME "hardware"
 // #define USE_LIDAR_UDP
-#define LIDAR_RXD 14
+#define LIDAR_RXD 2
 // #define LIDAR_PWM 15
 #define LIDAR_SERIAL 1 // uart number
 #define LIDAR_BAUDRATE 230400
 #define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define LIDAR_PORT 8889
 #define BAUDRATE 921600
-#define SDA_PIN 21 // specify I2C pins
-#define SCL_PIN 22
-#define NODE_NAME "esp32"
-// #define TOPIC_PREFIX "esp32/"
+#define SDA_PIN 8 // specify I2C pins
+#define SCL_PIN 9
+#define NODE_NAME "esp32s3"
+// #define TOPIC_PREFIX "esp32s3/"
 
 // battery voltage ADC pin
-#define BATTERY_PIN 33
+#define BATTERY_PIN 1
 // 3.3V ref, 12 bits ADC, 33k + 10k voltage divider
 // #define USE_ADC_LUT
 #ifdef USE_ADC_LUT

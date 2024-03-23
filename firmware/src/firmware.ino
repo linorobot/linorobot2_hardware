@@ -35,7 +35,9 @@
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
 
+#ifndef RCCHECK
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
+#endif
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile int64_t init = -1; \
@@ -97,9 +99,17 @@ Kinematics kinematics(
 Odometry odometry;
 IMU imu;
 
+#ifndef BAUDRATE
+#define BAUDRATE 115200
+#endif
+
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
+    Serial.begin(BAUDRATE);
+#ifdef BOARD_INIT // board specific setup
+    BOARD_INIT
+#endif
 
     bool imu_ok = imu.init();
     if(!imu_ok)
@@ -109,9 +119,15 @@ void setup()
             flashLED(3);
         }
     }
-    
-    Serial.begin(115200);
+
+#ifdef MICRO_ROS_TRANSPORT_ARDUINO_WIFI
+    set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
+#else
     set_microros_serial_transports(Serial);
+#endif
+#ifdef BOARD_INIT_LATE // board specific setup
+    BOARD_INIT_LATE
+#endif
 }
 
 void loop() {
@@ -141,6 +157,9 @@ void loop() {
         default:
             break;
     }
+#ifdef BOARD_LOOP // board specific loop
+    BOARD_LOOP
+#endif
 }
 
 void controlCallback(rcl_timer_t * timer, int64_t last_call_time) 

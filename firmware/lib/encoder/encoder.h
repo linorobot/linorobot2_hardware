@@ -28,9 +28,9 @@
 
 #ifndef Encoder_h_
 #define Encoder_h_
+#include <Arduino.h>
 
 #ifdef ESP32
-#include "Arduino.h"
 #include <ESP32Encoder.h>
 class Encoder
 {
@@ -49,7 +49,6 @@ public:
 			pin2 = temp_pin;
 		}
 		counts_per_rev_ = counts_per_rev;
-		ESP32Encoder::useInternalWeakPullResistors = UP;
 		encoder_.attachHalfQuad(pin1, pin2);
 	}
 	float getRPM() {
@@ -77,6 +76,51 @@ public:
 	        if (counts_per_rev_ < 0) return;
 	        encoder_.setCount(p);
 	}
+};
+#elif defined(PICO)
+#include <pio_encoder.h>
+
+class Encoder
+{
+private:
+    int counts_per_rev_ = -1;
+    unsigned long prev_update_time_;
+    int32_t prev_encoder_ticks_;
+    uint offset_;
+      PioEncoder pioencoder_;
+public:
+    Encoder(int pin1, int pin2, int counts_per_rev, bool invert = false) : \
+        pioencoder_(pin1) {
+        if (pin1 < 0 || pin2 < 0) return; // unused encoder
+        pioencoder_.begin();
+        pioencoder_.flip(invert);
+        counts_per_rev_ = counts_per_rev;
+     }
+    float getRPM() {
+        if (counts_per_rev_ < 0) return 0.0;
+        int32_t encoder_ticks = read();
+        //this function calculates the motor's RPM based on encoder ticks and delta time
+        unsigned long current_time = micros();
+        unsigned long dt = current_time - prev_update_time_;
+
+        //convert the time from milliseconds to minutes
+        double dtm = (double)dt / 60000000;
+        int64_t delta_ticks = encoder_ticks - prev_encoder_ticks_;
+
+        //calculate wheel's speed (RPM)
+        prev_update_time_ = current_time;
+        prev_encoder_ticks_ = encoder_ticks;
+
+        return (((double) delta_ticks / counts_per_rev_) / dtm);
+    }
+    inline int32_t read() {
+        if (counts_per_rev_ < 0) return 0;
+        return pioencoder_.getCount();
+    }
+    inline void write(int32_t p) {
+        if (counts_per_rev_ < 0) return;
+        pioencoder_.reset();
+    }
 };
 #else
 

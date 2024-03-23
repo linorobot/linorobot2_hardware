@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ESP32_CONFIG_H
-#define ESP32_CONFIG_H
+#ifndef PICO_CONFIG_H
+#define PICO_CONFIG_H
 
 #define LED_PIN LED_BUILTIN //used for debugging status
 
@@ -59,10 +59,10 @@ ROBOT ORIENTATION
 #define MOTOR_OPERATING_VOLTAGE 12          // motor's operating voltage (used to calculate max RPM)
 #define MOTOR_POWER_MAX_VOLTAGE 12          // max voltage of the motor's power source (used to calculate max RPM)
 #define MOTOR_POWER_MEASURED_VOLTAGE 12     // current voltage reading of the power connected to the motor (used for calibration)
-#define COUNTS_PER_REV1 450                 // wheel1 encoder's no of ticks per rev
-#define COUNTS_PER_REV2 450                 // wheel2 encoder's no of ticks per rev
-#define COUNTS_PER_REV3 450                 // wheel3 encoder's no of ticks per rev
-#define COUNTS_PER_REV4 450                 // wheel4 encoder's no of ticks per rev
+#define COUNTS_PER_REV1 900                 // wheel1 encoder's no of ticks per rev
+#define COUNTS_PER_REV2 900                 // wheel2 encoder's no of ticks per rev
+#define COUNTS_PER_REV3 900                 // wheel3 encoder's no of ticks per rev
+#define COUNTS_PER_REV4 900                 // wheel4 encoder's no of ticks per rev
 #define WHEEL_DIAMETER 0.0560               // wheel's diameter in meters
 #define LR_WHEELS_DISTANCE 0.224            // distance between left and right wheels
 #define PWM_BITS 10                         // PWM Resolution of the microcontroller
@@ -81,21 +81,22 @@ ROBOT ORIENTATION
 #define MOTOR4_INV false
 
 // ENCODER PINS
-#define MOTOR1_ENCODER_A 36
-#define MOTOR1_ENCODER_B 39
+// Note: encoder pins must be consecutive (e.g. 2 and 3, 10 and 11 etc.)
+#define MOTOR1_ENCODER_A  6
+#define MOTOR1_ENCODER_B  7
 
-#define MOTOR2_ENCODER_A 35
-#define MOTOR2_ENCODER_B 34
+#define MOTOR2_ENCODER_A 10
+#define MOTOR2_ENCODER_B 11
 
-#define MOTOR3_ENCODER_A 32
-#define MOTOR3_ENCODER_B 27
+#define MOTOR3_ENCODER_A 20
+#define MOTOR3_ENCODER_B 21
 
-#define MOTOR4_ENCODER_A 26
-#define MOTOR4_ENCODER_B 25
+#define MOTOR4_ENCODER_A 2
+#define MOTOR4_ENCODER_B 3
 
 // MOTOR PINS
 #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
-  #define MOTOR1_PWM 21
+  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can swap it with pin no 1 instead.
   #define MOTOR1_IN_A 20
   #define MOTOR1_IN_B 1
 
@@ -116,7 +117,7 @@ ROBOT ORIENTATION
 #endif
 
 #ifdef USE_GENERIC_1_IN_MOTOR_DRIVER
-  #define MOTOR1_PWM 21
+  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can use pin no 1 instead.
   #define MOTOR1_IN_A 20
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
 
@@ -138,27 +139,27 @@ ROBOT ORIENTATION
 
 #ifdef USE_BTS7960_MOTOR_DRIVER
   #define MOTOR1_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR1_IN_A 19
-  #define MOTOR1_IN_B 18
+  #define MOTOR1_IN_A 12
+  #define MOTOR1_IN_B 13
 
   #define MOTOR2_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR2_IN_A 16
-  #define MOTOR2_IN_B 17
+  #define MOTOR2_IN_A 14
+  #define MOTOR2_IN_B 15
 
   #define MOTOR3_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR3_IN_A 13
-  #define MOTOR3_IN_B 12
+  #define MOTOR3_IN_A 16
+  #define MOTOR3_IN_B 17
 
   #define MOTOR4_PWM -1 //DON'T TOUCH THIS! This is just a placeholder
-  #define MOTOR4_IN_A 4
-  #define MOTOR4_IN_B 23
+  #define MOTOR4_IN_A 18
+  #define MOTOR4_IN_B 19
 
   #define PWM_MAX pow(2, PWM_BITS) - 1
   #define PWM_MIN -PWM_MAX
 #endif
 
 #ifdef USE_ESC_MOTOR_DRIVER
-  #define MOTOR1_PWM 21
+  #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x. You can use pin no 1 instead.
   #define MOTOR1_IN_A -1 //DON'T TOUCH THIS! This is just a placeholder
   #define MOTOR1_IN_B -1 //DON'T TOUCH THIS! This is just a placeholder
 
@@ -180,8 +181,6 @@ ROBOT ORIENTATION
 
 #define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define AGENT_PORT 8888
-#define WIFI_SSID "WIFI_SSID"
-#define WIFI_PASSWORD "WIFI_PASSWORD"
 // Enable WiFi with null terminated list of multiple APs SSID and password
 // #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
 #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
@@ -189,23 +188,23 @@ ROBOT ORIENTATION
 // #define USE_SYSLOG
 #define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define SYSLOG_PORT 514
-#define DEVICE_HOSTNAME "esp32"
+#define DEVICE_HOSTNAME "pico"
 #define APP_NAME "hardware"
 // #define USE_LIDAR_UDP
-#define LIDAR_RXD 14
-// #define LIDAR_PWM 15
+#define LIDAR_RXD 1
+// #define LIDAR_PWM 0
 #define LIDAR_SERIAL 1 // uart number
 #define LIDAR_BAUDRATE 230400
 #define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define LIDAR_PORT 8889
-#define BAUDRATE 921600
-#define SDA_PIN 21 // specify I2C pins
-#define SCL_PIN 22
-#define NODE_NAME "esp32"
-// #define TOPIC_PREFIX "esp32/"
+#define BAUDRATE 115200
+#define SDA_PIN 4 // specify I2C pins
+#define SCL_PIN 5
+#define NODE_NAME "pico"
+// #define TOPIC_PREFIX "pico/"
 
 // battery voltage ADC pin
-#define BATTERY_PIN 33
+#define BATTERY_PIN 28
 // 3.3V ref, 12 bits ADC, 33k + 10k voltage divider
 // #define USE_ADC_LUT
 #ifdef USE_ADC_LUT
@@ -220,7 +219,9 @@ const int16_t ADC_LUT[4096] = { /* insert adc_calibrate data here */ };
 #define USE_SHORT_BRAKE // for shorter stopping distance
 // #define WDT_TIMEOUT 60 // Sec
 #define BOARD_INIT { \
-    Wire.begin(SDA_PIN, SCL_PIN); \
+    Wire.setSDA(SDA_PIN); \
+    Wire.setSCL(SCL_PIN); \
+    Wire.begin(); \
     Wire.setClock(400000); \
 }
 // #define BOARD_INIT_LATE {}
