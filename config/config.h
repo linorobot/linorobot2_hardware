@@ -22,6 +22,14 @@
     #include "custom/dev_config.h"
 #endif
 
+#ifdef USE_GENDRV_CONFIG
+    #include "custom/gendrv_config.h"
+#endif
+
+#ifdef USE_GENDRV_WIFI_CONFIG
+    #include "custom/gendrv_wifi_config.h"
+#endif
+
 #ifdef USE_ESP32_CONFIG
     #include "custom/esp32_config.h"
 #endif
@@ -41,6 +49,13 @@
 #ifdef USE_PICO_CONFIG
     #include "custom/pico_config.h"
 #endif
+
+// add maintainer configurations above this line
+// this barrier helps to reduce user merge conflict
+// add user configurations below this line
+
+
+// add user configurations above this line
 
 // this should be the last one
 #ifndef LINO_BASE

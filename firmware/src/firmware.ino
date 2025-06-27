@@ -27,6 +27,7 @@
 #include <geometry_msgs/msg/vector3.h>
 
 #include "config.h"
+#include "syslog.h"
 #include "motor.h"
 #include "kinematics.h"
 #include "pid.h"
@@ -36,6 +37,32 @@
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
+#include "lidar.h"
+#include "wifis.h"
+#include "ota.h"
+
+#ifdef MICRO_ROS_TRANSPORT_ARDUINO_WIFI
+// remove wifi initialization code from wifi transport
+static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agent_port)
+{
+    static struct micro_ros_agent_locator locator;
+    locator.address = agent_ip;
+    locator.port = agent_port;
+
+    rmw_uros_set_custom_transport(
+        false,
+        (void *) &locator,
+        platformio_transport_open,
+        platformio_transport_close,
+        platformio_transport_write,
+        platformio_transport_read
+    );
+}
+#endif
+
+#ifndef NODE_NAME
+#define NODE_NAME "linorobot_base_node"
+#endif
 
 #ifndef RCCHECK
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
@@ -112,28 +139,54 @@ void setup()
 {
     pinMode(LED_PIN, OUTPUT);
     Serial.begin(BAUDRATE);
-#ifdef BOARD_INIT // board specific setup
-    BOARD_INIT
+#ifdef ESP32
+    Serial.setRxBufferSize(1024);
 #endif
 
+#ifdef BOARD_INIT // board specific setup, must include Wire.begin
+    BOARD_INIT
+#else
+    Wire.begin();
+#endif
+
+    initWifis();
+    initOta();
     bool imu_ok = imu.init();
-    if(!imu_ok)
+    if (!imu_ok) // take IMU failure as fatal
     {
-        while(1)
+        Serial.println("IMU init failed");
+        syslog(LOG_INFO, "%s IMU init failed %lu", __FUNCTION__, millis());
+        while (1)
         {
-            flashLED(3);
+            flashLED(3); // flash 3 times
+            runWifis();
+            runOta();
         }
     }
-    mag.init();
+    bool mag_ok = mag.init();
+    if (!mag_ok) // take mag failure as fatal
+    {
+        Serial.println("MAG init failed");
+        syslog(LOG_INFO, "%s MAG init failed %lu", __FUNCTION__, millis());
+        while (1)
+        {
+            flashLED(4); // flash 4 times
+            runWifis();
+            runOta();
+        }
+    }
+    initLidar(); // after wifi connected
 
 #ifdef MICRO_ROS_TRANSPORT_ARDUINO_WIFI
-    set_microros_wifi_transports(WIFI_SSID, WIFI_PASSWORD, AGENT_IP, AGENT_PORT);
+    set_microros_net_transports(AGENT_IP, AGENT_PORT);
 #else
     set_microros_serial_transports(Serial);
 #endif
+
 #ifdef BOARD_INIT_LATE // board specific setup
     BOARD_INIT_LATE
 #endif
+    syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
 
 void loop() {
@@ -143,6 +196,7 @@ void loop() {
             EXECUTE_EVERY_N_MS(500, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_AVAILABLE : WAITING_AGENT;);
             break;
         case AGENT_AVAILABLE:
+            syslog(LOG_INFO, "%s agent available %lu", __FUNCTION__, millis());
             state = (true == createEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
             if (state == WAITING_AGENT) 
             {
@@ -150,19 +204,28 @@ void loop() {
             }
             break;
         case AGENT_CONNECTED:
+#ifndef USE_STAY_CONNECTED // Stay connected. Do not ping.
             EXECUTE_EVERY_N_MS(200, state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1)) ? AGENT_CONNECTED : AGENT_DISCONNECTED;);
+#endif
             if (state == AGENT_CONNECTED) 
             {
                 rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
             }
             break;
         case AGENT_DISCONNECTED:
+            syslog(LOG_INFO, "%s agent disconnected %lu", __FUNCTION__, millis());
+            fullStop();
             destroyEntities();
             state = WAITING_AGENT;
             break;
         default:
             break;
     }
+    runWifis();
+    runOta();
+#ifdef WDT_TIMEOUT
+    esp_task_wdt_reset();
+#endif
 #ifdef BOARD_LOOP // board specific loop
     BOARD_LOOP
 #endif
@@ -187,11 +250,12 @@ void twistCallback(const void * msgin)
 
 bool createEntities()
 {
+    syslog(LOG_INFO, "%s %lu", __FUNCTION__, millis());
     allocator = rcl_get_default_allocator();
     //create init_options
     RCCHECK(rclc_support_init(&support, 0, NULL, &allocator));
     // create node
-    RCCHECK(rclc_node_init_default(&node, "linorobot_base_node", "", &support));
+    RCCHECK(rclc_node_init_default(&node, NODE_NAME, "", &support));
     // create odometry publisher
     RCCHECK(rclc_publisher_init_default( 
         &odom_publisher, 
@@ -204,6 +268,7 @@ bool createEntities()
         &imu_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
+    // if we have magnetomter, use imu/data_raw for madgwick filter
 #ifndef USE_FAKE_MAG
         "imu/data_raw"
 #else
@@ -227,11 +292,12 @@ bool createEntities()
     ));
     // create timer for actuating the motors at 50 Hz (1000/20)
     const unsigned int control_timeout = 20;
-    RCCHECK(rclc_timer_init_default( 
+    RCCHECK(rclc_timer_init_default2( 
         &control_timer, 
         &support,
         RCL_MS_TO_NS(control_timeout),
-        controlCallback
+        controlCallback,
+        true
     ));
     executor = rclc_executor_get_zero_initialized_executor();
     RCCHECK(rclc_executor_init(&executor, &support.context, 2, & allocator));
@@ -256,16 +322,16 @@ bool destroyEntities()
     rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support.context);
     (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
-    rcl_publisher_fini(&odom_publisher, &node);
-    rcl_publisher_fini(&imu_publisher, &node);
+    RCSOFTCHECK(rcl_publisher_fini(&odom_publisher, &node));
+    RCSOFTCHECK(rcl_publisher_fini(&imu_publisher, &node));
 #ifndef USE_FAKE_MAG
-    rcl_publisher_fini(&mag_publisher, &node);
+    RCSOFTCHECK(rcl_publisher_fini(&mag_publisher, &node));
 #endif
-    rcl_subscription_fini(&twist_subscriber, &node);
-    rcl_node_fini(&node);
-    rcl_timer_fini(&control_timer);
-    rclc_executor_fini(&executor);
-    rclc_support_fini(&support);
+    RCSOFTCHECK(rcl_subscription_fini(&twist_subscriber, &node));
+    RCSOFTCHECK(rcl_timer_fini(&control_timer));
+    RCSOFTCHECK(rclc_executor_fini(&executor));
+    RCSOFTCHECK(rcl_node_fini(&node))
+    RCSOFTCHECK(rclc_support_fini(&support));
 
     digitalWrite(LED_PIN, HIGH);
     
@@ -366,25 +432,42 @@ void publishData()
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
 }
 
-void syncTime()
+bool syncTime()
 {
+    const int timeout_ms = 1000;
+    if (rmw_uros_epoch_synchronized()) return true; // synchronized previously
     // get the current time from the agent
-    unsigned long now = millis();
-    RCCHECK(rmw_uros_sync_session(10));
-    unsigned long long ros_time_ms = rmw_uros_epoch_millis(); 
+    RCCHECK(rmw_uros_sync_session(timeout_ms));
+    if (rmw_uros_epoch_synchronized()) {
+#if (_POSIX_TIMERS > 0)
+        // Get time in milliseconds or nanoseconds
+        int64_t time_ns = rmw_uros_epoch_nanos();
+    timespec tp;
+    tp.tv_sec = time_ns / 1000000000;
+    tp.tv_nsec = time_ns % 1000000000;
+    clock_settime(CLOCK_REALTIME, &tp);
+#else
+    unsigned long long ros_time_ms = rmw_uros_epoch_millis();
     // now we can find the difference between ROS time and uC time
-    time_offset = ros_time_ms - now;
+    time_offset = ros_time_ms - millis();
+#endif
+    return true;
+    }
+    return false;
 }
 
 struct timespec getTime()
 {
     struct timespec tp = {0};
+#if (_POSIX_TIMERS > 0)
+    clock_gettime(CLOCK_REALTIME, &tp);
+#else
     // add time difference between uC time and ROS time to
     // synchronize time with ROS
     unsigned long long now = millis() + time_offset;
     tp.tv_sec = now / 1000;
     tp.tv_nsec = (now % 1000) * 1000000;
-
+#endif
     return tp;
 }
 
