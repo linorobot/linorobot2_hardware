@@ -9,6 +9,7 @@ ROS 2 Distro | Branch | Build status
 # linorobot2_hardware for ESP32 and Pico
 
 ## Overview
+
 The linorobot2_hardware repo uses platformio to build microcontroller firmware for mobile robots based on micro-ROS.
 It is extremely parameterized and easily customizable for varied hardware configurations.
 
