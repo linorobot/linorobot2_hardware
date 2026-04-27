@@ -36,12 +36,9 @@
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
-#include "battery.h"
-#include "range.h"
 #include "lidar.h"
 #include "wifis.h"
 #include "ota.h"
-#include "pwm.h"
 
 #ifndef BAUDRATE
 #define BAUDRATE 115200
@@ -108,15 +105,8 @@ void setup()
     initWifis();
     initOta();
     i2cdetect();  // default range from 0x03 to 0x77
-    initPwm();
-    motor1_controller.begin();
-    motor2_controller.begin();
-    motor3_controller.begin();
-    motor4_controller.begin();
     imu.init();
     mag.init();
-    initBattery();
-    initRange();
 
     if(Kinematics::LINO_BASE == Kinematics::DIFFERENTIAL_DRIVE)
     {
