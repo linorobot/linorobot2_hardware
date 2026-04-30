@@ -187,16 +187,31 @@ ROBOT ORIENTATION
   #define PWM_MIN -PWM_MAX
 #endif
 
-#define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
-#define AGENT_PORT 8888
-#define WIFI_SSID "WIFI_SSID"
-#define WIFI_PASSWORD "WIFI_PASSWORD"
-// Enable WiFi with null terminated list of multiple APs SSID and password
-// #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
-#define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
+// Wifi network settings
+// Option 1: Enable WiFi by copying wifi_config.h.template in this directory
+// to wifi_config.h and filling in your wifi credentials and IP addresses.
+// wifi_config.h will be ignored by git, so your credentials will not be pushed to github,
+// and will be private to you. This is the recommended option.
+// Option 2: Enable WiFi below by filling in your wifi credentials and IP addresses.
+// WARNING: if you push this file to git, your credentials will be public!
+
+#if __has_include("wifi_config.h")
+  #include "wifi_config.h"
+#else
+  // Enable WiFi with null terminated list of multiple APs SSID and password
+  // #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+  #define AGENT_IP { 192, 168, 1, 100 }
+  #define SYSLOG_SERVER { 192, 168, 1, 100 }
+  #define LIDAR_SERVER { 192, 168, 1, 100 }
+#endif
+
+// Uncomment the line below to enable Arduino OTA updates.
 // #define USE_ARDUINO_OTA
+// Uncomment the line below to enable syslog for debugging over wifi.
 // #define USE_SYSLOG
-#define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
+
+#define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
+#define AGENT_PORT 8888
 #define SYSLOG_PORT 514
 #define DEVICE_HOSTNAME "esp32"
 #define APP_NAME "hardware"
@@ -205,7 +220,6 @@ ROBOT ORIENTATION
 // #define LIDAR_PWM 15
 #define LIDAR_SERIAL 1 // uart number
 #define LIDAR_BAUDRATE 230400
-#define LIDAR_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define LIDAR_PORT 8889
 #define BAUDRATE 921600
 #define SDA_PIN 21 // specify I2C pins
