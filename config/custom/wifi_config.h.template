@@ -1,0 +1,10 @@
+// Wifi network settings
+// Copy this file to wifi_config.h and edit the settings for your wifi network
+// and ROS2 linux computer IP address
+
+// Enable WiFi with null terminated list of multiple APs SSID and password
+// and set IP of the ROS2 linux computer for the various services
+#define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+#define AGENT_IP { 192, 168, 1, 100 }
+#define SYSLOG_SERVER { 192, 168, 1, 100 }
+#define LIDAR_SERVER { 192, 168, 1, 100 }
