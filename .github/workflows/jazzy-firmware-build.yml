@@ -1,14 +1,10 @@
 name: ROS Jazzy Firmware Build
 
-# Get the default branch name from the repository settings
-env:
-  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-
 on:
   pull_request:
-    # Run only on PRs to the default branch (usually main or master)
+    # Run on PRs only to branches starting with 'jazzy'
     branches:
-      - DEFAULT_BRANCH
+      - jazzy*
     # Don't run when the following files are changed which don't effect firmware.
     paths-ignore:
       - 'docs/**'
@@ -17,18 +13,17 @@ on:
       - README.md
   
   push:
-    # Run on pushes to any branches except these distro-specific branches
-    branches-ignore:
-      - iron*
-      - humble*
+    # Run on pushes only to branches starting with 'jazzy'
+    branches:
+      - jazzy*
     # Don't run when the following files are changed which don't effect firmware.
     paths-ignore:
       - 'docs/**'
       - .gitignore
       - LICENSE
       - README.md
-    
-  # Run daily at midnight to detect flakiness and broken dependencies
+  
+  # Run Fridays at midnight to detect flakiness and broken dependencies
   schedule:
     - cron: '0 0 * * FRI'
 
@@ -42,5 +37,6 @@ jobs:
     uses: ./.github/workflows/reusable-platformio-ci.yml
     with:
       ros_distro: jazzy
-      # The reference field will be set to the default branch only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
-      reference: ${{ github.event_name == 'schedule' && github.event.repository.default_branch || '' }}
+      os: ubuntu-24.04
+      # The reference field will be set to 'jazzy' only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
+      reference: ${{ github.event_name == 'schedule' && 'jazzy' || '' }}

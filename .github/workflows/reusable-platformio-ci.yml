@@ -21,7 +21,6 @@ on:
         required: false
         type: string
 
-    
 jobs:
   # This job is used to build the calibration firmware
   build-calibration:
@@ -30,13 +29,13 @@ jobs:
 
     steps:
       # Check out the repository
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.reference }}
           path: repo
 
       # Cache dependencies to speed up workflows
-      - uses: actions/cache@v3
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.cache/pip
@@ -62,14 +61,14 @@ jobs:
 
     steps:
       # check out the repository
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.reference }}
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.9'
+          python-version: '3.14'
 
       # run the python script to parse the platformio.ini file and output as json to a matrix
       # pass the ros distros desired as arguments
@@ -88,19 +87,20 @@ jobs:
     strategy:
       # don't stop all jobs if one fails
       fail-fast: false
-      # Build the firmware for each environment from parsing job in parallel
+      # Build the firmware for each environment from parsing job in parallel, max 3 concurrent jobs
+      max-parallel: 3
       matrix:
         include: ${{fromJson(needs.pio-fw-matrix.outputs.matrix)}}
 
     steps:
       # Check out the repository
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         with:
           ref: ${{ inputs.reference }}
           path: repo
 
       # Cache dependencies to speed up workflows
-      - uses: actions/cache@v3
+      - uses: actions/cache@v5
         with:
           path: |
             ~/.cache/pip

@@ -12,7 +12,7 @@ environments = []
 for section in config.sections():
     if section.startswith("env:"):
         env_name = section.split("env:")[1]
-        if "teensy" in env_name:
+        if "teensy" in env_name or env_name == "dev" or env_name == "vattenkar":
             continue  # Skip environments that contain "teensy"
         environments.append({"env": env_name})
 
