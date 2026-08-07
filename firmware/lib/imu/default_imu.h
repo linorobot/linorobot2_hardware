@@ -283,6 +283,127 @@ class QMI8658IMU: public IMUInterface
         }
 };
 
+#ifdef USE_BNO085_IMU
+// avoid conflict with I2C_BUFFER_LENGTH defined in Wire.h
+#ifdef I2C_BUFFER_LENGTH
+  #undef I2C_BUFFER_LENGTH
+#endif
+
+#include <SparkFun_BNO080_Arduino_Library.h>
+#include "syslog.h"
+#endif
+class BNO085IMU: public IMUInterface 
+{
+    private:
+        BNO080 bno085_;
+        const int bno085UpdateRateMs = 20;   // 50Hz update rate (standard for ROS IMU messages)
+        const float accel_cov_ = 0.01;
+        const float gyro_cov_ = 0.001;
+        const float ori_xy_cov_ = 0.01;
+        const float ori_z_cov_ = 0.05;
+
+        int nextUpdateTime = 0;
+
+        geometry_msgs__msg__Vector3 accel_;
+        geometry_msgs__msg__Vector3 gyro_;
+
+    public:
+        BNO085IMU()
+        {
+        }
+
+        bool startSensor() override
+        {
+            Wire.begin();
+            if (bno085_.begin() == 0){
+                // Serial.println("bno085_init fail");
+                return false;
+            }
+
+            // IMPORTANT: Request Game Rotation Vector (6-DOF) to bypass the magnetometer.
+            // The chip will automatically load the saved physical Tare profile from flash.
+            // You should run the tare calibration routine with the IMU mounted in the robot
+            // chassis to get pitch & roll reporting zeroed to the chassis.
+            // The magnetometer is not used in this mode, so yaw will drift over time.
+            bno085_.enableGameRotationVector(bno085UpdateRateMs);
+            bno085_.enableGyro(bno085UpdateRateMs);
+            bno085_.enableAccelerometer(bno085UpdateRateMs);
+
+            // Freeze dynamic calibration to stop the baseline from shifting
+            bno085_.endCalibration();
+
+            nextUpdateTime = millis() + 500;
+            return true;
+        }
+
+        geometry_msgs__msg__Vector3 readAccelerometer() override
+        {
+            accel_.x = bno085_.getAccelX();
+            accel_.y = bno085_.getAccelY();
+            accel_.z = bno085_.getAccelZ();
+            return accel_;
+        }
+
+        geometry_msgs__msg__Vector3 readGyroscope() override
+        {
+            gyro_.x = bno085_.getGyroX() * DEG_TO_RAD;
+            gyro_.y = bno085_.getGyroY() * DEG_TO_RAD;
+            gyro_.z = bno085_.getGyroZ() * DEG_TO_RAD;
+            return gyro_;
+        }
+
+        sensor_msgs__msg__Imu getData()
+        {
+            if (!bno085_.dataAvailable()) {
+                syslog(LOG_INFO, "%s BNO085 IMU data not available %lu", __FUNCTION__, millis());
+                return imu_msg_;
+            }
+            imu_msg_.angular_velocity = readGyroscope();
+
+            if(imu_msg_.angular_velocity.x > -0.01 && imu_msg_.angular_velocity.x < 0.01 )
+                imu_msg_.angular_velocity.x = 0;
+
+            if(imu_msg_.angular_velocity.y > -0.01 && imu_msg_.angular_velocity.y < 0.01 )
+                imu_msg_.angular_velocity.y = 0;
+
+            if(imu_msg_.angular_velocity.z > -0.01 && imu_msg_.angular_velocity.z < 0.01 )
+                imu_msg_.angular_velocity.z = 0;
+
+            imu_msg_.angular_velocity_covariance[0] = gyro_cov_;
+            imu_msg_.angular_velocity_covariance[4] = gyro_cov_;
+            imu_msg_.angular_velocity_covariance[8] = gyro_cov_;
+
+            imu_msg_.linear_acceleration = readAccelerometer();
+            imu_msg_.linear_acceleration_covariance[0] = accel_cov_;
+            imu_msg_.linear_acceleration_covariance[4] = accel_cov_;
+            imu_msg_.linear_acceleration_covariance[8] = accel_cov_;
+
+            imu_msg_.orientation.x = bno085_.getQuatI();
+            imu_msg_.orientation.y = bno085_.getQuatJ();
+            imu_msg_.orientation.z = bno085_.getQuatK();
+            imu_msg_.orientation.w = bno085_.getQuatReal();
+
+            imu_msg_.orientation_covariance[0] = ori_xy_cov_;
+            imu_msg_.orientation_covariance[4] = ori_xy_cov_;
+            imu_msg_.orientation_covariance[8] = ori_z_cov_;
+
+// Uncomment the following line to enable syslog debug output for BNO085 IMU data
+// #define DEBUG_BNO085
+#ifdef DEBUG_BNO085
+            float roll = bno085_.getRoll() * RAD_TO_DEG;
+            float pitch = bno085_.getPitch() * RAD_TO_DEG;
+            float yaw = bno085_.getYaw() * RAD_TO_DEG;
+
+            if (millis() >= nextUpdateTime) {
+                syslog(LOG_INFO, "%s BNO085 IMU data read complete %lu, roll: %0.2f, pitch: %0.2f, yaw: %0.2f", __FUNCTION__, millis(), roll, pitch, yaw);
+                nextUpdateTime = millis() + 500;
+            }   
+#endif
+
+            return imu_msg_;
+        }
+};
+
 #endif
 //ADXL345 https://www.sparkfun.com/datasheets/Sensors/Accelerometer/ADXL345.pdf
 //HMC8553L https://cdn-shop.adafruit.com/datasheets/HMC5883L_3-Axis_Digital_Compass_IC.pdf
