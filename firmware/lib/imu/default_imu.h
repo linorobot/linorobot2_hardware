@@ -27,6 +27,8 @@
 #include "MPU9250.h"
 #include "QMI8658.h"
 
+#include "syslog.h"
+
 class GY85IMU: public IMUInterface 
 {
     private:
@@ -283,15 +285,12 @@ class QMI8658IMU: public IMUInterface
         }
 };
 
-#ifdef USE_BNO085_IMU
-// avoid conflict with I2C_BUFFER_LENGTH defined in Wire.h
+// Note: Sparkfun library redefines I2C_BUFFER_LENGTH, so we undefine it for this class
 #ifdef I2C_BUFFER_LENGTH
-  #undef I2C_BUFFER_LENGTH
+#undef I2C_BUFFER_LENGTH
 #endif
-
 #include <SparkFun_BNO080_Arduino_Library.h>
-#include "syslog.h"
-#endif
+
 class BNO085IMU: public IMUInterface 
 {
     private:
@@ -387,7 +386,6 @@ class BNO085IMU: public IMUInterface
             imu_msg_.orientation_covariance[4] = ori_xy_cov_;
             imu_msg_.orientation_covariance[8] = ori_z_cov_;
 
-// Uncomment the following line to enable syslog debug output for BNO085 IMU data
 // #define DEBUG_BNO085
 #ifdef DEBUG_BNO085
             float roll = bno085_.getRoll() * RAD_TO_DEG;
@@ -399,7 +397,6 @@ class BNO085IMU: public IMUInterface
                 nextUpdateTime = millis() + 500;
             }   
 #endif
-
             return imu_msg_;
         }
 };
