@@ -306,6 +306,21 @@ class BNO085IMU: public IMUInterface
         geometry_msgs__msg__Vector3 accel_;
         geometry_msgs__msg__Vector3 gyro_;
 
+        // State Machine Enumeration
+        enum IMUState {
+        STATE_DISCONNECTED,
+        STATE_SEND_CONFIG,
+        STATE_CHECK_RESET,
+        STATE_VALIDATE_STREAM,
+        STATE_RUNNING
+        };
+
+        // Global State Variables for the IMU State Machine
+        IMUState imuState = STATE_DISCONNECTED;
+        unsigned long stateTimer = 0;
+        int validPacketCount = 0;
+        int configAttempts = 0;
+
     public:
         BNO085IMU()
         {
@@ -316,22 +331,13 @@ class BNO085IMU: public IMUInterface
             Wire.begin();
             if (bno085_.begin() == 0){
                 // Serial.println("bno085_init fail");
+                syslog(LOG_ERR, "%s BNO085 IMU init fail %lu", __FUNCTION__, millis());
+                imuState = STATE_DISCONNECTED;
                 return false;
             }
+            syslog(LOG_INFO, "%s BNO085 IMU init success %lu", __FUNCTION__, millis());
+            imuState = STATE_SEND_CONFIG;
 
-            // IMPORTANT: Request Game Rotation Vector (6-DOF) to bypass the magnetometer.
-            // The chip will automatically load the saved physical Tare profile from flash.
-            // You should run the tare calibration routine with the IMU mounted in the robot
-            // chassis to get pitch & roll reporting zeroed to the chassis.
-            // The magnetometer is not used in this mode, so yaw will drift over time.
-            bno085_.enableGameRotationVector(bno085UpdateRateMs);
-            bno085_.enableGyro(bno085UpdateRateMs);
-            bno085_.enableAccelerometer(bno085UpdateRateMs);
-
-            // Freeze dynamic calibration to stop the baseline from shifting
-            bno085_.endCalibration();
-
-            nextUpdateTime = millis() + 500;
             return true;
         }
 
@@ -353,7 +359,7 @@ class BNO085IMU: public IMUInterface
 
         sensor_msgs__msg__Imu getData()
         {
-            if (!bno085_.dataAvailable()) {
+            if (!runIMUStateMachine()) {
                 syslog(LOG_INFO, "%s BNO085 IMU data not available %lu", __FUNCTION__, millis());
                 return imu_msg_;
             }
@@ -386,18 +392,101 @@ class BNO085IMU: public IMUInterface
             imu_msg_.orientation_covariance[4] = ori_xy_cov_;
             imu_msg_.orientation_covariance[8] = ori_z_cov_;
 
+            return imu_msg_;
+        }
+
+        // The BNO085 IMU has an I2C interface that doesn't work well with the ESP32.
+        // To work around this, we implement a state machine to manage the IMU's initialization and data streaming.
+        bool runIMUStateMachine()
+        {
+        switch (imuState) {
+
+          case STATE_DISCONNECTED:
+            if (millis() - stateTimer >= 500) {
+                stateTimer = millis();
+                if (bno085_.begin() == true) {
+                syslog(LOG_INFO, "%s [I2C] Link achieved. Moving to configuration step.", __FUNCTION__);
+                imuState = STATE_SEND_CONFIG;
+                }
+            }
+            break;
+
+          case STATE_SEND_CONFIG:
+            configAttempts++;
+            syslog(LOG_INFO, "%s [CONFIG] Transmitting 6-DOF Profile (Try # %d)...", __FUNCTION__, configAttempts);
+
+            bno085_.hasReset(); // Clear historical reset tracking bits
+
+            bno085_.enableGameRotationVector(bno085UpdateRateMs);
+            bno085_.enableGyro(bno085UpdateRateMs);
+            bno085_.enableAccelerometer(bno085UpdateRateMs);
+            bno085_.endCalibration(); // Anchor our saved physical Tare profile
+
+            stateTimer = millis();
+            imuState = STATE_CHECK_RESET;
+            break;
+
+          case STATE_CHECK_RESET:
+            if (millis() - stateTimer >= 400) {
+                if (bno085_.hasReset()) {
+                syslog(LOG_INFO, "%s [WARNING] Reset flag caught during parsing. Cyclical retry...", __FUNCTION__);
+                imuState = STATE_SEND_CONFIG;
+                } else {
+                syslog(LOG_INFO, "%s [VALIDATION] Checking telemetry stream integrity...", __FUNCTION__);
+                validPacketCount = 0;
+                stateTimer = millis();
+                imuState = STATE_VALIDATE_STREAM;
+                }
+            }
+            break;
+
+          case STATE_VALIDATE_STREAM:
+            // Note: myIMU.dataAvailable() internally executes and evaluates getReadings()
+            if (bno085_.dataAvailable() == true) {
+                // 2. Verify the active packet type matches our navigation profile.
+                // This isolates the actual 6-DOF frame and strips out 0.06 diagnostic responses.
+                if (bno085_.getReadings() == SENSOR_REPORTID_GAME_ROTATION_VECTOR) {
+                    float testYaw = bno085_.getYaw();
+                    if (!isnan(testYaw)) {
+                        validPacketCount++;
+                    }
+                }
+            }
+
+            if (validPacketCount >= 10) {
+                syslog(LOG_INFO, "%s [SUCCESS] Navigation data streams verified numeric!", __FUNCTION__);
+                imuState = STATE_RUNNING;
+            }
+            else if (millis() - stateTimer >= 1500) {
+                syslog(LOG_INFO, "%s [TIMEOUT] Stream unpopulated or stuck on NaN. Soft resetting...", __FUNCTION__);
+                bno085_.softReset();
+                stateTimer = millis();
+                imuState = STATE_CHECK_RESET;
+            }
+            break;
+
+          case STATE_RUNNING:
+            if (bno085_.dataAvailable() == true) {
+                // Enforce the layout check in real-time execution to prevent background packets from causing spikes
+                if (bno085_.getReadings() == SENSOR_REPORTID_GAME_ROTATION_VECTOR) {
+// Uncomment the following line to log the IMU data to syslog for debugging purposes
 // #define DEBUG_BNO085
 #ifdef DEBUG_BNO085
-            float roll = bno085_.getRoll() * RAD_TO_DEG;
-            float pitch = bno085_.getPitch() * RAD_TO_DEG;
-            float yaw = bno085_.getYaw() * RAD_TO_DEG;
+                    float roll = bno085_.getRoll() * RAD_TO_DEG;
+                    float pitch = bno085_.getPitch() * RAD_TO_DEG;
+                    float yaw = bno085_.getYaw() * RAD_TO_DEG;
 
-            if (millis() >= nextUpdateTime) {
-                syslog(LOG_INFO, "%s BNO085 IMU data read complete %lu, roll: %0.2f, pitch: %0.2f, yaw: %0.2f", __FUNCTION__, millis(), roll, pitch, yaw);
-                nextUpdateTime = millis() + 500;
-            }   
+                    if (millis() >= nextUpdateTime) {
+                        syslog(LOG_INFO, "%s BNO085 IMU data read complete %lu, roll: %0.2f, pitch: %0.2f, yaw: %0.2f", __FUNCTION__, millis(), roll, pitch, yaw);
+                        nextUpdateTime = millis() + 500;
+                    }
 #endif
-            return imu_msg_;
+                }
+                return true;  // IMU is fully initialized and running and we can use its data
+            }
+            break;
+        }
+        return false;  // if we don't return true from STATE_RUNNING, we are not fully initialized yet
         }
 };
 
