@@ -301,7 +301,7 @@ class BNO085IMU: public IMUInterface
         const float ori_xy_cov_ = 0.01;
         const float ori_z_cov_ = 0.05;
 
-        int nextUpdateTime = 0;
+        unsigned long nextUpdateTime = 0;
 
         geometry_msgs__msg__Vector3 accel_;
         geometry_msgs__msg__Vector3 gyro_;
