@@ -4,7 +4,6 @@ ROS 2 Distro | Branch | Build status
 :----------: | :----: | :----------:
 **Rolling** | [`rolling`](../../tree/rolling) | [![Rolling Firmware Build](../../actions/workflows/rolling-firmware-build.yml/badge.svg?branch=rolling)](../../actions/workflows/rolling-firmware-build.yml?branch=rolling)
 **Jazzy** | [`jazzy`](../../tree/jazzy) | [![Jazzy Firmware Build](../../actions/workflows/jazzy-firmware-build.yml/badge.svg?branch=jazzy)](../../actions/workflows/jazzy-firmware-build.yml?branch=jazzy)
-**Humble** | [`humble`](../../tree/humble) | [![Humble Firmware Build](../../actions/workflows/humble-firmware-build.yml/badge.svg?branch=humble)](../../actions/workflows/humble-firmware-build.yml?branch=humble)
 
 # linorobot2_hardware for ESP32 and Pico
 
