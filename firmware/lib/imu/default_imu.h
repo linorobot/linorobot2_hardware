@@ -360,7 +360,7 @@ class BNO085IMU: public IMUInterface
         sensor_msgs__msg__Imu getData()
         {
             if (!runIMUStateMachine()) {
-                syslog(LOG_INFO, "%s BNO085 IMU data not available %lu", __FUNCTION__, millis());
+                logImuDataUnavailable();
                 return imu_msg_;
             }
             imu_msg_.angular_velocity = readGyroscope();
@@ -483,10 +483,23 @@ class BNO085IMU: public IMUInterface
 #endif
                 }
                 return true;  // IMU is fully initialized and running and we can use its data
+            } else {
+                syslog(LOG_INFO, "%s [WARNING] Data stream interrupted. Revalidating...", __FUNCTION__);
+                imuState = STATE_DISCONNECTED;
             }
             break;
         }
         return false;  // if we don't return true from STATE_RUNNING, we are not fully initialized yet
+        }
+
+        void logImuDataUnavailable()
+        {
+            static unsigned long lastLogTime = 0;
+            unsigned long currentTime = millis();
+            if (currentTime - lastLogTime >= 1000) { // Log every 1 second
+                syslog(LOG_INFO, "%s BNO085 IMU data not available %lu", __FUNCTION__, currentTime);
+                lastLogTime = currentTime;
+            }
         }
 };
 
