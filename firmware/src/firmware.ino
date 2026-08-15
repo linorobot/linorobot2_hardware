@@ -23,6 +23,8 @@
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h>
 #include <sensor_msgs/msg/magnetic_field.h>
+#include <sensor_msgs/msg/battery_state.h>
+#include <sensor_msgs/msg/range.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 
@@ -37,6 +39,8 @@
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
+#include "battery.h"
+#include "range.h"
 #include "lidar.h"
 #include "wifis.h"
 #include "ota.h"
@@ -63,11 +67,25 @@ static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agen
 #ifndef NODE_NAME
 #define NODE_NAME "linorobot_base_node"
 #endif
+#ifndef TOPIC_PREFIX
+#define TOPIC_PREFIX
+#endif
+#ifndef CONTROL_TIMER
+#define CONTROL_TIMER 20 // 50Hz
+#endif
+#ifndef BATTERY_TIMER
+#define BATTERY_TIMER 2000 // 2 sec
+#endif
+#ifndef RANGE_TIMER
+#define RANGE_TIMER 100 // 10Hz
+#endif
 
 #ifndef RCCHECK
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
 #endif
+#ifndef RCSOFTCHECK
 #define RCSOFTCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){}}
+#endif
 #define EXECUTE_EVERY_N_MS(MS, X)  do { \
   static volatile int64_t init = -1; \
   if (init == -1) { init = uxr_millis();} \
@@ -78,11 +96,15 @@ rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
 rcl_publisher_t mag_publisher;
 rcl_subscription_t twist_subscriber;
+rcl_publisher_t battery_publisher;
+rcl_publisher_t range_publisher;
 
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
 sensor_msgs__msg__MagneticField mag_msg;
 geometry_msgs__msg__Twist twist_msg;
+sensor_msgs__msg__BatteryState battery_msg;
+sensor_msgs__msg__Range range_msg;
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -93,6 +115,7 @@ rcl_timer_t control_timer;
 unsigned long long time_offset = 0;
 unsigned long prev_cmd_time = 0;
 unsigned long prev_odom_update = 0;
+float prev_voltage;
 
 enum states 
 {
@@ -175,7 +198,11 @@ void setup()
             runOta();
         }
     }
+    initBattery();
+    initRange();
     initLidar(); // after wifi connected
+    battery_msg = getBattery();
+    prev_voltage = battery_msg.voltage;
 
 #ifdef MICRO_ROS_TRANSPORT_ARDUINO_WIFI
     set_microros_net_transports(AGENT_IP, AGENT_PORT);
@@ -261,7 +288,7 @@ bool createEntities()
         &odom_publisher, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(nav_msgs, msg, Odometry),
-        "odom/unfiltered"
+        TOPIC_PREFIX "odom/unfiltered"
     ));
     // create IMU publisher
     RCCHECK(rclc_publisher_init_default( 
@@ -270,9 +297,9 @@ bool createEntities()
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
     // if we have magnetomter, use imu/data_raw for madgwick filter
 #ifndef USE_FAKE_MAG
-        "imu/data_raw"
+        TOPIC_PREFIX "imu/data_raw"
 #else
-        "imu/data"
+        TOPIC_PREFIX "imu/data"
 #endif
     ));
 #ifndef USE_FAKE_MAG
@@ -280,7 +307,25 @@ bool createEntities()
         &mag_publisher,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, MagneticField),
-        "imu/mag"
+        TOPIC_PREFIX "imu/mag"
+    ));
+#endif
+#if defined(BATTERY_PIN) || defined(USE_INA219)
+    // create battery pyblisher
+    RCCHECK(rclc_publisher_init_default(
+    &battery_publisher,
+    &node,
+    ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, BatteryState),
+    TOPIC_PREFIX "battery"
+    ));
+#endif
+#ifdef ECHO_PIN
+    // create range pyblisher
+    RCCHECK(rclc_publisher_init_default(
+    &range_publisher,
+    &node,
+    ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Range),
+    TOPIC_PREFIX "sonar"
     ));
 #endif
     // create twist command subscriber
@@ -288,7 +333,7 @@ bool createEntities()
         &twist_subscriber, 
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
-        "cmd_vel"
+        TOPIC_PREFIX "cmd_vel"
     ));
     // create timer for actuating the motors at 50 Hz (1000/20)
     const unsigned int control_timeout = 20;
@@ -319,6 +364,7 @@ bool createEntities()
 
 bool destroyEntities()
 {
+    syslog(LOG_INFO, "%s %lu", __FUNCTION__, millis());
     rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support.context);
     (void) rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
 
@@ -326,6 +372,12 @@ bool destroyEntities()
     RCSOFTCHECK(rcl_publisher_fini(&imu_publisher, &node));
 #ifndef USE_FAKE_MAG
     RCSOFTCHECK(rcl_publisher_fini(&mag_publisher, &node));
+#endif
+#if defined(BATTERY_PIN) || defined(USE_INA219)
+    RCSOFTCHECK(rcl_publisher_fini(&battery_publisher, &node));
+#endif
+#ifdef ECHO_PIN
+    RCSOFTCHECK(rcl_publisher_fini(&range_publisher, &node));
 #endif
     RCSOFTCHECK(rcl_subscription_fini(&twist_subscriber, &node));
     RCSOFTCHECK(rcl_timer_fini(&control_timer));
@@ -401,6 +453,7 @@ void moveBase()
 
 void publishData()
 {
+    static unsigned skip_dip = 0;
     odom_msg = odometry.getData();
     imu_msg = imu.getData();
 #ifdef USE_FAKE_IMU
@@ -422,14 +475,40 @@ void publishData()
     imu_msg.header.stamp.sec = time_stamp.tv_sec;
     imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
+#ifndef USE_FAKE_MAG
     mag_msg.header.stamp.sec = time_stamp.tv_sec;
     mag_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+#endif
 
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
 #ifndef USE_FAKE_MAG
     RCSOFTCHECK(rcl_publish(&mag_publisher, &mag_msg, NULL));
 #endif
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
+#if defined(BATTERY_PIN) || defined(USE_INA219)
+    battery_msg = getBattery();
+    battery_msg.header.stamp.sec = time_stamp.tv_sec;
+    battery_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+#ifdef BATTERY_DIP
+    if (!skip_dip && battery_msg.voltage > 1.0  && battery_msg.voltage < prev_voltage * BATTERY_DIP) {
+        RCSOFTCHECK(rcl_publish(&battery_publisher, &battery_msg, NULL));
+    syslog(LOG_WARNING, "%s voltage dip %.2f", __FUNCTION__, battery_msg.voltage);
+        skip_dip = 5;
+    }
+    if (skip_dip) skip_dip--;
+#endif
+    battery_msg.voltage = prev_voltage = battery_msg.voltage * 0.01 + prev_voltage * 0.99;
+    EXECUTE_EVERY_N_MS(BATTERY_TIMER, {
+        getBatteryPercentage(&battery_msg);
+        RCSOFTCHECK(rcl_publish(&battery_publisher, &battery_msg, NULL)) });
+#endif
+#ifdef ECHO_PIN
+    EXECUTE_EVERY_N_MS(RANGE_TIMER, {
+        range_msg = getRange();
+        range_msg.header.stamp.sec = time_stamp.tv_sec;
+        range_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+        RCSOFTCHECK(rcl_publish(&range_publisher, &range_msg, NULL)) });
+#endif
 }
 
 bool syncTime()
@@ -475,7 +554,8 @@ void rclErrorLoop()
 {
     while(true)
     {
-        flashLED(2);
+        flashLED(2); // flash 2 times
+        runOta();
     }
 }
 
