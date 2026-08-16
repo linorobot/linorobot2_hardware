@@ -46,7 +46,11 @@ double readVoltage(int pin) {
   int reading = 0;
   int i;
   for (i = 0; i < 4; i++) // smoothing
+#ifdef ESP32
+    reading += analogReadMilliVolts(pin);
+#else
     reading += analogRead(pin);
+#endif
   reading /= i;
   return BATTERY_ADJUST(reading);
 }
