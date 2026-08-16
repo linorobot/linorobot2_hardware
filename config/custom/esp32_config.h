@@ -236,7 +236,11 @@ ROBOT ORIENTATION
 const int16_t ADC_LUT[4096] = { /* insert adc_calibrate data here */ };
 #define BATTERY_ADJUST(v) (ADC_LUT[v] * (3.3 / 4096 * (33 + 10) / 10 * 1.0))
 #else
-#define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (33 + 10) / 10))
+// Change the following to suit your battery voltage divider and ADC reference voltage.
+// Pico uses analogRead(): 3.3V ref, 12 bits ADC, 10k + 1k voltage divider
+// #define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (10 + 1) / 1))
+// ESP32 uses analogReadMilliVolts() which returns voltage in mV
+#define BATTERY_ADJUST(v) ((v) * ((10 + 1) / 1) / 1000.0)
 #endif
 // #define USE_INA219
 // #define TRIG_PIN 31 // ultrasonic sensor HC-SR04

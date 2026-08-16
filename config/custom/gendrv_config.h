@@ -219,7 +219,11 @@ ROBOT ORIENTATION
 // battery voltage ADC pin
 // #define BATTERY_PIN 33
 // 3.3V ref, 12 bits ADC, 33k + 10k voltage divider
-#define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (33 + 10) / 10))
+// Change the following to suit your battery voltage divider and ADC reference voltage.
+// Pico uses analogRead(): 3.3V ref, 12 bits ADC, 10k + 1k voltage divider
+// #define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (10 + 1) / 1))
+// ESP32 uses analogReadMilliVolts() which returns voltage in mV
+#define BATTERY_ADJUST(v) ((v) * ((10 + 1) / 1) / 1000.0)
 #define USE_INA219
 #define BATTERY_DIP 0.98  // battery voltage drop alert
 // #define BATTERY_CAP 2.0  // battery capacity Ah

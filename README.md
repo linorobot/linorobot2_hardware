@@ -128,6 +128,7 @@ The motor drivers are configurable from the config file explained in the later p
 
 Supported IMUs:
 
+- **BNO085**
 - **GY-85**
 - **MPU6050**
 - **MPU9150**
@@ -142,7 +143,20 @@ Supported MAGs:
 - **AK09918**
 - **QMC5883L**
 
-### 4. Teensy Connection Diagram
+### 4. Range Sensor
+
+Supported range sensors:
+
+- **HC-SR04** ultrasonic range sensor
+
+### 5. Battery Voltage
+
+Supported battery voltage sensors
+
+- **INA219**
+- **Resistive divider to analog input**
+
+### 6. Teensy Connection Diagram
 Below are connection diagrams you can follow for each supported motor driver and IMU. For simplicity, only one motor connection is provided but the same diagram can be used to connect the rest of the motors. You are free to decide which microcontroller pin to use just ensure that the following are met:
 
 - Reserve SCL0 and SDA0 (pins 18 and 19 on Teensy boards) for IMU.
@@ -153,19 +167,19 @@ Alternatively, you can also use the pre-defined pin assignments in lino_base_con
 
 All diagrams below are based on Teensy 4.0 microcontroller and GY85 IMU. Click the images for higher resolution.
 
-#### 4.1 GENERIC 2 IN
+#### 6.1 GENERIC 2 IN
 
 ![generic_2_in_connection](docs/generic_2_in_connection.png)
 
-#### 4.2 GENERIC 1 IN
+#### 6.2 GENERIC 1 IN
 
 ![generic_1_in_connection](docs/generic_1_in_connection.png)
 
-#### 4.3 BTS7960
+#### 6.3 BTS7960
 
 ![bts7960_connection](docs/bts7960_connection.png)
 
-#### 4.4 IMU
+#### 6.4 IMU
 
 ![imu_connection](docs/imu_connection.png)
 
@@ -175,7 +189,7 @@ Take note of the IMU's correct orientation when mounted on the robot. Ensure tha
 - **Y** - Left
 - **Z** - Up
 
-#### 4.5 System Diagram
+#### 6.5 System Diagram
 Reference designs you can follow in building your robot.
 
 A minimal setup with a 5V powered robot computer.
@@ -188,7 +202,8 @@ For bigger robots, you can add an emergency switch in between the motor drivers'
 
 ## Setting up the firmware
 ### 1. Robot Settings
-Go to the config folder and open lino_base_config.h. Uncomment the base, motor driver and IMU you want to use for your robot. For example:
+Go to the config/custom folder and open a suitable config file, e.g. esp32_config.h or pico2_config.h.
+Uncomment the base, motor driver and IMU you want to use for your robot. For example:
 
     #define LINO_BASE DIFFERENTIAL_DRIVE
     #define USE_GENERIC_2_IN_MOTOR_DRIVER
@@ -213,6 +228,14 @@ Constants' Meaning:
 - **USE_ESC_MOTOR_DRIVER** - Bi-directional (forward/reverse) electronic speed controllers.
 
 *INERTIAL MEASUREMENT UNIT (IMU)*
+- **USE_BNO085_IMU** - BNO085 IMUs.
+Note: the firmware uses the BNO085 in 6-DOF GAME_ROTATION_VECTOR
+mode - the magnetometer is not used. A utility firmware load that
+removes mounting orientation is
+provided in the bno085_cal directory. After loading this firmware,
+the BNO085 will be reconfigured so that it reports zero pitch and roll,
+and yaw will report rotation about the vertical axis, regardless of
+the physical IMU mounting orientation.
 - **USE_GY85_IMU** - GY-85 IMUs.
 
 - **USE_MPU6050_IMU** - MPU6060 IMUs.
@@ -252,6 +275,40 @@ Magnetometer calibration should be taken on board with all hardware installed, i
 Set the MAG_BIAS to these values in robot configuration file.
 
     #define MAG_BIAS { -7.94713e-06, 3.49388e-05, -5.40286e-05 }
+
+*RANGE SENSOR*
+
+If your robot has an HC-SR04 ultrasonic range sensor, uncomment
+the trigger and echo pin lines and set the pin number according
+to your hardware design. For example:
+
+    #define TRIG_PIN 13
+    #define ECHO_PIN 12
+
+*BATTERY SENSOR*
+
+If your robot has an INA219 voltage and current sensor, or
+if your robot has a potential divider to reduce the sensed maximum battery
+voltage to less than 3.3 volts, and the sense output is connected to an analog input,
+uncomment and modify the battery sense configuration:
+
+    // Battery settings
+    // battery voltage ADC pin. If defined. battery voltage will be read from this pin. 
+    #define BATTERY_PIN 32
+    // If defined, battery voltage will be read from INA219 sensor.
+    // #define USE_INA219
+    // #define USE_ADC_LUT
+    #ifdef USE_ADC_LUT
+    const int16_t ADC_LUT[4096] = { /* insert adc_calibrate data here */ };
+    #define BATTERY_ADJUST(v) (ADC_LUT[v] * (3.3 / 4096 * (33 + 10) / 10 * 1.0))
+    #else
+    // Change the following to suit your battery voltage divider and ADC reference voltage.
+    // Pico uses analogRead(): 3.3V ref, 12 bits ADC, 10k + 1k voltage divider
+    // #define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (10 + 1) / 1))
+    // ESP32 uses analogReadMilliVolts() which returns voltage in mV
+    #define BATTERY_ADJUST(v) ((v) * ((10 + 1) / 1) / 1000.0)
+    #endif
+
 
 Next, fill in the robot settings accordingly:
 
