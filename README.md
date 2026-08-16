@@ -200,8 +200,8 @@ A more advanced setup with a 19V powered computer and USB hub connected to senso
 
 For bigger robots, you can add an emergency switch in between the motor drivers' power supply and motor drivers.
 
-## Setting up the firmware
-### 1. Robot Settings
+## Configure the firmware settings for your robot
+
 Go to the config/custom folder and open a suitable config file, e.g. esp32_config.h or pico2_config.h.
 Uncomment the base, motor driver and IMU you want to use for your robot. For example:
 
@@ -209,25 +209,33 @@ Uncomment the base, motor driver and IMU you want to use for your robot. For exa
     #define USE_GENERIC_2_IN_MOTOR_DRIVER
     #define USE_GY85_IMU
 
-Constants' Meaning:
+The following sections define the meaning of each part of the config file.
 
-*ROBOT TYPE (LINO_BASE)*
+### ROBOT DRIVE TYPE
+
+The LINO_BASE #define sets the drive type for the robot. Set it to:
+
 - **DIFFERENTIAL_DRIVE** - 2 wheel drive or tracked robots w/ 2 motors.
-
 - **SKID_STEER** - 4 wheel drive robots.
-
 - **MECANUM** - 4 wheel drive robots using mecanum wheels.
 
-*MOTOR DRIVERS*
+### MOTOR DRIVER TYPE
+
+Uncomment the #define corresponding to the motor driver type your robot uses.
+
 - **USE_GENERIC_2_IN_MOTOR_DRIVER** - Motor drivers that have EN (pwm) pin, and 2 direction pins (usually DIRA, DIRB pins).
-
 - **USE_GENERIC_1_IN_MOTOR_DRIVER** - Motor drivers that have EN (pwm) pin, and 1 direction pin (usual DIR pin). These drivers usually have logic gates included to lessen the pins required in controlling the driver.
-
 - **USE_BTS7960_MOTOR_DRIVER** - BTS7960 motor driver.
-
 - **USE_ESC_MOTOR_DRIVER** - Bi-directional (forward/reverse) electronic speed controllers.
 
-*INERTIAL MEASUREMENT UNIT (IMU)*
+### INERTIAL MEASUREMENT UNIT (IMU)
+
+When you're ready to enable the IMU, uncomment the #define corresponding to
+the IMU type your robot uses. For
+initial testing you can leave all options commented - the firmware will not
+publish the /imu/data topic and the system will still work. When properly
+set up, the IMU aids navigation, but if misconfigured, it can break navigation.
+
 - **USE_BNO085_IMU** - BNO085 IMUs.
 Note: the firmware uses the BNO085 in 6-DOF GAME_ROTATION_VECTOR
 mode - the magnetometer is not used. A utility firmware load that
@@ -237,28 +245,24 @@ the BNO085 will be reconfigured so that it reports zero pitch and roll,
 and yaw will report rotation about the vertical axis, regardless of
 the physical IMU mounting orientation.
 - **USE_GY85_IMU** - GY-85 IMUs.
-
 - **USE_MPU6050_IMU** - MPU6060 IMUs.
-
 - **USE_MPU9150_IMU** - MPU9150 IMUs.
-
 - **USE_MPU9250_IMU** - MPU9250 IMUs.
-
 - **USE_QMI8658_IMU** - QMI8658 IMUs.
-
 - **USE_HMC5883L_MAG** - HMC5883L MAGs.
-
 - **USE_AK8963_MAG** - AK8963 MAGs.
-
 - **USE_AK8975_MAG** - AK8975 MAGs.
-
 - **USE_AK09918_MAG** - AK09918 MAGs.
-
 - **USE_QMC5883L_MAG** - QMC5883L MAGs.
-
 - **MAG_BIAS** - Magnetometer calibration, eg { -352, -382, -10 }.
 
-If you enable magnetometer device, you will need to enable Magdwick filter by adding "madgwick:=true" in robot bringup. The topic from imu will be named as imu/data_raw. The Madgwick filter will fuse imu/data_raw and imu/mag to imu/data.
+### MAGNETOMETER
+
+If you enable the magnetometer device, keep in mind these wise words, "Magnetometers
+are evil! They are subject to iron in the ground and in the robot and to dynamic
+magnetic fields in and around the robot."
+
+You will need to enable Magdwick filter by adding "madgwick:=true" in robot bringup. The topic from imu will be named as imu/data_raw. The Madgwick filter will fuse imu/data_raw and imu/mag to imu/data.
 
     ros2 launch linorobot2_bringup bringup.launch.py madgwick:=true
 
@@ -276,7 +280,7 @@ Set the MAG_BIAS to these values in robot configuration file.
 
     #define MAG_BIAS { -7.94713e-06, 3.49388e-05, -5.40286e-05 }
 
-*RANGE SENSOR*
+### RANGE SENSOR
 
 If your robot has an HC-SR04 ultrasonic range sensor, uncomment
 the trigger and echo pin lines and set the pin number according
@@ -285,16 +289,16 @@ to your hardware design. For example:
     #define TRIG_PIN 13
     #define ECHO_PIN 12
 
-*BATTERY SENSOR*
+### BATTERY SENSOR
 
 If your robot has an INA219 voltage and current sensor, or
 if your robot has a potential divider to reduce the sensed maximum battery
 voltage to less than 3.3 volts, and the sense output is connected to an analog input,
-uncomment and modify the battery sense configuration:
+you configure the firmware in the *Battery Settings* section.
 
     // Battery settings
     // battery voltage ADC pin. If defined. battery voltage will be read from this pin. 
-    #define BATTERY_PIN 32
+    // #define BATTERY_PIN 32
     // If defined, battery voltage will be read from INA219 sensor.
     // #define USE_INA219
     // #define USE_ADC_LUT
@@ -304,11 +308,29 @@ uncomment and modify the battery sense configuration:
     #else
     // Change the following to suit your battery voltage divider and ADC reference voltage.
     // Pico uses analogRead(): 3.3V ref, 12 bits ADC, 10k + 1k voltage divider
-    // #define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (10 + 1) / 1))
+    // #define BATTERY_ADJUST(v) ((v) * (3.3 / 4096 * (33 + 10) / 10))
     // ESP32 uses analogReadMilliVolts() which returns voltage in mV
     #define BATTERY_ADJUST(v) ((v) * ((10 + 1) / 1) / 1000.0)
     #endif
 
+- If your robot does not sense battery voltage, leave "#define USE_INA219" and
+"#define BATTERY_PIN" commented, and the firmware will not publish the /battery
+topic.
+- If your robot uses an analog input to sense battery voltage the firmware
+will publish the measured voltage on the /battery topic, which may then be
+used to send warnings or change behavior.
+  - Uncomment "#define BATTERY_PIN 32" and set the GPIO pin number used to sense voltage
+  - Uncomment one of the macro definitions of BATTERY_ADJUST depending on
+  whether you use a Pico or ESP32 microcontroller. Read the comments.
+  - The numbers 33 and 10 in the macro correspond to a 33k ohm + 10k ohm potential
+  divider. Change them according to your potential divider design. Your potential
+  divider designb needs to never apply more than 3.3 volts to the analog input 
+  even at the highest charge voltage.
+  - You can define a lookup table to remove non-linearities if you define "USE_ADC_LUT"
+- If your robot uses an INA219 sensor, uncomment "#define USE_INA219". The firmware
+will publish voltage and current on the /battery topic.
+
+### MOTORS AND ENCODERS
 
 Next, fill in the robot settings accordingly:
 
@@ -428,17 +450,14 @@ Constants' Meaning:
 
 - **MOTORX_INV** - Flag used to invert the direction of the motor. More on that later.
 
-*WIFI related settings*
+### WIFI SETTINGS
 
 - **AGENT_IP** - micro-ROS agent IP. eg. host IP, { 192, 168, 1, 100 }
-
 - **AGENT_PORT** - micro-ROS agent port. default 8888
-
 - **WIFI_SSID**
-
 - **WIFI_PASSWORD**
 
-The mirco-ROS wifi transport is selected with a setting in firmare/platformio.ini.
+The micro-ROS wifi transport is selected with a setting in firmare/platformio.ini.
 
     board_microros_transport = wifi
 
