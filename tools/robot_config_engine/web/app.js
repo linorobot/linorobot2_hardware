@@ -1425,7 +1425,7 @@ function getToolchainInstallCmd(opts) {
       lines.push("sudo apt update && sudo apt install -y git cmake ninja-build python3-pip python3-venv udev");
     }
     if (opts.installPio) {
-      lines.push("python3 -m pip install --upgrade platformio --break-system-packages 2>/dev/null || python3 -m pip install --upgrade platformio");
+      lines.push("curl -fsSL -o /tmp/get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py && python3 /tmp/get-platformio.py");
     }
     if (opts.installUdev) {
       lines.push("curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/master/scripts/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules > /dev/null");
@@ -1548,8 +1548,8 @@ fi` : "# Build tools check skipped"}
 
 ${opts.installPio ? `if ! command -v pio &>/dev/null; then
     info "Installing PlatformIO Core..."
-    python3 -m pip install --upgrade platformio --break-system-packages 2>/dev/null || python3 -m pip install --upgrade platformio
-    export PATH="$HOME/.local/bin:$PATH"
+    curl -fsSL -o /tmp/get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py && python3 /tmp/get-platformio.py
+    export PATH="$HOME/.platformio/penv/bin:$HOME/.local/bin:$PATH"
 fi
 success "PlatformIO Core active: $(pio --version 2>/dev/null || echo 'Installed')"
 ` : "# PlatformIO install skipped"}
