@@ -56,6 +56,63 @@ Micro-ROS over wifi is supported by the downstream hippo5329
 and [linorobot2_hardware](https://github.com/hippo5329/linorobot2_hardware)
 repos.
 
+
+---
+
+## 🤖 AI Robot Configuration Engine & Automation Hub
+
+Linorobot2 now includes a comprehensive, client-side **Robot Configuration Engine & Automation Hub** located in [`tools/robot_config_engine/`](tools/robot_config_engine/). It provides real-time hardware safety validation, kinematics calculation, multi-artifact code generation, automated system provisioning, and firmware flashing.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      Linorobot2 Web Configuration UI                        │
+│  [1. Base & MCU] -> [2. Drive] -> [3. Sensors] -> [4. Pins] -> [5. Deploy]  │
+└──────────────────────────────────────┬──────────────────────────────────────┘
+                                       ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                            Automation Features                              │
+│  1. 🖥️ OS Auto-Detection: Linux (Ubuntu 24.04/26.04/22.04), macOS, Windows │
+│  2. 🛠️ Toolchain Setup: PlatformIO Core, udev rules, serial group permissions│
+│  3. 🤖 ROS 2 Setup: Jazzy, Lyrical, Rolling, Humble, micro-ROS agent build  │
+│  4. 🔀 Auto-Merge & Git: Ingests config.h & platformio.ini, commits to Git  │
+│  5. ⚡ Firmware Flash: One-click compile & upload for Pico, Pico 2, ESP32   │
+│  6. 📟 Web Serial Monitor: In-browser live streaming sensor & debug console │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 1. Launching the Interactive Web UI
+Serve the standalone, zero-dependency Web UI locally:
+
+```bash
+cd tools/robot_config_engine/web
+python3 -m http.server 8000
+```
+Open **`http://localhost:8000`** in Google Chrome or Microsoft Edge.
+
+### 2. Automation Hub Capabilities (Tab 5)
+- **OS & Environment Detection**: Detects your client platform, CPU architecture (`x86_64` / `arm64`), and browser capabilities.
+- **Toolchain Installer Generator**: Generates customized one-click scripts for PlatformIO Core and USB `udev` rules (`99-platformio-udev.rules`).
+- **ROS 2 Distribution Selector**: Choose between ROS 2 Jazzy (Ubuntu 24.04), Lyrical (Ubuntu 26.04), Rolling, Humble, or Standalone Firmware, with automated `micro_ros_agent` workspace builds.
+- **Automated Header Merging & Git Commits**: Merges generated configuration files directly into `config/custom/<robot>_config.h`, registers in `config/config.h`, injects environment blocks into `platformio.ini`, and creates structured Git commits.
+- **Firmware Compilation & Flashing**: Select target (`firmware`, `test_sensors`, `calibration`), serial port, and compile/upload with one click.
+- **Web Serial Live Diagnostics**: Connect directly to your microcontroller over USB at 115200 baud directly inside the browser to view live odometry and sensor readouts.
+
+### 3. CLI Usage
+Generate, merge, and commit robot configurations from the terminal:
+
+```bash
+cd tools/robot_config_engine
+
+# Validate specification and preview artifacts
+python3 generate_config.py examples/scout_pico2.json
+
+# Merge headers into codebase and create Git commit automatically
+python3 generate_config.py examples/scout_pico2.json --merge --commit
+
+# Output artifacts to dedicated directory
+python3 generate_config.py examples/mech_esp32.json --out-dir ./build_out/
+```
+
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 

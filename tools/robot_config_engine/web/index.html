@@ -48,6 +48,17 @@
         </select>
       </div>
 
+      <!-- OS Quick Indicator -->
+      <div class="os-quick-badge" id="header-os-badge" title="Auto-Detected Client Environment">
+        <span class="os-badge-icon" id="header-os-icon">🐧</span>
+        <span class="os-badge-text" id="header-os-text">Detecting OS...</span>
+      </div>
+
+      <button id="btn-quick-deploy" class="btn btn-accent" title="Jump to Automation Hub">
+        <span class="tab-icon">🚀</span>
+        <span>Deploy & Flash</span>
+      </button>
+
       <!-- Action Buttons -->
       <label class="btn btn-secondary" for="import-file" title="Import JSON specification">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
@@ -94,6 +105,10 @@
         <button class="nav-tab" data-tab="tab-pins" id="btn-tab-pins">
           <span class="tab-icon">🔌</span>
           <span>4. Pinout Matrix</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-automation" id="btn-tab-automation">
+          <span class="tab-icon">🚀</span>
+          <span>5. Automation & Flash</span>
         </button>
       </nav>
 
@@ -407,6 +422,260 @@
             </div>
           </div>
         </div>
+        <!-- Tab 5: Automation & Flash -->
+        <div class="tab-pane" id="tab-automation">
+          <div class="form-section">
+            <h2 class="section-title">🚀 Automation Hub, OS Toolchain & Flash Engine</h2>
+            <p class="section-desc">Automate your entire workflow: detect host OS, install build toolchains, optionally install ROS 2 distributions, merge generated C++ headers into the codebase, create Git commits, and build/flash firmware to microcontrollers.</p>
+
+            <!-- OS Detection Banner -->
+            <div class="os-detect-banner" id="os-detect-banner">
+              <div class="os-detect-info">
+                <span class="os-icon-large" id="os-banner-icon">🐧</span>
+                <div>
+                  <div class="os-banner-title">
+                    <span id="os-banner-detected-text">Auto-Detected: Linux (Ubuntu 24.04 Noble/Jazzy)</span>
+                    <span class="badge-pill badge-ok" id="os-banner-status">Ready</span>
+                  </div>
+                  <p class="os-banner-sub" id="os-banner-sub">Architecture: <strong id="os-banner-arch">x86_64</strong> | Browser: <span id="os-banner-browser">Chrome/WebKit</span></p>
+                </div>
+              </div>
+              <button type="button" id="btn-redetect-os" class="btn btn-sm btn-ghost" title="Re-run browser OS detection">
+                <span>🔄 Re-Detect</span>
+              </button>
+            </div>
+
+            <!-- 1. OS & Workspace Environment -->
+            <h3 class="sub-title mt-4">🖥️ 1. Host OS & Workspace Environment</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="auto-os-select" class="form-label">Operating System / Distribution</label>
+                <select id="auto-os-select" class="form-select">
+                  <option value="ubuntu_2404">Ubuntu 24.04 LTS (Noble Numbat / Jazzy)</option>
+                  <option value="ubuntu_2604">Ubuntu 26.04 LTS (Resolute Raccoon / Lyrical)</option>
+                  <option value="ubuntu_2204">Ubuntu 22.04 LTS (Jammy Jellyfish / Humble)</option>
+                  <option value="debian">Debian 12 / 13 (Bookworm / Trixie)</option>
+                  <option value="fedora">Fedora / Bluefin Linux</option>
+                  <option value="macos">macOS (Homebrew / Apple Silicon & Intel)</option>
+                  <option value="windows_wsl">Windows 10 / 11 (WSL2 Ubuntu)</option>
+                </select>
+                <span class="input-hint">Used to tailor package manager and shell commands</span>
+              </div>
+
+              <div class="form-group">
+                <label for="auto-env-select" class="form-label">Runtime Environment Mode</label>
+                <select id="auto-env-select" class="form-select">
+                  <option value="native">Native Host System</option>
+                  <option value="distrobox">Distrobox Workspace Container (jazzy / resolute)</option>
+                  <option value="docker">Docker Container</option>
+                </select>
+                <span class="input-hint">Isolates build tools and compiler dependencies</span>
+              </div>
+
+              <div class="form-group">
+                <label for="auto-arch-select" class="form-label">Target CPU Architecture</label>
+                <select id="auto-arch-select" class="form-select">
+                  <option value="x86_64">x86_64 (64-bit Intel / AMD)</option>
+                  <option value="aarch64">aarch64 / arm64 (Apple Silicon / Raspberry Pi 5)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 2. Toolchain & Permissions Installer -->
+            <h3 class="sub-title mt-4">🛠️ 2. Toolchain & Hardware Permissions Installer</h3>
+            <div class="automation-options-grid">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-pio" checked>
+                <span><strong>PlatformIO Core (<code>pio</code>)</strong> — Microcontroller compiler & flash engine</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-udev" checked>
+                <span><strong>Hardware udev Rules (<code>99-platformio-udev.rules</code>)</strong> — Grant non-root USB access</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-dialout" checked>
+                <span><strong>User Serial Groups</strong> — Add current user to <code>dialout</code> and <code>plugdev</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-buildtools" checked>
+                <span><strong>Build Essentials</strong> — <code>git</code>, <code>cmake</code>, <code>ninja-build</code>, <code>python3-pip</code></span>
+              </label>
+            </div>
+
+            <div class="quick-cmd-box">
+              <div class="quick-cmd-header">
+                <span class="quick-cmd-title">⚡ One-Click Toolchain Install Command</span>
+                <button type="button" id="btn-copy-tool-cmd" class="btn btn-xs btn-ghost">📋 Copy Command</button>
+              </div>
+              <pre class="quick-cmd-code"><code id="preview-tool-cmd"># Updating...</code></pre>
+            </div>
+
+            <!-- 3. ROS 2 Distribution Selector & Installer -->
+            <h3 class="sub-title mt-4">🤖 3. ROS 2 Distribution Selector & Setup (Optional)</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="auto-ros-distro" class="form-label">ROS 2 Distribution</label>
+                <select id="auto-ros-distro" class="form-select">
+                  <option value="jazzy" selected>ROS 2 Jazzy Jalisco (Ubuntu 24.04 LTS — Recommended)</option>
+                  <option value="lyrical">ROS 2 Lyrical (Ubuntu 26.04 LTS)</option>
+                  <option value="rolling">ROS 2 Rolling Ridley (Continuous Release)</option>
+                  <option value="humble">ROS 2 Humble Hawksbill (Ubuntu 22.04 LTS)</option>
+                  <option value="none">None / Standalone Firmware Only (Skip ROS 2)</option>
+                </select>
+                <span class="input-hint">Select your host ROS 2 distribution or skip for standalone MCU</span>
+              </div>
+
+              <div class="form-group" id="group-ros-install-type">
+                <label for="auto-ros-type" class="form-label">ROS 2 Package Bundle</label>
+                <select id="auto-ros-type" class="form-select">
+                  <option value="desktop" selected>Desktop Bundle (ros-distro-desktop + Dev Tools)</option>
+                  <option value="base">Base Bundle (ros-distro-ros-base + Micro-ROS)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="automation-options-grid mt-2" id="group-microros-agent">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-build-microros-agent" checked>
+                <span><strong>Build micro-ROS Agent Workspace</strong> — Clone and compile <code>micro_ros_agent</code> for DDS bridging</span>
+              </label>
+            </div>
+
+            <div class="quick-cmd-box" id="box-ros-cmd">
+              <div class="quick-cmd-header">
+                <span class="quick-cmd-title">⚡ One-Click ROS 2 Setup Command</span>
+                <button type="button" id="btn-copy-ros-cmd" class="btn btn-xs btn-ghost">📋 Copy Command</button>
+              </div>
+              <pre class="quick-cmd-code"><code id="preview-ros-cmd"># Updating...</code></pre>
+            </div>
+
+            <!-- 4. Merge Generated Headers & Git Commit -->
+            <h3 class="sub-title mt-4">🔀 4. Merge Generated Headers & Git Commit Automation</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="auto-git-branch" class="form-label">Git Branch Name</label>
+                <input type="text" id="auto-git-branch" class="form-input" value="config/scout_pico2" placeholder="e.g. config/scout_pico2">
+                <span class="input-hint">Auto-created branch for isolated testing</span>
+              </div>
+
+              <div class="form-group">
+                <label for="auto-git-commit-msg" class="form-label">Git Commit Message</label>
+                <input type="text" id="auto-git-commit-msg" class="form-input" value="feat(config): add configuration for scout_pico2" placeholder="Commit message">
+              </div>
+            </div>
+
+            <div class="automation-options-grid mt-2">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-header" checked>
+                <span>Write <code>config/custom/&lt;robot&gt;_config.h</code> and register in <code>config/config.h</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-pio-firmware" checked>
+                <span>Append <code>[env:&lt;robot&gt;]</code> target to <code>firmware/platformio.ini</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-pio-calibration" checked>
+                <span>Append <code>[env:&lt;robot&gt;]</code> target to <code>calibration/platformio.ini</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-pio-sensors" checked>
+                <span>Append <code>[env:&lt;robot&gt;]</code> target to <code>test_sensors/platformio.ini</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-urdf" checked>
+                <span>Generate <code>urdf/&lt;robot&gt;_properties.urdf.xacro</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-auto-commit" checked>
+                <span>Stage changes and create Git commit automatically</span>
+              </label>
+            </div>
+
+            <div class="quick-cmd-box">
+              <div class="quick-cmd-header">
+                <span class="quick-cmd-title">⚡ One-Click Merge & Git Commit Command</span>
+                <button type="button" id="btn-copy-merge-cmd" class="btn btn-xs btn-ghost">📋 Copy Command</button>
+              </div>
+              <pre class="quick-cmd-code"><code id="preview-merge-cmd"># Updating...</code></pre>
+            </div>
+
+            <!-- 5. Firmware Build & Flash Hub -->
+            <h3 class="sub-title mt-4">⚡ 5. Firmware Compilation & Microcontroller Upload</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="auto-flash-target" class="form-label">Firmware Target</label>
+                <select id="auto-flash-target" class="form-select">
+                  <option value="firmware" selected>🏎️ Robot Firmware (Main micro-ROS Motor Controller)</option>
+                  <option value="test_sensors">🧭 Sensor Diagnostics (I2C Scanner & Real-Time Readout)</option>
+                  <option value="calibration">⚙️ Motor & Encoder Calibration Utility</option>
+                  <option value="adc_calibrate">📈 Battery ADC Analog Calibration</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="auto-flash-port" class="form-label">Upload Serial Port / Protocol</label>
+                <input type="text" id="auto-flash-port" class="form-input" value="/dev/ttyACM0" placeholder="/dev/ttyACM0, /dev/ttyUSB0, COM3, or AUTO">
+                <span class="input-hint">Pico: <code>/dev/ttyACM0</code> | ESP32: <code>/dev/ttyUSB0</code></span>
+              </div>
+            </div>
+
+            <div class="btn-group-row mt-3">
+              <button type="button" id="btn-copy-build-cmd" class="btn btn-secondary flex-1">
+                <span>🔨 Copy Build Command</span>
+              </button>
+              <button type="button" id="btn-copy-upload-cmd" class="btn btn-primary flex-1">
+                <span>⚡ Copy Upload Command</span>
+              </button>
+              <button type="button" id="btn-download-deploy-script" class="btn btn-accent flex-1">
+                <span>📥 Download deploy_robot.sh</span>
+              </button>
+            </div>
+
+            <!-- 6. Web Serial Diagnostics Console -->
+            <h3 class="sub-title mt-4">📟 6. Browser Web Serial Live Diagnostics Console</h3>
+            <div class="web-serial-console-card">
+              <div class="console-toolbar">
+                <div class="console-controls-left">
+                  <button type="button" id="btn-serial-connect" class="btn btn-sm btn-accent">
+                    <span id="serial-btn-icon">🔌</span>
+                    <span id="serial-btn-text">Connect Serial Port</span>
+                  </button>
+                  <select id="serial-baud-select" class="form-select form-select-sm">
+                    <option value="115200" selected>115200 Baud (Linorobot2 / micro-ROS)</option>
+                    <option value="9600">9600 Baud</option>
+                    <option value="57600">57600 Baud</option>
+                    <option value="230400">230400 Baud</option>
+                    <option value="921600">921600 Baud</option>
+                  </select>
+                  <span class="serial-status-pill pill-disconnected" id="serial-status-pill">
+                    <span class="pulse-dot"></span>
+                    <span id="serial-status-text">Disconnected</span>
+                  </span>
+                </div>
+                <div class="console-controls-right">
+                  <label class="checkbox-label-sm">
+                    <input type="checkbox" id="chk-serial-autoscroll" checked>
+                    <span>Auto-scroll</span>
+                  </label>
+                  <button type="button" id="btn-serial-clear" class="btn btn-xs btn-ghost">🧹 Clear</button>
+                </div>
+              </div>
+
+              <!-- Terminal Output Display Screen -->
+              <div class="terminal-screen" id="serial-terminal-screen">
+                <div class="terminal-line terminal-dim">[Web Serial Console Initialized. Click 'Connect Serial Port' to stream live microcontroller logs.]</div>
+              </div>
+
+              <!-- Terminal Command Sender Input -->
+              <div class="terminal-input-bar">
+                <input type="text" id="serial-input-text" class="terminal-input" placeholder="Type serial command or character (e.g. 's' for I2C scan, 'r' for reset) and press Enter..." disabled>
+                <button type="button" id="btn-serial-send" class="btn btn-sm btn-secondary" disabled>Send</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
 
       </div>
     </section>
@@ -483,6 +752,9 @@
             </button>
             <button class="artifact-tab" data-artifact="tab-code-wiring" id="btn-art-wiring">
               <span>🔌 Wiring Chart</span>
+            </button>
+            <button class="artifact-tab" data-artifact="tab-code-deploy" id="btn-art-deploy">
+              <span>🛠️ Deploy Script</span>
             </button>
             <button class="artifact-tab" data-artifact="tab-code-json" id="btn-art-json">
               <span>📋 Spec JSON</span>

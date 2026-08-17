@@ -184,7 +184,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initNavTabs();
   initArtifactTabs();
   initEventListeners();
+  initAutomationEventListeners();
   loadPreset("scout_pico2");
+  detectClientOS();
   handleUrlParams();
 });
 
@@ -534,7 +536,10 @@ function recomputeAll() {
   // 2. Compute Kinematics & Update HUD
   renderKinematicsHUD(validation.stats);
 
-  // 3. Render Active Code Viewer
+  // 3. Update Automation Previews
+  updateAutomationPreviews();
+
+  // 4. Render Active Code Viewer
   renderActiveCode();
 }
 
@@ -1002,6 +1007,9 @@ function renderActiveCode() {
   } else if (activeArtifact === "tab-code-wiring") {
     code = generateWiringTable(currentSpec);
     display.className = "language-markdown";
+  } else if (activeArtifact === "tab-code-deploy") {
+    code = generateDeployScript(currentSpec, readAutomationOptions());
+    display.className = "language-bash";
   } else if (activeArtifact === "tab-code-json") {
     code = JSON.stringify(currentSpec, null, 2);
     display.className = "language-json";
@@ -1156,6 +1164,9 @@ function downloadActiveArtifact() {
   } else if (activeArtifact === "tab-code-wiring") {
     content = generateWiringTable(currentSpec);
     filename = `${name}_wiring_table.md`;
+  } else if (activeArtifact === "tab-code-deploy") {
+    content = generateDeployScript(currentSpec, readAutomationOptions());
+    filename = `deploy_${name}.sh`;
   } else if (activeArtifact === "tab-code-json") {
     content = JSON.stringify(currentSpec, null, 2);
     filename = `${name}_spec.json`;
@@ -1216,4 +1227,761 @@ function showToast(message) {
   setTimeout(() => {
     toast.classList.remove("show");
   }, 2500);
+}
+
+
+// =============================================================================
+// Automation Hub, OS Detection, Deploy Script Generator & Web Serial Console
+// =============================================================================
+
+// Web Serial Global State
+let serialPort = null;
+let serialReader = null;
+let isSerialReading = false;
+
+// Client-Side OS & Platform Auto-Detection
+function detectClientOS() {
+  const ua = navigator.userAgent || "";
+  const platform = navigator.userAgentData?.platform || navigator.platform || "";
+  let detectedOS = "ubuntu_2404";
+  let detectedLabel = "Linux (Ubuntu 24.04 Noble / Jazzy)";
+  let osIcon = "🐧";
+  let suggestedRos = "jazzy";
+  let arch = "x86_64";
+
+  // Check Architecture
+  if (/arm|aarch64|Apple/i.test(ua) || /arm|aarch64/i.test(platform)) {
+    arch = "aarch64";
+  }
+
+  // Check OS / Platform
+  if (/Mac|iPhone|iPad|iPod/i.test(platform) || /Macintosh/i.test(ua)) {
+    detectedOS = "macos";
+    detectedLabel = "macOS (Apple Silicon & Intel)";
+    osIcon = "🍎";
+    suggestedRos = "jazzy";
+  } else if (/Win/i.test(platform) || /Windows/i.test(ua)) {
+    detectedOS = "windows_wsl";
+    detectedLabel = "Windows 10/11 (WSL2 Ubuntu)";
+    osIcon = "🪟";
+    suggestedRos = "jazzy";
+  } else if (/Linux/i.test(platform) || /Linux/i.test(ua)) {
+    osIcon = "🐧";
+    if (/26\.04|resolute/i.test(ua)) {
+      detectedOS = "ubuntu_2604";
+      detectedLabel = "Ubuntu 26.04 LTS (Resolute / Lyrical)";
+      suggestedRos = "lyrical";
+    } else if (/22\.04|jammy/i.test(ua)) {
+      detectedOS = "ubuntu_2204";
+      detectedLabel = "Ubuntu 22.04 LTS (Jammy / Humble)";
+      suggestedRos = "humble";
+    } else if (/debian/i.test(ua)) {
+      detectedOS = "debian";
+      detectedLabel = "Debian 12 / 13 (Bookworm / Trixie)";
+      suggestedRos = "jazzy";
+    } else if (/fedora|bluefin/i.test(ua)) {
+      detectedOS = "fedora";
+      detectedLabel = "Fedora / Bluefin Linux";
+      suggestedRos = "jazzy";
+    } else {
+      detectedOS = "ubuntu_2404";
+      detectedLabel = "Ubuntu 24.04 LTS (Noble / Jazzy)";
+      suggestedRos = "jazzy";
+    }
+  }
+
+  // Update Header Badges
+  const headerIcon = document.getElementById("header-os-icon");
+  const headerText = document.getElementById("header-os-text");
+  if (headerIcon) headerIcon.innerText = osIcon;
+  if (headerText) headerText.innerText = detectedLabel.split("(")[0].trim();
+
+  // Update Banner in Tab 5
+  const bannerIcon = document.getElementById("os-banner-icon");
+  const bannerText = document.getElementById("os-banner-detected-text");
+  const bannerArch = document.getElementById("os-banner-arch");
+  const bannerBrowser = document.getElementById("os-banner-browser");
+
+  if (bannerIcon) bannerIcon.innerText = osIcon;
+  if (bannerText) bannerText.innerText = `Auto-Detected: ${detectedLabel}`;
+  if (bannerArch) bannerArch.innerText = arch;
+  if (bannerBrowser) {
+    const isChrome = /Chrome|Chromium|Edg/i.test(ua);
+    bannerBrowser.innerText = isChrome ? "Chrome / Chromium (Web Serial Supported)" : "Standard Browser";
+  }
+
+  // Set Default Dropdowns if not manually touched
+  const osSelect = document.getElementById("auto-os-select");
+  if (osSelect) osSelect.value = detectedOS;
+
+  const archSelect = document.getElementById("auto-arch-select");
+  if (archSelect) archSelect.value = arch;
+
+  const rosSelect = document.getElementById("auto-ros-distro");
+  if (rosSelect) rosSelect.value = suggestedRos;
+
+  updateAutomationPreviews();
+}
+
+// Read All Automation Configuration Options
+function readAutomationOptions() {
+  return {
+    os: document.getElementById("auto-os-select")?.value || "ubuntu_2404",
+    env: document.getElementById("auto-env-select")?.value || "native",
+    arch: document.getElementById("auto-arch-select")?.value || "x86_64",
+    installPio: document.getElementById("chk-install-pio")?.checked ?? true,
+    installUdev: document.getElementById("chk-install-udev")?.checked ?? true,
+    installDialout: document.getElementById("chk-install-dialout")?.checked ?? true,
+    installBuildTools: document.getElementById("chk-install-buildtools")?.checked ?? true,
+    rosDistro: document.getElementById("auto-ros-distro")?.value || "jazzy",
+    rosType: document.getElementById("auto-ros-type")?.value || "desktop",
+    buildMicrorosAgent: document.getElementById("chk-build-microros-agent")?.checked ?? true,
+    gitBranch: document.getElementById("auto-git-branch")?.value.trim() || `config/${currentSpec.robot_name || "robot"}`,
+    gitCommitMsg: document.getElementById("auto-git-commit-msg")?.value.trim() || `feat(config): add configuration for ${currentSpec.robot_name || "robot"}`,
+    mergeHeader: document.getElementById("chk-merge-header")?.checked ?? true,
+    mergePioFirmware: document.getElementById("chk-merge-pio-firmware")?.checked ?? true,
+    mergePioCalibration: document.getElementById("chk-merge-pio-calibration")?.checked ?? true,
+    mergePioSensors: document.getElementById("chk-merge-pio-sensors")?.checked ?? true,
+    mergeUrdf: document.getElementById("chk-merge-urdf")?.checked ?? true,
+    autoCommit: document.getElementById("chk-auto-commit")?.checked ?? true,
+    flashTarget: document.getElementById("auto-flash-target")?.value || "firmware",
+    flashPort: document.getElementById("auto-flash-port")?.value.trim() || "/dev/ttyACM0"
+  };
+}
+
+// Update Dynamic Previews across Tab 5
+function updateAutomationPreviews() {
+  const opts = readAutomationOptions();
+  const spec = currentSpec;
+  const robotName = spec.robot_name || "scout_pico2";
+
+  // Dynamic Git Branch & Commit message if unset or auto-managed
+  const gitBranchInput = document.getElementById("auto-git-branch");
+  if (gitBranchInput && (!gitBranchInput.value || gitBranchInput.dataset.autoManaged === "true")) {
+    gitBranchInput.value = `config/${robotName}`;
+    gitBranchInput.dataset.autoManaged = "true";
+  }
+
+  const gitCommitInput = document.getElementById("auto-git-commit-msg");
+  if (gitCommitInput && (!gitCommitInput.value || gitCommitInput.dataset.autoManaged === "true")) {
+    gitCommitInput.value = `feat(config): add configuration for ${robotName}`;
+    gitCommitInput.dataset.autoManaged = "true";
+  }
+
+  // Set default port based on MCU
+  const mcu = (spec.mcu || "PICO2").toUpperCase();
+  const portInput = document.getElementById("auto-flash-port");
+  if (portInput && (!portInput.value || portInput.dataset.autoManaged === "true")) {
+    if (mcu === "PICO" || mcu === "PICO2" || mcu === "ESP32S3") {
+      portInput.value = "/dev/ttyACM0";
+    } else {
+      portInput.value = "/dev/ttyUSB0";
+    }
+    portInput.dataset.autoManaged = "true";
+  }
+
+  // 1. Toolchain Preview
+  const toolCmdEl = document.getElementById("preview-tool-cmd");
+  if (toolCmdEl) {
+    toolCmdEl.innerText = getToolchainInstallCmd(opts);
+  }
+
+  // 2. ROS 2 Preview & Visibility
+  const rosDistroBox = document.getElementById("box-ros-cmd");
+  const rosTypeGroup = document.getElementById("group-ros-install-type");
+  const microrosGroup = document.getElementById("group-microros-agent");
+  const isRosActive = opts.rosDistro !== "none";
+
+  if (rosDistroBox) rosDistroBox.style.display = isRosActive ? "block" : "none";
+  if (rosTypeGroup) rosTypeGroup.style.display = isRosActive ? "flex" : "none";
+  if (microrosGroup) microrosGroup.style.display = isRosActive ? "grid" : "none";
+
+  const rosCmdEl = document.getElementById("preview-ros-cmd");
+  if (rosCmdEl && isRosActive) {
+    rosCmdEl.innerText = getRos2InstallCmd(opts);
+  }
+
+  // 3. Merge & Commit Preview
+  const mergeCmdEl = document.getElementById("preview-merge-cmd");
+  if (mergeCmdEl) {
+    mergeCmdEl.innerText = getMergeAndCommitCmd(spec, opts);
+  }
+
+  // If Deploy Script tab is active, re-render code display
+  if (activeArtifact === "tab-code-deploy") {
+    renderActiveCode();
+  }
+}
+
+// Generate Toolchain Install Commands
+function getToolchainInstallCmd(opts) {
+  const lines = [];
+  const isDebianUbuntu = ["ubuntu_2404", "ubuntu_2604", "ubuntu_2204", "debian", "windows_wsl"].includes(opts.os);
+  const isMac = opts.os === "macos";
+  const isFedora = opts.os === "fedora";
+
+  if (isDebianUbuntu) {
+    if (opts.installBuildTools) {
+      lines.push("sudo apt update && sudo apt install -y git cmake ninja-build python3-pip python3-venv udev");
+    }
+    if (opts.installPio) {
+      lines.push("python3 -m pip install --upgrade platformio --break-system-packages 2>/dev/null || python3 -m pip install --upgrade platformio");
+    }
+    if (opts.installUdev) {
+      lines.push("curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/master/scripts/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules > /dev/null");
+      lines.push("sudo udevadm control --reload-rules && sudo udevadm trigger");
+    }
+    if (opts.installDialout) {
+      lines.push("sudo usermod -a -G dialout,plugdev $USER");
+    }
+  } else if (isMac) {
+    if (opts.installBuildTools) lines.push("brew install git cmake ninja python3");
+    if (opts.installPio) lines.push("brew install platformio || pip3 install platformio");
+  } else if (isFedora) {
+    if (opts.installBuildTools) lines.push("sudo dnf install -y git cmake ninja-build python3-pip systemd-udev");
+    if (opts.installPio) lines.push("pip3 install --user platformio");
+    if (opts.installDialout) lines.push("sudo usermod -a -G dialout $USER");
+  }
+
+  return lines.length > 0 ? lines.join(" && \\\n") : "# No toolchain installations selected";
+}
+
+// Generate ROS 2 Install Commands
+function getRos2InstallCmd(opts) {
+  const distro = opts.rosDistro;
+  if (distro === "none") return "# ROS 2 Installation skipped (Standalone Firmware mode)";
+
+  const pkgName = opts.rosType === "desktop" ? `ros-${distro}-desktop` : `ros-${distro}-ros-base`;
+  const lines = [
+    `# 1. Setup ROS 2 ${distro.toUpperCase()} Official Apt Repository`,
+    `sudo apt update && sudo apt install -y software-properties-common curl gnupg`,
+    `sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg`,
+    `echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null`,
+    `sudo apt update && sudo apt install -y ${pkgName} python3-colcon-common-extensions python3-rosdep`
+  ];
+
+  if (opts.buildMicrorosAgent) {
+    lines.push(
+      ``,
+      `# 2. Build micro-ROS Agent Workspace`,
+      `source /opt/ros/${distro}/setup.bash`,
+      `mkdir -p ~/microros_ws/src && cd ~/microros_ws`,
+      `git clone -b ${distro} https://github.com/micro-ROS/micro-ROS-Agent.git src/micro_ros_agent || true`,
+      `colcon build --symlink-install`,
+      `echo "source /opt/ros/${distro}/setup.bash" >> ~/.bashrc`,
+      `echo "source ~/microros_ws/install/setup.bash" >> ~/.bashrc`
+    );
+  }
+
+  return lines.join("\n");
+}
+
+// Generate Merge & Commit Commands
+function getMergeAndCommitCmd(spec, opts) {
+  const name = spec.robot_name || "my_robot";
+  const branch = opts.gitBranch || `config/${name}`;
+  const commitMsg = opts.gitCommitMsg || `feat(config): add configuration for ${name}`;
+
+  const lines = [
+    `# 1. Create Isolated Git Branch`,
+    `git checkout -b "${branch}" 2>/dev/null || git checkout "${branch}"`,
+    ``,
+    `# 2. Ingest Custom Header and URDF`,
+    `mkdir -p config/custom urdf`,
+    `# (Files injected automatically into config/custom/${name}_config.h and platformio.ini)`,
+    ``,
+    `# 3. Stage & Create Git Commit`,
+    `git add config/ firmware/platformio.ini calibration/platformio.ini test_sensors/platformio.ini urdf/ 2>/dev/null || true`,
+    `git commit -m "${commitMsg}"`
+  ];
+
+  return lines.join("\n");
+}
+
+// Full All-In-One Bash Deploy Script Generator
+function generateDeployScript(spec, opts) {
+  const name = spec.robot_name || "my_robot";
+  const nameUpper = name.toUpperCase();
+  const mcu = (spec.mcu || "PICO2").toUpperCase();
+  const branch = opts.gitBranch || `config/${name}`;
+  const commitMsg = opts.gitCommitMsg || `feat(config): add configuration for ${name}`;
+  const target = opts.flashTarget || "firmware";
+  const port = opts.flashPort || "/dev/ttyACM0";
+  const headerContent = generateCppHeader(spec);
+  const pioSection = generatePlatformioEnv(spec);
+  const urdfContent = generateUrdfXacro(spec);
+
+  const script = `#!/usr/bin/env bash
+# =============================================================================
+# Automated Linorobot2 Setup, Merge, Build & Flash Script for '${name}'
+# Generated by Linorobot2 Robot Configuration Engine
+# Target MCU: ${mcu} | Kinematics: ${spec.kinematics} | Target: ${target}
+# =============================================================================
+
+set -e
+
+# ANSI Styling
+C_RESET='\\033[0m'
+C_CYAN='\\033[1;36m'
+C_GREEN='\\033[1;32m'
+C_YELLOW='\\033[1;33m'
+C_RED='\\033[1;31m'
+
+info()    { echo -e "\${C_CYAN}[INFO]\${C_RESET} \$*"; }
+success() { echo -e "\${C_GREEN}[SUCCESS]\${C_RESET} \$*"; }
+warn()    { echo -e "\${C_YELLOW}[WARN]\${C_RESET} \$*"; }
+err()     { echo -e "\${C_RED}[ERROR]\${C_RESET} \$*" >&2; }
+
+info "========================================================="
+info "  Linorobot2 Deployment Engine: ${name}"
+info "  Target MCU: ${mcu} | Mode: ${target}"
+info "========================================================="
+
+# -----------------------------------------------------------------------------
+# Phase 1: Toolchain & Dependency Verification
+# -----------------------------------------------------------------------------
+info "Step 1: Checking build toolchains and dependencies..."
+${opts.installBuildTools ? `if command -v apt-get &>/dev/null; then
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq git cmake ninja-build python3-pip python3-venv udev
+fi` : "# Build tools check skipped"}
+
+${opts.installPio ? `if ! command -v pio &>/dev/null; then
+    info "Installing PlatformIO Core..."
+    python3 -m pip install --upgrade platformio --break-system-packages 2>/dev/null || python3 -m pip install --upgrade platformio
+    export PATH="$HOME/.local/bin:$PATH"
+fi
+success "PlatformIO Core active: $(pio --version 2>/dev/null || echo 'Installed')"
+` : "# PlatformIO install skipped"}
+
+${opts.installUdev ? `if [ -d "/etc/udev/rules.d" ] && [ ! -f "/etc/udev/rules.d/99-platformio-udev.rules" ]; then
+    info "Installing PlatformIO hardware udev rules..."
+    curl -fsSL https://raw.githubusercontent.com/platformio/platformio-core/master/scripts/99-platformio-udev.rules | sudo tee /etc/udev/rules.d/99-platformio-udev.rules > /dev/null
+    sudo udevadm control --reload-rules && sudo udevadm trigger || true
+fi` : "# udev rules skipped"}
+
+${opts.installDialout ? `if command -v usermod &>/dev/null; then
+    sudo usermod -a -G dialout,plugdev "$USER" 2>/dev/null || true
+fi` : "# dialout group skipped"}
+
+# -----------------------------------------------------------------------------
+# Phase 2: Optional ROS 2 Distribution Setup
+# -----------------------------------------------------------------------------
+${opts.rosDistro !== "none" ? `info "Step 2: Verifying ROS 2 ${opts.rosDistro.toUpperCase()} environment..."
+if [ ! -d "/opt/ros/${opts.rosDistro}" ]; then
+    warn "ROS 2 ${opts.rosDistro} not found in /opt/ros/${opts.rosDistro}. Installing..."
+    sudo apt-get update -qq && sudo apt-get install -y -qq curl gnupg software-properties-common
+    sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+    sudo apt-get update -qq
+    sudo apt-get install -y -qq ${opts.rosType === "desktop" ? `ros-${opts.rosDistro}-desktop` : `ros-${opts.rosDistro}-ros-base`} python3-colcon-common-extensions python3-rosdep
+fi
+
+${opts.buildMicrorosAgent ? `if [ -d "/opt/ros/${opts.rosDistro}" ] && [ ! -d "$HOME/microros_ws/install" ]; then
+    info "Building micro_ros_agent workspace at ~/microros_ws..."
+    mkdir -p "$HOME/microros_ws/src"
+    cd "$HOME/microros_ws"
+    if [ ! -d "src/micro_ros_agent" ]; then
+        git clone -b ${opts.rosDistro} https://github.com/micro-ROS/micro-ROS-Agent.git src/micro_ros_agent || true
+    fi
+    source "/opt/ros/${opts.rosDistro}/setup.bash"
+    colcon build --symlink-install
+    cd - >/dev/null
+fi` : ""}
+` : `# ROS 2 Host setup skipped (Standalone Firmware mode)`}
+
+# -----------------------------------------------------------------------------
+# Phase 3: Git Branch Preparation
+# -----------------------------------------------------------------------------
+info "Step 3: Preparing Git branch '${branch}'..."
+if git rev-parse --is-inside-work-tree &>/dev/null; then
+    git checkout -b "${branch}" 2>/dev/null || git checkout "${branch}"
+fi
+
+# -----------------------------------------------------------------------------
+# Phase 4: Ingest Custom C++ Header
+# -----------------------------------------------------------------------------
+${opts.mergeHeader ? `info "Step 4: Merging C++ configuration header into config/custom/${name}_config.h..."
+mkdir -p config/custom
+
+cat << 'EOF_HEADER' > "config/custom/${name}_config.h"
+${headerContent}
+EOF_HEADER
+success "Generated config/custom/${name}_config.h"
+
+# Register in config/config.h if not already present
+if [ -f "config/config.h" ]; then
+    if ! grep -q "USE_${nameUpper}_CONFIG" config/config.h; then
+        info "Registering USE_${nameUpper}_CONFIG in config/config.h..."
+        sed -i '/\\/\\/ add user configurations above this line/i #ifdef USE_${nameUpper}_CONFIG\\n    #include "custom/${name}_config.h"\\n#endif\\n' config/config.h
+        success "Registered in config/config.h"
+    else
+        info "USE_${nameUpper}_CONFIG already registered in config/config.h"
+    fi
+fi
+` : "# Header merge skipped"}
+
+# -----------------------------------------------------------------------------
+# Phase 5: Ingest PlatformIO Target Environments
+# -----------------------------------------------------------------------------
+inject_pio_env() {
+    local pio_file="$1"
+    if [ -f "$pio_file" ]; then
+        if ! grep -q "\[env:${name}\]" "$pio_file"; then
+            info "Appending [env:${name}] to $pio_file..."
+            echo "" >> "$pio_file"
+            cat << 'EOF_PIO' >> "$pio_file"
+${pioSection}
+EOF_PIO
+            success "Updated $pio_file"
+        else
+            info "[env:${name}] already exists in $pio_file"
+        fi
+    fi
+}
+
+${opts.mergePioFirmware ? `inject_pio_env "firmware/platformio.ini"` : ""}
+${opts.mergePioCalibration ? `inject_pio_env "calibration/platformio.ini"` : ""}
+${opts.mergePioSensors ? `inject_pio_env "test_sensors/platformio.ini"` : ""}
+
+# -----------------------------------------------------------------------------
+# Phase 6: Ingest URDF Description
+# -----------------------------------------------------------------------------
+${opts.mergeUrdf ? `info "Step 6: Writing URDF description to urdf/${name}_properties.urdf.xacro..."
+mkdir -p urdf
+cat << 'EOF_URDF' > "urdf/${name}_properties.urdf.xacro"
+${urdfContent}
+EOF_URDF
+success "Generated urdf/${name}_properties.urdf.xacro"
+` : "# URDF generation skipped"}
+
+# -----------------------------------------------------------------------------
+# Phase 7: Stage and Commit Changes
+# -----------------------------------------------------------------------------
+${opts.autoCommit ? `if git rev-parse --is-inside-work-tree &>/dev/null; then
+    info "Step 7: Committing generated hardware configuration to Git..."
+    git add config/ firmware/platformio.ini calibration/platformio.ini test_sensors/platformio.ini urdf/ 2>/dev/null || true
+    if ! git diff --cached --quiet; then
+        git commit -m "${commitMsg}"
+        success "Git commit created on branch '${branch}'"
+    else
+        info "No configuration changes to commit."
+    fi
+fi` : "# Git commit skipped"}
+
+# -----------------------------------------------------------------------------
+# Phase 8: Build and Flash Target Firmware
+# -----------------------------------------------------------------------------
+info "Step 8: Building target '${target}' for environment '[env:${name}]'..."
+if [ -d "${target}" ]; then
+    pio run -d "${target}" -e "${name}"
+    success "Build SUCCEEDED for '${name}' in ${target}/"
+
+    if [ -n "${port}" ] && [ "${port}" != "AUTO" ]; then
+        info "Uploading to microcontroller on port '${port}'..."
+        pio run -d "${target}" -e "${name}" -t upload --upload-port "${port}" || {
+            warn "Standard upload exited. Attempting auto-upload protocol..."
+            pio run -d "${target}" -e "${name}" -t upload
+        }
+        success "Microcontroller flashing COMPLETE!"
+    fi
+else
+    warn "Target directory '${target}/' not found in current workspace."
+fi
+
+info "========================================================="
+success "All deployment steps completed successfully for '${name}'!"
+info "========================================================="
+`;
+
+  return script;
+}
+
+// -----------------------------------------------------------------------------
+// Web Serial API Implementation for Chrome / Edge Live Microcontroller Logs
+// -----------------------------------------------------------------------------
+async function toggleWebSerialConnection() {
+  if (serialPort) {
+    await disconnectWebSerial();
+  } else {
+    await connectWebSerial();
+  }
+}
+
+async function connectWebSerial() {
+  const terminalScreen = document.getElementById("serial-terminal-screen");
+  const statusPill = document.getElementById("serial-status-pill");
+  const statusText = document.getElementById("serial-status-text");
+  const btnConnect = document.getElementById("btn-serial-connect");
+  const btnText = document.getElementById("serial-btn-text");
+  const baudSelect = document.getElementById("serial-baud-select");
+  const inputBar = document.getElementById("serial-input-text");
+  const btnSend = document.getElementById("btn-serial-send");
+
+  if (!("serial" in navigator)) {
+    appendTerminalLine("❌ Web Serial API is not supported in this browser. Please use Chrome, Edge, or Opera over HTTPS/localhost.", "err");
+    alert("Web Serial API is not supported in this browser. Please open in Google Chrome or Microsoft Edge.");
+    return;
+  }
+
+  try {
+    const baudRate = parseInt(baudSelect?.value || "115200", 10);
+    appendTerminalLine(`🔌 Requesting serial port access (Baud: ${baudRate})...`, "dim");
+
+    serialPort = await navigator.serial.requestPort();
+    await serialPort.open({ baudRate: baudRate });
+
+    // Update UI Connected State
+    if (statusPill) statusPill.className = "serial-status-pill pill-connected";
+    if (statusText) statusText.innerText = `Connected (${baudRate} baud)`;
+    if (btnText) btnText.innerText = "Disconnect";
+    if (btnConnect) btnConnect.className = "btn btn-sm btn-secondary";
+    if (inputBar) inputBar.disabled = false;
+    if (btnSend) btnSend.disabled = false;
+
+    appendTerminalLine(`✅ Serial port connected at ${baudRate} baud. Streaming output:`, "dim");
+    showToast("🟢 Serial port connected!");
+
+    // Start background reader loop
+    readSerialStream();
+
+  } catch (err) {
+    appendTerminalLine(`❌ Connection failed: ${err.message}`, "err");
+    serialPort = null;
+    if (statusPill) statusPill.className = "serial-status-pill pill-disconnected";
+    if (statusText) statusText.innerText = "Disconnected";
+  }
+}
+
+async function disconnectWebSerial() {
+  const statusPill = document.getElementById("serial-status-pill");
+  const statusText = document.getElementById("serial-status-text");
+  const btnConnect = document.getElementById("btn-serial-connect");
+  const btnText = document.getElementById("serial-btn-text");
+  const inputBar = document.getElementById("serial-input-text");
+  const btnSend = document.getElementById("btn-serial-send");
+
+  isSerialReading = false;
+
+  try {
+    if (serialReader) {
+      await serialReader.cancel();
+      serialReader = null;
+    }
+    if (serialPort) {
+      await serialPort.close();
+      serialPort = null;
+    }
+  } catch (err) {
+    console.error("Error closing serial port:", err);
+  }
+
+  if (statusPill) statusPill.className = "serial-status-pill pill-disconnected";
+  if (statusText) statusText.innerText = "Disconnected";
+  if (btnText) btnText.innerText = "Connect Serial Port";
+  if (btnConnect) btnConnect.className = "btn btn-sm btn-accent";
+  if (inputBar) inputBar.disabled = true;
+  if (btnSend) btnSend.disabled = true;
+
+  appendTerminalLine("🔌 Serial port disconnected.", "dim");
+  showToast("🔌 Serial port disconnected.");
+}
+
+async function readSerialStream() {
+  isSerialReading = true;
+  const decoder = new TextDecoderStream();
+  const inputDone = serialPort.readable.pipeTo(decoder.writable);
+  const inputStream = decoder.readable;
+  serialReader = inputStream.getReader();
+
+  let lineBuffer = "";
+
+  try {
+    while (isSerialReading) {
+      const { value, done } = await serialReader.read();
+      if (done) break;
+      if (value) {
+        lineBuffer += value;
+        const lines = lineBuffer.split(/\r?\n/);
+        lineBuffer = lines.pop(); // Keep partial line in buffer
+
+        for (const line of lines) {
+          if (line.trim().length > 0) {
+            appendTerminalLine(line, "out");
+          }
+        }
+      }
+    }
+  } catch (err) {
+    if (isSerialReading) {
+      appendTerminalLine(`⚠️ Serial stream closed: ${err.message}`, "dim");
+    }
+  } finally {
+    if (serialReader) {
+      serialReader.releaseLock();
+    }
+  }
+}
+
+async function sendSerialCommand() {
+  const inputBar = document.getElementById("serial-input-text");
+  if (!inputBar || !inputBar.value || !serialPort || !serialPort.writable) return;
+
+  const textToSend = inputBar.value + "\n";
+  appendTerminalLine(`> ${inputBar.value}`, "in");
+  inputBar.value = "";
+
+  const encoder = new TextEncoder();
+  const writer = serialPort.writable.getWriter();
+  await writer.write(encoder.encode(textToSend));
+  writer.releaseLock();
+}
+
+function appendTerminalLine(text, type = "out") {
+  const screen = document.getElementById("serial-terminal-screen");
+  if (!screen) return;
+
+  const lineEl = document.createElement("div");
+  lineEl.className = `terminal-line terminal-${type}`;
+  lineEl.innerText = text;
+  screen.appendChild(lineEl);
+
+  const autoScroll = document.getElementById("chk-serial-autoscroll")?.checked ?? true;
+  if (autoScroll) {
+    screen.scrollTop = screen.scrollHeight;
+  }
+}
+
+function clearTerminalScreen() {
+  const screen = document.getElementById("serial-terminal-screen");
+  if (screen) {
+    screen.innerHTML = '<div class="terminal-line terminal-dim">[Terminal Cleared]</div>';
+  }
+}
+
+// Initialize Automation Event Listeners
+function initAutomationEventListeners() {
+  // Top Quick Deploy Button
+  const btnQuickDeploy = document.getElementById("btn-quick-deploy");
+  if (btnQuickDeploy) {
+    btnQuickDeploy.addEventListener("click", () => {
+      const tabBtn = document.querySelector('[data-tab="tab-automation"]');
+      if (tabBtn) tabBtn.click();
+    });
+  }
+
+  // Re-detect OS Button
+  const btnRedetect = document.getElementById("btn-redetect-os");
+  if (btnRedetect) {
+    btnRedetect.addEventListener("click", () => {
+      detectClientOS();
+      showToast("🔍 OS re-detected!");
+    });
+  }
+
+  // Dynamic Automation Form Listeners
+  const autoInputs = [
+    "auto-os-select", "auto-env-select", "auto-arch-select",
+    "chk-install-pio", "chk-install-udev", "chk-install-dialout", "chk-install-buildtools",
+    "auto-ros-distro", "auto-ros-type", "chk-build-microros-agent",
+    "auto-git-branch", "auto-git-commit-msg",
+    "chk-merge-header", "chk-merge-pio-firmware", "chk-merge-pio-calibration", "chk-merge-pio-sensors", "chk-merge-urdf", "chk-auto-commit",
+    "auto-flash-target", "auto-flash-port"
+  ];
+
+  autoInputs.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("input", () => {
+        if (id === "auto-git-branch" || id === "auto-git-commit-msg" || id === "auto-flash-port") {
+          el.dataset.autoManaged = "false";
+        }
+        updateAutomationPreviews();
+      });
+      el.addEventListener("change", () => {
+        updateAutomationPreviews();
+      });
+    }
+  });
+
+  // Quick Copy Buttons
+  const btnCopyTool = document.getElementById("btn-copy-tool-cmd");
+  if (btnCopyTool) {
+    btnCopyTool.addEventListener("click", () => {
+      const cmd = document.getElementById("preview-tool-cmd")?.innerText || "";
+      navigator.clipboard.writeText(cmd).then(() => showToast("📋 Toolchain command copied!"));
+    });
+  }
+
+  const btnCopyRos = document.getElementById("btn-copy-ros-cmd");
+  if (btnCopyRos) {
+    btnCopyRos.addEventListener("click", () => {
+      const cmd = document.getElementById("preview-ros-cmd")?.innerText || "";
+      navigator.clipboard.writeText(cmd).then(() => showToast("📋 ROS 2 command copied!"));
+    });
+  }
+
+  const btnCopyMerge = document.getElementById("btn-copy-merge-cmd");
+  if (btnCopyMerge) {
+    btnCopyMerge.addEventListener("click", () => {
+      const cmd = document.getElementById("preview-merge-cmd")?.innerText || "";
+      navigator.clipboard.writeText(cmd).then(() => showToast("📋 Merge & Commit command copied!"));
+    });
+  }
+
+  const btnCopyBuild = document.getElementById("btn-copy-build-cmd");
+  if (btnCopyBuild) {
+    btnCopyBuild.addEventListener("click", () => {
+      const target = document.getElementById("auto-flash-target")?.value || "firmware";
+      const name = currentSpec.robot_name || "scout_pico2";
+      const cmd = `pio run -d ${target} -e ${name}`;
+      navigator.clipboard.writeText(cmd).then(() => showToast(`📋 Build command copied: ${cmd}`));
+    });
+  }
+
+  const btnCopyUpload = document.getElementById("btn-copy-upload-cmd");
+  if (btnCopyUpload) {
+    btnCopyUpload.addEventListener("click", () => {
+      const target = document.getElementById("auto-flash-target")?.value || "firmware";
+      const name = currentSpec.robot_name || "scout_pico2";
+      const port = document.getElementById("auto-flash-port")?.value.trim() || "/dev/ttyACM0";
+      const cmd = port === "AUTO" ? `pio run -d ${target} -e ${name} -t upload` : `pio run -d ${target} -e ${name} -t upload --upload-port ${port}`;
+      navigator.clipboard.writeText(cmd).then(() => showToast(`⚡ Upload command copied: ${cmd}`));
+    });
+  }
+
+  const btnDownloadDeploy = document.getElementById("btn-download-deploy-script");
+  if (btnDownloadDeploy) {
+    btnDownloadDeploy.addEventListener("click", () => {
+      const script = generateDeployScript(currentSpec, readAutomationOptions());
+      const filename = `deploy_${currentSpec.robot_name || "robot"}.sh`;
+      triggerDownload(filename, script, "application/x-sh");
+      showToast(`📥 ${filename} downloaded!`);
+    });
+  }
+
+  // Web Serial Event Listeners
+  const btnSerialConnect = document.getElementById("btn-serial-connect");
+  if (btnSerialConnect) {
+    btnSerialConnect.addEventListener("click", toggleWebSerialConnection);
+  }
+
+  const btnSerialClear = document.getElementById("btn-serial-clear");
+  if (btnSerialClear) {
+    btnSerialClear.addEventListener("click", clearTerminalScreen);
+  }
+
+  const btnSerialSend = document.getElementById("btn-serial-send");
+  if (btnSerialSend) {
+    btnSerialSend.addEventListener("click", sendSerialCommand);
+  }
+
+  const inputSerialText = document.getElementById("serial-input-text");
+  if (inputSerialText) {
+    inputSerialText.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        sendSerialCommand();
+      }
+    });
+  }
 }
