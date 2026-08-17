@@ -341,7 +341,7 @@ bool createEntities()
         &control_timer, 
         &support,
         RCL_MS_TO_NS(control_timeout),
-        controlCallback,
+        (rcl_timer_callback_t)controlCallback,
         true
     ));
     executor = rclc_executor_get_zero_initialized_executor();
