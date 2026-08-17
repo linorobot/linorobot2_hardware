@@ -571,15 +571,7 @@
               </label>
               <label class="checkbox-label">
                 <input type="checkbox" id="chk-merge-pio-firmware" checked>
-                <span>Append <code>[env:&lt;robot&gt;]</code> target to <code>firmware/platformio.ini</code></span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" id="chk-merge-pio-calibration" checked>
-                <span>Append <code>[env:&lt;robot&gt;]</code> target to <code>calibration/platformio.ini</code></span>
-              </label>
-              <label class="checkbox-label">
-                <input type="checkbox" id="chk-merge-pio-sensors" checked>
-                <span>Append <code>[env:&lt;robot&gt;]</code> target to <code>test_sensors/platformio.ini</code></span>
+                <span>Append <code>[env:&lt;robot&gt;]</code> to <code>firmware/platformio.ini</code> (automatically inherited by <code>test_motors</code> & <code>test_sensors</code>)</span>
               </label>
               <label class="checkbox-label">
                 <input type="checkbox" id="chk-merge-urdf" checked>
@@ -606,9 +598,9 @@
                 <label for="auto-flash-target" class="form-label">Firmware Target</label>
                 <select id="auto-flash-target" class="form-select">
                   <option value="firmware" selected>🏎️ Robot Firmware (Main micro-ROS Motor Controller)</option>
-                  <option value="test_sensors">🧭 Sensor Diagnostics (I2C Scanner & Real-Time Readout)</option>
-                  <option value="calibration">⚙️ Motor & Encoder Calibration Utility</option>
-                  <option value="adc_calibrate">📈 Battery ADC Analog Calibration</option>
+                  <option value="test_motors">⚙️ Motor & Encoder Diagnostics (test_motors/)</option>
+                  <option value="test_sensors">🧭 Sensor Diagnostics Utility (test_sensors/)</option>
+                  <option value="bno085_cal">🧭 BNO085 IMU Calibration (bno085_cal/)</option>
                 </select>
               </div>
 

@@ -1340,8 +1340,6 @@ function readAutomationOptions() {
     gitCommitMsg: document.getElementById("auto-git-commit-msg")?.value.trim() || `feat(config): add configuration for ${currentSpec.robot_name || "robot"}`,
     mergeHeader: document.getElementById("chk-merge-header")?.checked ?? true,
     mergePioFirmware: document.getElementById("chk-merge-pio-firmware")?.checked ?? true,
-    mergePioCalibration: document.getElementById("chk-merge-pio-calibration")?.checked ?? true,
-    mergePioSensors: document.getElementById("chk-merge-pio-sensors")?.checked ?? true,
     mergeUrdf: document.getElementById("chk-merge-urdf")?.checked ?? true,
     autoCommit: document.getElementById("chk-auto-commit")?.checked ?? true,
     flashTarget: document.getElementById("auto-flash-target")?.value || "firmware",
@@ -1491,7 +1489,7 @@ function getMergeAndCommitCmd(spec, opts) {
     `# (Files injected automatically into config/custom/${name}_config.h and platformio.ini)`,
     ``,
     `# 3. Stage & Create Git Commit`,
-    `git add config/ firmware/platformio.ini calibration/platformio.ini test_sensors/platformio.ini urdf/ 2>/dev/null || true`,
+    `git add config/ firmware/platformio.ini urdf/ 2>/dev/null || true`,
     `git commit -m "${commitMsg}"`
   ];
 
@@ -1622,27 +1620,21 @@ fi
 ` : "# Header merge skipped"}
 
 # -----------------------------------------------------------------------------
-# Phase 5: Ingest PlatformIO Target Environments
+# Phase 5: Ingest PlatformIO Target Environment
+# (test_motors and test_sensors automatically inherit firmware/platformio.ini)
 # -----------------------------------------------------------------------------
-inject_pio_env() {
-    local pio_file="$1"
-    if [ -f "$pio_file" ]; then
-        if ! grep -q "\[env:${name}\]" "$pio_file"; then
-            info "Appending [env:${name}] to $pio_file..."
-            echo "" >> "$pio_file"
-            cat << 'EOF_PIO' >> "$pio_file"
+if [ -f "firmware/platformio.ini" ] && [ "${opts.mergePioFirmware ? "1" : "0"}" = "1" ]; then
+    if ! grep -q "\[env:${name}\]" "firmware/platformio.ini"; then
+        info "Appending [env:${name}] to firmware/platformio.ini..."
+        echo "" >> "firmware/platformio.ini"
+        cat << 'EOF_PIO' >> "firmware/platformio.ini"
 ${pioSection}
 EOF_PIO
-            success "Updated $pio_file"
-        else
-            info "[env:${name}] already exists in $pio_file"
-        fi
+        success "Updated firmware/platformio.ini (inherited by test_motors & test_sensors)"
+    else
+        info "[env:${name}] already exists in firmware/platformio.ini"
     fi
-}
-
-${opts.mergePioFirmware ? `inject_pio_env "firmware/platformio.ini"` : ""}
-${opts.mergePioCalibration ? `inject_pio_env "calibration/platformio.ini"` : ""}
-${opts.mergePioSensors ? `inject_pio_env "test_sensors/platformio.ini"` : ""}
+fi
 
 # -----------------------------------------------------------------------------
 # Phase 6: Ingest URDF Description
@@ -1660,7 +1652,7 @@ success "Generated urdf/${name}_properties.urdf.xacro"
 # -----------------------------------------------------------------------------
 ${opts.autoCommit ? `if git rev-parse --is-inside-work-tree &>/dev/null; then
     info "Step 7: Committing generated hardware configuration to Git..."
-    git add config/ firmware/platformio.ini calibration/platformio.ini test_sensors/platformio.ini urdf/ 2>/dev/null || true
+    git add config/ firmware/platformio.ini urdf/ 2>/dev/null || true
     if ! git diff --cached --quiet; then
         git commit -m "${commitMsg}"
         success "Git commit created on branch '${branch}'"
@@ -1885,7 +1877,7 @@ function initAutomationEventListeners() {
     "chk-install-pio", "chk-install-udev", "chk-install-dialout", "chk-install-buildtools",
     "auto-ros-distro", "auto-ros-type", "chk-build-microros-agent",
     "auto-git-branch", "auto-git-commit-msg",
-    "chk-merge-header", "chk-merge-pio-firmware", "chk-merge-pio-calibration", "chk-merge-pio-sensors", "chk-merge-urdf", "chk-auto-commit",
+    "chk-merge-header", "chk-merge-pio-firmware", "chk-merge-urdf", "chk-auto-commit",
     "auto-flash-target", "auto-flash-port"
   ];
 

@@ -54,24 +54,20 @@ def merge_configuration(spec, repo_root):
         else:
             print(f" ℹ️  '{macro_name}' already registered in config/config.h")
 
-    # 3. PlatformIO environment injection
-    pio_targets = [
-        os.path.join(repo_root, "firmware", "platformio.ini"),
-        os.path.join(repo_root, "calibration", "platformio.ini"),
-        os.path.join(repo_root, "test_sensors", "platformio.ini")
-    ]
+    # 3. PlatformIO environment injection into firmware/platformio.ini
+    # (test_motors and test_sensors automatically inherit via extra_configs = ../firmware/platformio.ini)
+    pio_path = os.path.join(repo_root, "firmware", "platformio.ini")
     env_header = f"[env:{robot_name}]"
-    for pio_path in pio_targets:
-        if os.path.exists(pio_path):
-            with open(pio_path, "r") as f:
-                pio_content = f.read()
-            if env_header not in pio_content:
-                pio_content += f"\n{pio_code}\n"
-                with open(pio_path, "w") as f:
-                    f.write(pio_content)
-                print(f" ✅ Appended '{env_header}' to {os.path.relpath(pio_path, repo_root)}")
-            else:
-                print(f" ℹ️  '{env_header}' already exists in {os.path.relpath(pio_path, repo_root)}")
+    if os.path.exists(pio_path):
+        with open(pio_path, "r") as f:
+            pio_content = f.read()
+        if env_header not in pio_content:
+            pio_content += f"\n{pio_code}\n"
+            with open(pio_path, "w") as f:
+                f.write(pio_content)
+            print(f" ✅ Appended '{env_header}' to {os.path.relpath(pio_path, repo_root)} (inherited by test_motors & test_sensors)")
+        else:
+            print(f" ℹ️  '{env_header}' already exists in {os.path.relpath(pio_path, repo_root)}")
 
     # 4. URDF Generation
     urdf_dir = os.path.join(repo_root, "urdf")
@@ -93,7 +89,7 @@ def commit_configuration(spec, repo_root, branch_name=None, commit_msg=None):
         subprocess.run(["git", "checkout", branch], cwd=repo_root, capture_output=True, check=False)
 
         # Stage files
-        subprocess.run(["git", "add", "config/", "firmware/platformio.ini", "calibration/platformio.ini", "test_sensors/platformio.ini", "urdf/"], cwd=repo_root, check=True)
+        subprocess.run(["git", "add", "config/", "firmware/platformio.ini", "urdf/"], cwd=repo_root, check=True)
 
         # Commit
         res = subprocess.run(["git", "commit", "-m", msg], cwd=repo_root, capture_output=True, text=True)
