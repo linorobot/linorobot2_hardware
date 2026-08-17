@@ -36,5 +36,8 @@ void initRange()
 #ifdef TRIG_PIN // ultrasonic sensor HC-SR04
     range_msg_.header.frame_id = micro_ros_string_utilities_set(range_msg_.header.frame_id, "sonar_link");
     pinMode(TRIG_PIN, OUTPUT);
+#ifdef ECHO_PIN
+    pinMode(ECHO_PIN, INPUT);
+#endif
 #endif
 }

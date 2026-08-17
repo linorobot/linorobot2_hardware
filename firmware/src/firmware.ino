@@ -311,7 +311,7 @@ bool createEntities()
     ));
 #endif
 #if defined(BATTERY_PIN) || defined(USE_INA219)
-    // create battery pyblisher
+    // create battery publisher
     RCCHECK(rclc_publisher_init_default(
     &battery_publisher,
     &node,
@@ -320,7 +320,7 @@ bool createEntities()
     ));
 #endif
 #ifdef ECHO_PIN
-    // create range pyblisher
+    // create range publisher
     RCCHECK(rclc_publisher_init_default(
     &range_publisher,
     &node,
