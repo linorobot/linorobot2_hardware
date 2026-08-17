@@ -7,6 +7,14 @@ ROS 2 Distro | Branch | Build status
 
 # linorobot2_hardware for ESP32 and Pico
 
+> [!TIP]
+> **🚀 Fast Track for Beginners: 3 Steps to Full Deploy**
+> 1. **Clone Repo**: `git clone https://github.com/linorobot/linorobot2_hardware.git && cd linorobot2_hardware`
+> 2. **Start Web Server**: `cd tools/robot_config_engine/web && python3 server.py 8000` (Open `http://localhost:8000`)
+> 3. **Select Config & 1-Click Full Deploy**: Choose a preset (*Scout Pico 2*, *ESP32 Mecanum*, *Crawler ESP32-S3*) or customize pins, then click **`🚀 Run Full Deploy`** in **Tab 5 (Automation Hub)** to install tools, merge configs, compile, and flash!
+> 
+> 👉 **[Explore the Interactive Web UI User Guide & Tutorial](https://github.com/hippo5329/linorobot2_hardware/wiki/Web-UI-Tutorial)**
+
 ## Overview
 
 The linorobot2_hardware repo uses platformio to build microcontroller firmware for mobile robots based on micro-ROS.

@@ -1,3 +1,4 @@
+import re
 #!/usr/bin/env python3
 """
 CLI entry point for the Linorobot2 AI Robot Configuration Engine.
@@ -61,13 +62,15 @@ def merge_configuration(spec, repo_root):
     if os.path.exists(pio_path):
         with open(pio_path, "r") as f:
             pio_content = f.read()
-        if env_header not in pio_content:
-            pio_content += f"\n{pio_code}\n"
-            with open(pio_path, "w") as f:
-                f.write(pio_content)
-            print(f" ✅ Appended '{env_header}' to {os.path.relpath(pio_path, repo_root)} (inherited by test_motors & test_sensors)")
+        if env_header in pio_content:
+            pattern = re.escape(env_header) + r"[\s\S]*?(?=\n\[env:|\Z)"
+            pio_content = re.sub(pattern, pio_code.strip() + "\n", pio_content)
+            print(f" ✅ Updated '{env_header}' in {os.path.relpath(pio_path, repo_root)}")
         else:
-            print(f" ℹ️  '{env_header}' already exists in {os.path.relpath(pio_path, repo_root)}")
+            pio_content += f"\n{pio_code}\n"
+            print(f" ✅ Appended '{env_header}' to {os.path.relpath(pio_path, repo_root)}")
+        with open(pio_path, "w") as f:
+            f.write(pio_content)
 
     # 4. URDF Generation
     urdf_dir = os.path.join(repo_root, "urdf")

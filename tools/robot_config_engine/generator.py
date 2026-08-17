@@ -80,27 +80,48 @@ def generate_cpp_header(spec: Dict[str, Any]) -> str:
     if "led" in pins:
         lines.append(f"#define LED_PIN {pins['led']}")
 
-    # Motor Pins
-    for i in range(1, 3 if kinematics == "DIFFERENTIAL_DRIVE" else 5):
-        m = pins.get(f"motor{i}", {})
-        if driver == "BTS7960":
-            lines.append(f"#define MOTOR{i}_PWM_R {m.get('pwm_r', 0)}")
-            lines.append(f"#define MOTOR{i}_PWM_L {m.get('pwm_l', 0)}")
-            if "en" in m:
-                lines.append(f"#define MOTOR{i}_EN {m.get('en')}")
-        elif driver == "GENERIC_2_IN":
-            lines.append(f"#define MOTOR{i}_PWM {m.get('pwm', 0)}")
-            lines.append(f"#define MOTOR{i}_IN_A {m.get('in_a', 0)}")
-            lines.append(f"#define MOTOR{i}_IN_B {m.get('in_b', 0)}")
-        elif driver == "GENERIC_1_IN":
-            lines.append(f"#define MOTOR{i}_PWM {m.get('pwm', 0)}")
-            lines.append(f"#define MOTOR{i}_DIR {m.get('dir', 0)}")
+    # Motor Pins (All 4 motors defined; unused motors set to -1 for 2WD)
+    num_active_motors = 2 if kinematics == "DIFFERENTIAL_DRIVE" else 4
+    for i in range(1, 5):
+        if i <= num_active_motors:
+            m = pins.get(f"motor{i}", {})
+            if driver == "BTS7960":
+                lines.append(f"#define MOTOR{i}_PWM_R {m.get('pwm_r', 0)}")
+                lines.append(f"#define MOTOR{i}_PWM_L {m.get('pwm_l', 0)}")
+                if "en" in m:
+                    lines.append(f"#define MOTOR{i}_EN {m.get('en')}")
+            elif driver == "GENERIC_2_IN":
+                lines.append(f"#define MOTOR{i}_PWM {m.get('pwm', 0)}")
+                lines.append(f"#define MOTOR{i}_IN_A {m.get('in_a', 0)}")
+                lines.append(f"#define MOTOR{i}_IN_B {m.get('in_b', 0)}")
+            elif driver == "GENERIC_1_IN":
+                lines.append(f"#define MOTOR{i}_PWM {m.get('pwm', 0)}")
+                lines.append(f"#define MOTOR{i}_DIR {m.get('dir', 0)}")
+            else:
+                lines.append(f"#define MOTOR{i}_PWM {m.get('pwm', 0)}")
+        else:
+            if driver == "BTS7960":
+                lines.append(f"#define MOTOR{i}_PWM_R -1")
+                lines.append(f"#define MOTOR{i}_PWM_L -1")
+            elif driver == "GENERIC_2_IN":
+                lines.append(f"#define MOTOR{i}_PWM -1")
+                lines.append(f"#define MOTOR{i}_IN_A -1")
+                lines.append(f"#define MOTOR{i}_IN_B -1")
+            elif driver == "GENERIC_1_IN":
+                lines.append(f"#define MOTOR{i}_PWM -1")
+                lines.append(f"#define MOTOR{i}_DIR -1")
+            else:
+                lines.append(f"#define MOTOR{i}_PWM -1")
 
-    # Encoders
+    # Encoders (All 4 encoders defined; unused encoders set to -1 for 2WD)
     enc = pins.get("encoders", {})
-    for i in range(1, 3 if kinematics == "DIFFERENTIAL_DRIVE" else 5):
-        lines.append(f"#define MOTOR{i}_ENCODER_A {enc.get(f'm{i}_a', 0)}")
-        lines.append(f"#define MOTOR{i}_ENCODER_B {enc.get(f'm{i}_b', 0)}")
+    for i in range(1, 5):
+        if i <= num_active_motors:
+            lines.append(f"#define MOTOR{i}_ENCODER_A {enc.get(f'm{i}_a', 0)}")
+            lines.append(f"#define MOTOR{i}_ENCODER_B {enc.get(f'm{i}_b', 0)}")
+        else:
+            lines.append(f"#define MOTOR{i}_ENCODER_A -1")
+            lines.append(f"#define MOTOR{i}_ENCODER_B -1")
 
     # Sensors
     lines.append("")
@@ -142,40 +163,88 @@ def generate_platformio_env(spec: Dict[str, Any]) -> str:
     name = spec["robot_name"]
     mcu = spec["mcu"].upper()
     cfg_macro = f"USE_{name.upper()}_CONFIG"
+    transport = str(spec.get("transport", "SERIAL")).upper()
+    is_wifi = "WIFI" in transport
+
+    wifi_line = "board_microros_transport = wifi\n" if is_wifi else ""
+    wifi_flag = "    -D USE_STAY_CONNECTED\n" if is_wifi else ""
 
     if mcu in ["PICO", "PICO2"]:
         board = "rpipico2" if mcu == "PICO2" else "rpipico"
         return f"""[env:{name}]
 platform = https://github.com/maxgerhardt/platform-raspberrypi.git
 board = {board}
-board_build.core = earlephilhower
-board_build.filesystem_size = 0.5m
+monitor_port = /dev/ttyACM0
+upload_port = /dev/ttyACM0
+upload_protocol = picotool
+board_microros_user_meta = atomic.meta
+{wifi_line}lib_deps =
+    ${{env.lib_deps}}
+    https://github.com/gbr1/rp2040-encoder-library.git
 build_flags =
     -I ../config
     -D PICO
     -D {cfg_macro}
-"""
+{wifi_flag}"""
     elif mcu in ["ESP32", "GENDRV"]:
         return f"""[env:{name}]
 platform = espressif32
-board = esp32doit-devkit-v1
+board = nodemcu-32s
+board_build.f_flash = 80000000L
+board_build.flash_mode = qio
+board_build.partitions = min_spiffs.csv
+monitor_speed = 921600
+monitor_port = /dev/ttyUSB0
+upload_port = /dev/ttyUSB0
+upload_protocol = esptool
+{wifi_line}lib_deps =
+    ${{env.lib_deps}}
+    madhephaestus/ESP32Servo
+    madhephaestus/ESP32Encoder
 build_flags =
     -I ../config
-    -D ESP32
+    -D __PGMSPACE_H_
     -D {cfg_macro}
-"""
+{wifi_flag}"""
     elif mcu == "ESP32S3":
         return f"""[env:{name}]
 platform = espressif32
 board = esp32-s3-devkitc-1
+board_build.f_flash = 80000000L
+board_build.flash_mode = qio
+monitor_speed = 921600
+monitor_port = /dev/ttyACM0
+upload_port = /dev/ttyACM0
+upload_protocol = esptool
+{wifi_line}lib_deps =
+    ${{env.lib_deps}}
+    madhephaestus/ESP32Servo
+    madhephaestus/ESP32Encoder
 build_flags =
     -I ../config
-    -D ARDUINO_USB_MODE=1
-    -D ARDUINO_USB_CDC_ON_BOOT=1
+    -D ARDUINO_USB_CDC_ON_BOOT
+    -D __PGMSPACE_H_
     -D {cfg_macro}
-"""
+{wifi_flag}"""
+    elif mcu == "ESP32S2":
+        return f"""[env:{name}]
+platform = espressif32
+board = esp32-s2-saola-1
+monitor_speed = 921600
+monitor_port = /dev/ttyACM0
+upload_port = /dev/ttyACM0
+upload_protocol = esptool
+{wifi_line}lib_deps =
+    ${{env.lib_deps}}
+    madhephaestus/ESP32Servo
+    madhephaestus/ESP32Encoder
+build_flags =
+    -I ../config
+    -D ARDUINO_USB_CDC_ON_BOOT
+    -D __PGMSPACE_H_
+    -D {cfg_macro}
+{wifi_flag}"""
     return ""
-
 
 def generate_urdf_xacro(spec: Dict[str, Any]) -> str:
     geom = spec.get("geometry", {})

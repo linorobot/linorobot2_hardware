@@ -802,29 +802,50 @@ function generateCppHeader(spec) {
     `#define LED_PIN ${pins.led !== undefined ? pins.led : 25}`
   );
 
-  const numMotors = is4WD ? 4 : 2;
-  for (let i = 1; i <= numMotors; i++) {
-    const m = pins[`motor${i}`] || {};
-    if (driver === "BTS7960") {
-      lines.push(`#define MOTOR${i}_PWM_R ${m.pwm_r || 0}`);
-      lines.push(`#define MOTOR${i}_PWM_L ${m.pwm_l || 0}`);
-      if (m.en !== undefined) lines.push(`#define MOTOR${i}_EN ${m.en}`);
-    } else if (driver === "GENERIC_2_IN") {
-      lines.push(`#define MOTOR${i}_PWM ${m.pwm || 0}`);
-      lines.push(`#define MOTOR${i}_IN_A ${m.in_a || 0}`);
-      lines.push(`#define MOTOR${i}_IN_B ${m.in_b || 0}`);
-    } else if (driver === "GENERIC_1_IN") {
-      lines.push(`#define MOTOR${i}_PWM ${m.pwm || 0}`);
-      lines.push(`#define MOTOR${i}_DIR ${m.dir || 0}`);
+  const numActive = is4WD ? 4 : 2;
+  for (let i = 1; i <= 4; i++) {
+    if (i <= numActive) {
+      const m = pins[`motor${i}`] || {};
+      if (driver === "BTS7960") {
+        lines.push(`#define MOTOR${i}_PWM_R ${m.pwm_r || 0}`);
+        lines.push(`#define MOTOR${i}_PWM_L ${m.pwm_l || 0}`);
+        if (m.en !== undefined) lines.push(`#define MOTOR${i}_EN ${m.en}`);
+      } else if (driver === "GENERIC_2_IN") {
+        lines.push(`#define MOTOR${i}_PWM ${m.pwm || 0}`);
+        lines.push(`#define MOTOR${i}_IN_A ${m.in_a || 0}`);
+        lines.push(`#define MOTOR${i}_IN_B ${m.in_b || 0}`);
+      } else if (driver === "GENERIC_1_IN") {
+        lines.push(`#define MOTOR${i}_PWM ${m.pwm || 0}`);
+        lines.push(`#define MOTOR${i}_DIR ${m.dir || 0}`);
+      } else {
+        lines.push(`#define MOTOR${i}_PWM ${m.pwm || 0}`);
+      }
     } else {
-      lines.push(`#define MOTOR${i}_PWM ${m.pwm || 0}`);
+      if (driver === "BTS7960") {
+        lines.push(`#define MOTOR${i}_PWM_R -1`);
+        lines.push(`#define MOTOR${i}_PWM_L -1`);
+      } else if (driver === "GENERIC_2_IN") {
+        lines.push(`#define MOTOR${i}_PWM -1`);
+        lines.push(`#define MOTOR${i}_IN_A -1`);
+        lines.push(`#define MOTOR${i}_IN_B -1`);
+      } else if (driver === "GENERIC_1_IN") {
+        lines.push(`#define MOTOR${i}_PWM -1`);
+        lines.push(`#define MOTOR${i}_DIR -1`);
+      } else {
+        lines.push(`#define MOTOR${i}_PWM -1`);
+      }
     }
   }
 
   const enc = pins.encoders || {};
-  for (let i = 1; i <= numMotors; i++) {
-    lines.push(`#define MOTOR${i}_ENCODER_A ${enc[`m${i}_a`] || 0}`);
-    lines.push(`#define MOTOR${i}_ENCODER_B ${enc[`m${i}_b`] || 0}`);
+  for (let i = 1; i <= 4; i++) {
+    if (i <= numActive) {
+      lines.push(`#define MOTOR${i}_ENCODER_A ${enc[`m${i}_a`] !== undefined ? enc[`m${i}_a`] : 0}`);
+      lines.push(`#define MOTOR${i}_ENCODER_B ${enc[`m${i}_b`] !== undefined ? enc[`m${i}_b`] : 0}`);
+    } else {
+      lines.push(`#define MOTOR${i}_ENCODER_A -1`);
+      lines.push(`#define MOTOR${i}_ENCODER_B -1`);
+    }
   }
 
   lines.push(``, `// Sensor Configurations`);
@@ -865,47 +886,87 @@ function generatePlatformioEnv(spec) {
   const name = spec.robot_name || "my_robot";
   const mcu = (spec.mcu || "PICO2").toUpperCase();
   const cfgMacro = `USE_${name.toUpperCase()}_CONFIG`;
+  const isWifi = spec.transport === "WIFI_UDP" || spec.transport === "wifi";
+
+  const wifiTransportLine = isWifi ? "board_microros_transport = wifi
+" : "";
+  const wifiFlag = isWifi ? "
+    -D USE_STAY_CONNECTED" : "";
 
   if (mcu === "PICO" || mcu === "PICO2") {
     const board = mcu === "PICO2" ? "rpipico2" : "rpipico";
     return `[env:${name}]
 platform = https://github.com/maxgerhardt/platform-raspberrypi.git
 board = ${board}
-board_build.core = earlephilhower
-board_build.filesystem_size = 0.5m
+monitor_port = /dev/ttyACM0
+upload_port = /dev/ttyACM0
+upload_protocol = picotool
+board_microros_user_meta = atomic.meta
+${wifiTransportLine}lib_deps =
+    \${env.lib_deps}
+    https://github.com/gbr1/rp2040-encoder-library.git
 build_flags =
     -I ../config
     -D PICO
-    -D ${cfgMacro}
+    -D ${cfgMacro}${wifiFlag}
 `;
   } else if (mcu === "ESP32" || mcu === "GENDRV") {
     return `[env:${name}]
 platform = espressif32
-board = esp32doit-devkit-v1
+board = nodemcu-32s
+board_build.f_flash = 80000000L
+board_build.flash_mode = qio
+board_build.partitions = min_spiffs.csv
+monitor_speed = 921600
+monitor_port = /dev/ttyUSB0
+upload_port = /dev/ttyUSB0
+upload_protocol = esptool
+${wifiTransportLine}lib_deps =
+    \${env.lib_deps}
+    madhephaestus/ESP32Servo
+    madhephaestus/ESP32Encoder
 build_flags =
     -I ../config
-    -D ESP32
-    -D ${cfgMacro}
+    -D __PGMSPACE_H_
+    -D ${cfgMacro}${wifiFlag}
 `;
   } else if (mcu === "ESP32S3") {
     return `[env:${name}]
 platform = espressif32
 board = esp32-s3-devkitc-1
+board_build.f_flash = 80000000L
+board_build.flash_mode = qio
+monitor_speed = 921600
+monitor_port = /dev/ttyACM0
+upload_port = /dev/ttyACM0
+upload_protocol = esptool
+${wifiTransportLine}lib_deps =
+    \${env.lib_deps}
+    madhephaestus/ESP32Servo
+    madhephaestus/ESP32Encoder
 build_flags =
     -I ../config
-    -D ARDUINO_USB_MODE=1
-    -D ARDUINO_USB_CDC_ON_BOOT=1
-    -D ${cfgMacro}
+    -D ARDUINO_USB_CDC_ON_BOOT
+    -D __PGMSPACE_H_
+    -D ${cfgMacro}${wifiFlag}
 `;
   } else if (mcu === "ESP32S2") {
     return `[env:${name}]
 platform = espressif32
 board = esp32-s2-saola-1
+monitor_speed = 921600
+monitor_port = /dev/ttyACM0
+upload_port = /dev/ttyACM0
+upload_protocol = esptool
+${wifiTransportLine}lib_deps =
+    \${env.lib_deps}
+    madhephaestus/ESP32Servo
+    madhephaestus/ESP32Encoder
 build_flags =
     -I ../config
-    -D ARDUINO_USB_MODE=1
-    -D ARDUINO_USB_CDC_ON_BOOT=1
-    -D ${cfgMacro}
+    -D ARDUINO_USB_CDC_ON_BOOT
+    -D __PGMSPACE_H_
+    -D ${cfgMacro}${wifiFlag}
 `;
   }
   return "";
