@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Linorobot2 Robot Configuration Engine - Local HTTP Server with Live Command Execution API
-Zero-Dependency, Pure Standard Library Python 3
+Zero-Dependency, Pure Standard Library Python 3 (Multi-Threaded)
 
 Usage:
     python3 server.py [PORT]
@@ -16,7 +16,7 @@ import signal
 import platform
 import threading
 import subprocess
-from http.server import HTTPServer, SimpleHTTPRequestHandler
+from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from urllib.parse import urlparse
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8000
@@ -30,6 +30,16 @@ active_process_lock = threading.Lock()
 class LinorobotEngineHandler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=WEB_DIR, **kwargs)
+
+    def do_HEAD(self):
+        parsed = urlparse(self.path)
+        if parsed.path == "/api/status":
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            return
+        return super().do_HEAD()
 
     def do_GET(self):
         parsed = urlparse(self.path)
@@ -47,15 +57,21 @@ class LinorobotEngineHandler(SimpleHTTPRequestHandler):
                 "machine": platform.machine(),
                 "repo_root": REPO_ROOT
             }
-            self.wfile.write(json.dumps(status_data).encode("utf-8"))
+            try:
+                self.wfile.write(json.dumps(status_data).encode("utf-8"))
+            except (BrokenPipeError, ConnectionResetError):
+                pass
             return
 
-        return super().do_GET()
+        try:
+            return super().do_GET()
+        except (BrokenPipeError, ConnectionResetError):
+            pass
 
     def do_OPTIONS(self):
         self.send_response(200)
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS, HEAD")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
         self.end_headers()
 
@@ -79,7 +95,10 @@ class LinorobotEngineHandler(SimpleHTTPRequestHandler):
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
-            self.wfile.write(json.dumps({"status": "killed"}).encode("utf-8"))
+            try:
+                self.wfile.write(json.dumps({"status": "killed"}).encode("utf-8"))
+            except (BrokenPipeError, ConnectionResetError):
+                pass
             return
 
         if parsed.path == "/api/exec":
@@ -123,7 +142,7 @@ class LinorobotEngineHandler(SimpleHTTPRequestHandler):
                 try:
                     self.wfile.write(msg.encode("utf-8"))
                     self.wfile.flush()
-                except Exception:
+                except (BrokenPipeError, ConnectionResetError):
                     pass
 
             send_event("start", {"command": command, "cwd": cwd})
@@ -163,10 +182,10 @@ class LinorobotEngineHandler(SimpleHTTPRequestHandler):
 
 
 def run_server(port=PORT):
-    server_address = ("", port)
-    httpd = HTTPServer(server_address, LinorobotEngineHandler)
+    server_address = ("0.0.0.0", port)
+    httpd = ThreadingHTTPServer(server_address, LinorobotEngineHandler)
     print("=" * 65)
-    print(f" 🤖 Linorobot2 Configuration Engine & Local Runner")
+    print(f" 🤖 Linorobot2 Configuration Engine & Multi-Threaded Runner")
     print(f" 🌐 URL: http://localhost:{port}")
     print(f" 📁 Serving Web UI from: {WEB_DIR}")
     print(f" 📂 Repository Root:    {REPO_ROOT}")
