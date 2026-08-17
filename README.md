@@ -94,7 +94,7 @@ Open **`http://localhost:8000`** in Google Chrome or Microsoft Edge.
 - **Toolchain Installer Generator**: Generates customized one-click scripts for PlatformIO Core and USB `udev` rules (`99-platformio-udev.rules`).
 - **ROS 2 Distribution Selector**: Choose between ROS 2 Jazzy (Ubuntu 24.04), Lyrical (Ubuntu 26.04), Rolling, Humble, or Standalone Firmware, with automated `micro_ros_agent` workspace builds.
 - **Automated Header Merging & Git Commits**: Merges generated configuration files directly into `config/custom/<robot>_config.h`, registers in `config/config.h`, injects environment blocks into `platformio.ini`, and creates structured Git commits.
-- **Firmware Compilation & Flashing**: Select target (`firmware`, `test_sensors`, `calibration`), serial port, and compile/upload with one click.
+- **Firmware Compilation & Flashing**: Select target (`firmware`, `test_motors`, `test_sensors`), serial port, and compile/upload with one click.
 - **Web Serial Live Diagnostics**: Connect directly to your microcontroller over USB at 115200 baud directly inside the browser to view live odometry and sensor readouts.
 
 ### 3. CLI Usage
@@ -147,6 +147,40 @@ and copy the file to /etc/udev/rules.d :
 ### 5. Install Screen Terminal
 
     sudo apt install screen
+
+
+---
+
+## 🛠️ Hardware Diagnostic Utilities: `test_motors` & `test_sensors`
+
+Before deploying full micro-ROS navigation firmware, `linorobot2_hardware` provides two lightweight standalone diagnostic utilities to verify wiring, electrical safety, and kinematics. Both utilities automatically inherit all board configurations and library dependencies directly from `firmware/platformio.ini` via `extra_configs`.
+
+### 1. Motor & Encoder Diagnostics (`test_motors/`)
+Verify motor wiring, direction polarity (`MOTOR1_INV`, `MOTOR2_INV`), and encoder CPR (`COUNTS_PER_REV`) without needing a running ROS 2 agent:
+
+```bash
+cd test_motors
+export ROS_DISTRO=jazzy
+pio run -e <your_board> -t upload --upload-port /dev/ttyACM0
+```
+
+**What it does:**
+- Sequences each motor individually: runs Motor 1 forward for 8s, then reverse, then moves to Motor 2, Motor 3, Motor 4.
+- Reads encoder feedback in real time and prints RPM, stopping distance, and calculated linear velocity to the serial console (115200 baud).
+- Allows you to quickly identify inverted motor wires or swapped encoder channels before running ROS 2 nodes.
+
+### 2. Sensor Diagnostics & I2C Bus Scanner (`test_sensors/`)
+Verify I2C bus wiring, IMU communication, magnetometer heading, battery ADC voltage, and ultrasonic range sensors:
+
+```bash
+cd test_sensors
+export ROS_DISTRO=jazzy
+pio run -e <your_board> -t upload --upload-port /dev/ttyACM0
+```
+
+**What it does:**
+- Runs an automated I2C bus scanner across addresses `0x03` to `0x77`, reporting connected devices (e.g. `0x68` for MPU6050, `0x4A` for BNO085, `0x40` for INA219).
+- Streams real-time 6-DOF/9-DOF orientation, acceleration, magnetic field vectors, analog battery voltage, and sonar distance directly to the serial terminal.
 
 ## Building the robot
 
