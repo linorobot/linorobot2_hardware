@@ -187,6 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initAutomationEventListeners();
   loadPreset("scout_pico2");
   detectClientOS();
+  checkServerRunnerStatus();
   handleUrlParams();
 });
 
@@ -1942,6 +1943,82 @@ function initAutomationEventListeners() {
     });
   }
 
+  // Command Execution Buttons
+  const btnExecTool = document.getElementById("btn-exec-tool-cmd");
+  if (btnExecTool) {
+    btnExecTool.addEventListener("click", () => {
+      const cmd = document.getElementById("preview-tool-cmd")?.innerText || "";
+      executeCommandInTerminal(cmd, "Installing Build Toolchains & Permissions");
+    });
+  }
+
+  const btnExecRos = document.getElementById("btn-exec-ros-cmd");
+  if (btnExecRos) {
+    btnExecRos.addEventListener("click", () => {
+      const cmd = document.getElementById("preview-ros-cmd")?.innerText || "";
+      executeCommandInTerminal(cmd, "Configuring ROS 2 & micro-ROS Agent");
+    });
+  }
+
+  const btnExecMerge = document.getElementById("btn-exec-merge-cmd");
+  if (btnExecMerge) {
+    btnExecMerge.addEventListener("click", () => {
+      const spec = currentSpec;
+      const opts = readAutomationOptions();
+      const name = spec.robot_name || "scout_pico2";
+      const branch = opts.gitBranch || `config/${name}`;
+      const commitMsg = opts.gitCommitMsg || `feat(config): add configuration for ${name}`;
+      
+      const script = generateDeployScript(spec, opts);
+      const cmd = `cat << 'EOF_DEPLOY' > deploy_${name}.sh\n${script}\nEOF_DEPLOY\nchmod +x deploy_${name}.sh && ./deploy_${name}.sh`;
+      executeCommandInTerminal(cmd, `Merging Headers & Committing '${name}'`);
+    });
+  }
+
+  const btnExecBuild = document.getElementById("btn-exec-build-cmd");
+  if (btnExecBuild) {
+    btnExecBuild.addEventListener("click", () => {
+      const target = document.getElementById("auto-flash-target")?.value || "firmware";
+      const name = currentSpec.robot_name || "scout_pico2";
+      const opts = readAutomationOptions();
+      const rosDistro = opts.rosDistro !== "none" ? opts.rosDistro : "jazzy";
+      const cmd = `export ROS_DISTRO=${rosDistro} && pio run -d ${target} -e ${name}`;
+      executeCommandInTerminal(cmd, `Building ${target}/ for [env:${name}]`);
+    });
+  }
+
+  const btnExecUpload = document.getElementById("btn-exec-upload-cmd");
+  if (btnExecUpload) {
+    btnExecUpload.addEventListener("click", () => {
+      const target = document.getElementById("auto-flash-target")?.value || "firmware";
+      const name = currentSpec.robot_name || "scout_pico2";
+      const port = document.getElementById("auto-flash-port")?.value.trim() || "/dev/ttyACM0";
+      const opts = readAutomationOptions();
+      const rosDistro = opts.rosDistro !== "none" ? opts.rosDistro : "jazzy";
+      const cmd = port === "AUTO" 
+        ? `export ROS_DISTRO=${rosDistro} && pio run -d ${target} -e ${name} -t upload` 
+        : `export ROS_DISTRO=${rosDistro} && pio run -d ${target} -e ${name} -t upload --upload-port ${port}`;
+      executeCommandInTerminal(cmd, `Flashing Microcontroller (${target}/ -> ${port})`);
+    });
+  }
+
+  const btnExecDeploy = document.getElementById("btn-exec-deploy-script");
+  if (btnExecDeploy) {
+    btnExecDeploy.addEventListener("click", () => {
+      const spec = currentSpec;
+      const opts = readAutomationOptions();
+      const name = spec.robot_name || "scout_pico2";
+      const script = generateDeployScript(spec, opts);
+      const cmd = `cat << 'EOF_DEPLOY' > deploy_${name}.sh\n${script}\nEOF_DEPLOY\nchmod +x deploy_${name}.sh && ./deploy_${name}.sh`;
+      executeCommandInTerminal(cmd, `Executing Full Deploy Lifecycle for '${name}'`);
+    });
+  }
+
+  const btnCancelExec = document.getElementById("btn-cancel-exec");
+  if (btnCancelExec) {
+    btnCancelExec.addEventListener("click", cancelRunningExecution);
+  }
+
   const btnDownloadDeploy = document.getElementById("btn-download-deploy-script");
   if (btnDownloadDeploy) {
     btnDownloadDeploy.addEventListener("click", () => {
@@ -1976,4 +2053,156 @@ function initAutomationEventListeners() {
       }
     });
   }
+}
+
+
+// =============================================================================
+// Live Command Execution API & Subprocess Controller
+// =============================================================================
+
+let isRunnerOnline = false;
+let currentExecController = null;
+
+// Check Server Runner API Status (GET /api/status)
+async function checkServerRunnerStatus() {
+  const pill = document.getElementById("runner-status-pill");
+  const text = document.getElementById("runner-status-text");
+
+  try {
+    const res = await fetch("/api/status", { cache: "no-cache" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.status === "ok" && data.exec_supported) {
+        isRunnerOnline = true;
+        if (pill) pill.className = "runner-status-pill pill-online";
+        if (text) text.innerText = `Runner: Online (${data.node || data.os})`;
+        return;
+      }
+    }
+  } catch (e) {
+    // Runner offline
+  }
+
+  isRunnerOnline = false;
+  if (pill) pill.className = "runner-status-pill pill-offline";
+  if (text) text.innerText = "Runner: Standalone / Copy Mode";
+}
+
+// Execute Command with Live Streaming Output in Terminal Console
+async function executeCommandInTerminal(command, title = "Executing Command") {
+  const terminalScreen = document.getElementById("serial-terminal-screen");
+  const btnCancel = document.getElementById("btn-cancel-exec");
+
+  // Scroll to terminal
+  const terminalEl = document.querySelector(".web-serial-console-card");
+  if (terminalEl) {
+    terminalEl.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  if (!isRunnerOnline) {
+    appendTerminalLine(`\n=========================================================`, "dim");
+    appendTerminalLine(`🚀 ${title}`, "in");
+    appendTerminalLine(`=========================================================`, "dim");
+    appendTerminalLine(`$ ${command}`, "out");
+    appendTerminalLine(`ℹ️  Local Execution Runner is not active on this host/port.`, "dim");
+    appendTerminalLine(`👉 Run 'python3 server.py' in tools/robot_config_engine/web to enable 1-click execution!`, "in");
+    appendTerminalLine(`📋 Command copied to clipboard for manual terminal execution.`, "dim");
+
+    navigator.clipboard.writeText(command).then(() => {
+      showToast("📋 Command copied! (Start 'python3 server.py' for 1-click execution)");
+    });
+    return;
+  }
+
+  appendTerminalLine(`\n=========================================================`, "dim");
+  appendTerminalLine(`🚀 ${title}`, "in");
+  appendTerminalLine(`$ ${command}`, "dim");
+  appendTerminalLine(`=========================================================`, "dim");
+
+  if (btnCancel) btnCancel.style.display = "inline-flex";
+
+  try {
+    currentExecController = new AbortController();
+    const response = await fetch("/api/exec", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command: command }),
+      signal: currentExecController.signal
+    });
+
+    if (!response.ok) {
+      appendTerminalLine(`❌ Server error: HTTP ${response.status}`, "err");
+      if (btnCancel) btnCancel.style.display = "none";
+      return;
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoderStream();
+    const inputStream = response.body.pipeThrough(decoder);
+    const textReader = inputStream.getReader();
+
+    let buffer = "";
+    while (true) {
+      const { value, done } = await textReader.read();
+      if (done) break;
+      if (value) {
+        buffer += value;
+        const events = buffer.split("\n\n");
+        buffer = events.pop(); // Keep incomplete event
+
+        for (const evt of events) {
+          if (!evt.trim()) continue;
+          const lines = evt.split("\n");
+          let eventType = "output";
+          let dataStr = "";
+
+          for (const line of lines) {
+            if (line.startsWith("event: ")) eventType = line.substring(7).trim();
+            if (line.startsWith("data: ")) dataStr = line.substring(6).trim();
+          }
+
+          if (dataStr) {
+            try {
+              const payload = JSON.parse(dataStr);
+              if (eventType === "output" && payload.line !== undefined) {
+                appendTerminalLine(payload.line, "out");
+              } else if (eventType === "done") {
+                if (payload.code === 0) {
+                  appendTerminalLine(`\n✅ [SUCCESS] Command finished with exit code 0!`, "out");
+                  showToast("✅ Command executed successfully!");
+                } else {
+                  appendTerminalLine(`\n❌ [FAILED] Command exited with code ${payload.code}`, "err");
+                  showToast(`⚠️ Command exited with code ${payload.code}`);
+                }
+              } else if (eventType === "error") {
+                appendTerminalLine(`❌ [ERROR] ${payload.error}`, "err");
+              }
+            } catch (e) {
+              appendTerminalLine(dataStr, "out");
+            }
+          }
+        }
+      }
+    }
+  } catch (err) {
+    if (err.name === "AbortError") {
+      appendTerminalLine(`\n⏹️ Process aborted by user.`, "dim");
+      showToast("⏹️ Process stopped.");
+    } else {
+      appendTerminalLine(`\n❌ Execution failed: ${err.message}`, "err");
+    }
+  } finally {
+    if (btnCancel) btnCancel.style.display = "none";
+    currentExecController = null;
+  }
+}
+
+// Abort running process via POST /api/kill
+async function cancelRunningExecution() {
+  if (currentExecController) {
+    currentExecController.abort();
+  }
+  try {
+    await fetch("/api/kill", { method: "POST" });
+  } catch (e) {}
 }

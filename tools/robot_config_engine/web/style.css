@@ -1154,3 +1154,49 @@ body {
   border-color: var(--border-focus);
   box-shadow: 0 0 8px var(--border-glow);
 }
+
+
+/* Quick Command Actions Row */
+.quick-cmd-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-danger {
+  background: rgba(244, 63, 94, 0.2);
+  color: #fb7185;
+  border: 1px solid rgba(244, 63, 94, 0.4);
+}
+.btn-danger:hover {
+  background: rgba(244, 63, 94, 0.35);
+  border-color: #f43f5e;
+}
+
+/* Local Runner Status Pill */
+.runner-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.runner-status-pill.pill-online {
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.2);
+}
+.runner-status-pill.pill-offline {
+  background: rgba(148, 163, 184, 0.12);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+.runner-status-pill.pill-checking {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.3);
+}

@@ -505,7 +505,10 @@
             <div class="quick-cmd-box">
               <div class="quick-cmd-header">
                 <span class="quick-cmd-title">⚡ One-Click Toolchain Install Command</span>
-                <button type="button" id="btn-copy-tool-cmd" class="btn btn-xs btn-ghost">📋 Copy Command</button>
+                <div class="quick-cmd-actions">
+                  <button type="button" id="btn-exec-tool-cmd" class="btn btn-xs btn-primary" title="Execute toolchain installer in live terminal">▶️ Run Command</button>
+                  <button type="button" id="btn-copy-tool-cmd" class="btn btn-xs btn-ghost">📋 Copy</button>
+                </div>
               </div>
               <pre class="quick-cmd-code"><code id="preview-tool-cmd"># Updating...</code></pre>
             </div>
@@ -544,7 +547,10 @@
             <div class="quick-cmd-box" id="box-ros-cmd">
               <div class="quick-cmd-header">
                 <span class="quick-cmd-title">⚡ One-Click ROS 2 Setup Command</span>
-                <button type="button" id="btn-copy-ros-cmd" class="btn btn-xs btn-ghost">📋 Copy Command</button>
+                <div class="quick-cmd-actions">
+                  <button type="button" id="btn-exec-ros-cmd" class="btn btn-xs btn-primary" title="Execute ROS 2 setup in live terminal">▶️ Run Command</button>
+                  <button type="button" id="btn-copy-ros-cmd" class="btn btn-xs btn-ghost">📋 Copy</button>
+                </div>
               </div>
               <pre class="quick-cmd-code"><code id="preview-ros-cmd"># Updating...</code></pre>
             </div>
@@ -586,7 +592,10 @@
             <div class="quick-cmd-box">
               <div class="quick-cmd-header">
                 <span class="quick-cmd-title">⚡ One-Click Merge & Git Commit Command</span>
-                <button type="button" id="btn-copy-merge-cmd" class="btn btn-xs btn-ghost">📋 Copy Command</button>
+                <div class="quick-cmd-actions">
+                  <button type="button" id="btn-exec-merge-cmd" class="btn btn-xs btn-primary" title="Execute header merge and Git commit">▶️ Run Merge & Commit</button>
+                  <button type="button" id="btn-copy-merge-cmd" class="btn btn-xs btn-ghost">📋 Copy</button>
+                </div>
               </div>
               <pre class="quick-cmd-code"><code id="preview-merge-cmd"># Updating...</code></pre>
             </div>
@@ -612,39 +621,54 @@
             </div>
 
             <div class="btn-group-row mt-3">
-              <button type="button" id="btn-copy-build-cmd" class="btn btn-secondary flex-1">
-                <span>🔨 Copy Build Command</span>
+              <button type="button" id="btn-exec-build-cmd" class="btn btn-secondary flex-1" title="Compile selected target firmware">
+                <span>🔨 Run Build</span>
               </button>
-              <button type="button" id="btn-copy-upload-cmd" class="btn btn-primary flex-1">
-                <span>⚡ Copy Upload Command</span>
+              <button type="button" id="btn-copy-build-cmd" class="btn btn-ghost" title="Copy build command">
+                <span>📋 Copy</span>
               </button>
-              <button type="button" id="btn-download-deploy-script" class="btn btn-accent flex-1">
-                <span>📥 Download deploy_robot.sh</span>
+              <button type="button" id="btn-exec-upload-cmd" class="btn btn-primary flex-1" title="Compile and upload firmware to target microcontroller">
+                <span>⚡ Flash MCU</span>
+              </button>
+              <button type="button" id="btn-copy-upload-cmd" class="btn btn-ghost" title="Copy upload command">
+                <span>📋 Copy</span>
+              </button>
+              <button type="button" id="btn-exec-deploy-script" class="btn btn-accent flex-1" title="Execute complete deployment lifecycle">
+                <span>🚀 Run Full Deploy</span>
+              </button>
+              <button type="button" id="btn-download-deploy-script" class="btn btn-ghost" title="Download deploy_robot.sh script">
+                <span>📥 Script</span>
               </button>
             </div>
 
-            <!-- 6. Web Serial Diagnostics Console -->
-            <h3 class="sub-title mt-4">📟 6. Browser Web Serial Live Diagnostics Console</h3>
+            <!-- 6. Live Interactive Terminal & Web Serial Console -->
+            <h3 class="sub-title mt-4">📟 6. Live Interactive Terminal & Microcontroller Console</h3>
             <div class="web-serial-console-card">
               <div class="console-toolbar">
                 <div class="console-controls-left">
-                  <button type="button" id="btn-serial-connect" class="btn btn-sm btn-accent">
+                  <!-- Local Runner Status -->
+                  <span class="runner-status-pill pill-checking" id="runner-status-pill" title="Local Python Execution Server">
+                    <span class="pulse-dot"></span>
+                    <span id="runner-status-text">Checking Runner...</span>
+                  </span>
+
+                  <!-- Web Serial Port Controls -->
+                  <button type="button" id="btn-serial-connect" class="btn btn-sm btn-secondary" title="Connect to USB Microcontroller via Web Serial">
                     <span id="serial-btn-icon">🔌</span>
-                    <span id="serial-btn-text">Connect Serial Port</span>
+                    <span id="serial-btn-text">Serial Port</span>
                   </button>
-                  <select id="serial-baud-select" class="form-select form-select-sm">
-                    <option value="115200" selected>115200 Baud (Linorobot2 / micro-ROS)</option>
+                  <select id="serial-baud-select" class="form-select form-select-sm" title="Serial Baud Rate">
+                    <option value="115200" selected>115200 Baud</option>
                     <option value="9600">9600 Baud</option>
                     <option value="57600">57600 Baud</option>
-                    <option value="230400">230400 Baud</option>
                     <option value="921600">921600 Baud</option>
                   </select>
                   <span class="serial-status-pill pill-disconnected" id="serial-status-pill">
-                    <span class="pulse-dot"></span>
-                    <span id="serial-status-text">Disconnected</span>
+                    <span id="serial-status-text">Serial: Off</span>
                   </span>
                 </div>
                 <div class="console-controls-right">
+                  <button type="button" id="btn-cancel-exec" class="btn btn-xs btn-danger" style="display: none;" title="Abort running process">⏹️ Stop Process</button>
                   <label class="checkbox-label-sm">
                     <input type="checkbox" id="chk-serial-autoscroll" checked>
                     <span>Auto-scroll</span>
