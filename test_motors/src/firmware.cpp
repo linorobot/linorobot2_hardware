@@ -1,5 +1,5 @@
-// Copyright (c) 2021 Juan Miguel Jimeno
-// Copyright (c) 2023 Thomas Chou
+// Copyright (c) 2026 Thomas Chou
+// Copyright (c) 2026 Linorobot contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.

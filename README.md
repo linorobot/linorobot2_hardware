@@ -461,6 +461,26 @@ The micro-ROS wifi transport is selected with a setting in firmare/platformio.in
 
     board_microros_transport = wifi
 
+## Motor Diagnostics Utility (`test_motors`)
+
+The `test_motors` standalone firmware utility tests each motor sequentially, verifies encoder direction and counts per revolution (CPR), and measures maximum linear speed ($m/s$) and stopping distance.
+
+```bash
+cd linorobot2_hardware/test_motors
+pio run -e <your_board> -t upload
+```
+
+Supported board environments: `pico`, `pico2`, `esp32`, `esp32s2`, `esp32s3`, `gendrv`.
+
+When flashed, the firmware spins each motor forward and in reverse for a controlled cycle, printing real-time RPM, max linear velocity, and calculated stopping distance via Serial (`115200` baud) and Syslog:
+
+```text
+MOTOR1 FWD RPM    280.5      0.0      0.0      0.0
+MOTOR1 SPEED   0.45 m/s STOP  0.035 m
+```
+
+---
+
 ## Calibration
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 5.1
