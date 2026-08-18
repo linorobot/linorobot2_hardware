@@ -236,6 +236,24 @@ initial testing you can leave all options commented - the firmware will not
 publish the /imu/data topic and the system will still work. When properly
 set up, the IMU aids navigation, but if misconfigured, it can break navigation.
 
+To verify IMU connectivity, orientation, magnetometer data, battery voltage, and sonar distance before full bringup, you can run the `test_sensors` utility:
+
+```bash
+cd linorobot2_hardware/test_sensors
+pio run -e <your_board> -t upload
+```
+
+Supported board environments: `pico`, `pico2`, `esp32`, `esp32s2`, `esp32s3`, `gendrv`.
+
+This utility scans the I2C bus (`i2cdetect`) and continuously streams real-time sensor measurements:
+
+```text
+Scanning I2C bus...
+0x28: BNO085 IMU detected
+ACC [m/s^2] X: 0.02 Y: 0.05 Z: 9.81 | GYR [rad/s] X: 0.00 Y: 0.00 Z: 0.00 | RPY [deg] R:  0.1 P: -0.2 Y: 178.4
+  BAT: 12.54V | RANGE: 0.35m
+```
+
 - **USE_BNO085_IMU** - BNO085 IMUs.
 Note: the firmware uses the BNO085 in 6-DOF GAME_ROTATION_VECTOR
 mode - the magnetometer is not used. A utility firmware load that
