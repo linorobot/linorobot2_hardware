@@ -1,4 +1,5 @@
 // Copyright (c) 2026 Thomas Chou
+// Copyright (c) 2026 Paul Bouchier
 // Copyright (c) 2026 Linorobot contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
