@@ -13,9 +13,11 @@ on:
       - README.md
   
   push:
-    # Run on pushes only to branches starting with 'jazzy'
+    # Run on pushes to jazzy, master, and upstream-pr branches
     branches:
       - jazzy*
+      - master
+      - 'upstream-pr/**'
     # Don't run when the following files are changed which don't effect firmware.
     paths-ignore:
       - 'docs/**'

@@ -120,7 +120,7 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update
-          sudo apt-get install -y ros-${{ inputs.ros_distro }}-rmw
+          sudo apt-get install -y ros-${{ inputs.ros_distro }}-rmw-cyclonedds-cpp ros-${{ inputs.ros_distro }}-rmw-fastrtps-cpp || true
 
       - name: Install environment
         uses: ./repo/.github/actions/platformio-env
