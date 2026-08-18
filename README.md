@@ -461,6 +461,29 @@ The micro-ROS wifi transport is selected with a setting in firmare/platformio.in
 
     board_microros_transport = wifi
 
+## Dynamic Acceleration Profiling Utility (`test_acc`)
+
+The `test_acc` standalone firmware utility performs dynamic acceleration profiling by executing controlled forward and reverse motion bursts at stepped PWM duty cycles (100%, 50%, 25%).
+
+```bash
+cd linorobot2_hardware/test_acc
+pio run -e <your_board> -t upload
+```
+
+Supported board environments: `pico`, `pico2`, `esp32`, `esp32s2`, `esp32s3`, `gendrv`.
+
+When flashed, the firmware measures kinematic linear/angular velocities, calculates discrete derivative accelerations ($m/s^2$, $rad/s^2$), correlates with IMU linear acceleration, and outputs time to reach 90% velocity along with stopping distance via Serial (`115200` baud) and Syslog:
+
+```text
+MAX VEL   0.52   0.00 m/s    1.25 rad/s
+MAX ACC   2.45   0.00 m/s2   5.80 rad/s2
+IMU ACC   2.38  -2.41 m/s2
+time to 0.9x max vel   0.24 sec
+distance to stop   0.04 m
+```
+
+---
+
 ## Calibration
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 5.1
