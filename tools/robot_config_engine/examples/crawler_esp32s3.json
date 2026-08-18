@@ -1,0 +1,72 @@
+{
+  "robot_name": "crawler_esp32s3",
+  "kinematics": "SKID_STEER",
+  "mcu": "ESP32S3",
+  "transport": "SERIAL",
+  "geometry": {
+    "wheel_diameter": 0.085,
+    "track_width": 0.26,
+    "wheelbase": 0.22,
+    "weight": 4.2
+  },
+  "motors": {
+    "driver_type": "GENERIC_2_IN",
+    "max_rpm": 280,
+    "cpr": 1400,
+    "rated_torque": 2.0,
+    "rated_voltage": 12.0
+  },
+  "sensors": {
+    "imu": "MPU6050",
+    "mag": "NONE",
+    "battery_monitor": "ADC_DIVIDER",
+    "sonar": true,
+    "battery_nominal_voltage": 11.1,
+    "battery_capacity": 3.3,
+    "battery_min_voltage": 9.0,
+    "battery_max_voltage": 12.6,
+    "battery_dip": 0.98
+  },
+  "pins": {
+    "led": 48,
+    "motor1": {
+      "pwm": 1,
+      "in_a": 2,
+      "in_b": 4
+    },
+    "motor2": {
+      "pwm": 5,
+      "in_a": 6,
+      "in_b": 7
+    },
+    "motor3": {
+      "pwm": 8,
+      "in_a": 9,
+      "in_b": 10
+    },
+    "motor4": {
+      "pwm": 11,
+      "in_a": 12,
+      "in_b": 13
+    },
+    "encoders": {
+      "m1_a": 14,
+      "m1_b": 15,
+      "m2_a": 16,
+      "m2_b": 17,
+      "m3_a": 18,
+      "m3_b": 21,
+      "m4_a": 38,
+      "m4_b": 39
+    },
+    "i2c": {
+      "sda": 41,
+      "scl": 42
+    },
+    "battery_pin": 3,
+    "sonar": {
+      "trig": 47,
+      "echo": 40
+    }
+  }
+}

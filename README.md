@@ -7,6 +7,24 @@ ROS 2 Distro | Branch | Build status
 
 # linorobot2_hardware for ESP32 and Pico
 
+## 🚀 AI Robot Configuration Engine & Interactive Web UI
+
+Linorobot2 includes an AI-assisted **Robot Configuration Engine** and client-side **Web UI** located in `tools/robot_config_engine/` that automates hardware rule validation, electrical safety pin checks, kinematics & physics calculations, and 1-click code generation for C++ headers (`config.h`), `platformio.ini`, and ROS 2 URDF Xacro files.
+
+### ⚡ 3-Step Quick Start with Web UI
+
+1. **Launch the Configuration Server**:
+   ```bash
+   cd tools/robot_config_engine/web
+   python3 server.py 8000
+   ```
+2. **Open the Web UI in your browser**:
+   Navigate to [http://localhost:8000](http://localhost:8000).
+3. **Configure & 1-Click Deploy**:
+   Select your reference build (e.g. Raspberry Pi Pico 2, ESP32, ESP32-S3), tune your wheel geometry and motor parameters with live kinematics HUD & electrical safety checks, and click **🚀 Run Full Deploy** to automatically merge configuration files, compile firmware, and flash your microcontroller!
+
+---
+
 ## Overview
 
 The linorobot2_hardware repo uses platformio to build microcontroller firmware for mobile robots based on micro-ROS.
@@ -68,11 +86,11 @@ It is assumed that you already have ROS2 and linorobot2 package installed. If yo
     git clone https://github.com/linorobot/linorobot2_hardware
 
 ### 3. Install PlatformIO
-Download and install platformio. [Platformio](https://platformio.org/) allows you to develop, configure, and upload the firmware without the Arduino IDE. This means that you can upload the firmware remotely which is ideal on headless setup especially when all components have already been fixed. 
-    
+Download and install platformio. [Platformio](https://platformio.org/) allows you to develop, configure, and upload the firmware without the Arduino IDE. This means that you can upload the firmware remotely which is ideal on headless setup especially when all components have already been fixed.
+
     curl -fsSL -o get-platformio.py https://raw.githubusercontent.com/platformio/platformio-core-installer/master/get-platformio.py
     python3 get-platformio.py
-    
+
 Add platformio to your $PATH:
 
     echo "PATH=\"\$PATH:\$HOME/.platformio/penv/bin\"" >> $HOME/.bashrc
@@ -163,7 +181,7 @@ Below are connection diagrams you can follow for each supported motor driver and
 
 - When connecting the motor driver's EN/PWM pin, ensure that the microcontroller pin used is PWM enabled. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for more info.
 
-Alternatively, you can also use the pre-defined pin assignments in lino_base_config.h. Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L112) carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy. 
+Alternatively, you can also use the pre-defined pin assignments in lino_base_config.h. Teensy 3.x and 4.x have different mapping of PWM pins, read the notes beside each pin assignment in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L112) carefully to avoid connecting your driver's PWM pin to a non PWM pin on Teensy.
 
 All diagrams below are based on Teensy 4.0 microcontroller and GY85 IMU. Click the images for higher resolution.
 
@@ -315,7 +333,7 @@ voltage to less than 3.3 volts, and the sense output is connected to an analog i
 you configure the firmware in the *Battery Settings* section.
 
     // Battery settings
-    // battery voltage ADC pin. If defined. battery voltage will be read from this pin. 
+    // battery voltage ADC pin. If defined. battery voltage will be read from this pin.
     // #define BATTERY_PIN 32
     // If defined, battery voltage will be read from INA219 sensor.
     // #define USE_INA219
@@ -342,7 +360,7 @@ used to send warnings or change behavior.
   whether you use a Pico or ESP32 microcontroller. Read the comments.
   - The numbers 33 and 10 in the macro correspond to a 33k ohm + 10k ohm potential
   divider. Change them according to your potential divider design. Your potential
-  divider designb needs to never apply more than 3.3 volts to the analog input 
+  divider designb needs to never apply more than 3.3 volts to the analog input
   even at the highest charge voltage.
   - You can define a lookup table to remove non-linearities if you define "USE_ADC_LUT"
 - If your robot uses an INA219 sensor, uncomment "#define USE_INA219". The firmware
@@ -356,19 +374,19 @@ Next, fill in the robot settings accordingly:
     #define K_I 0.8
     #define K_D 0.5
 
-    #define MOTOR_MAX_RPM 100             
-    #define MAX_RPM_RATIO 0.85          
+    #define MOTOR_MAX_RPM 100
+    #define MAX_RPM_RATIO 0.85
     #define MOTOR_OPERATING_VOLTAGE 24
     #define MOTOR_POWER_MAX_VOLTAGE 12
     #define MOTOR_POWER_MEASURED_VOLTAGE 11.7
 
-    #define COUNTS_PER_REV1 2200    
-    #define COUNTS_PER_REV2 2200      
-    #define COUNTS_PER_REV3 2200      
-    #define COUNTS_PER_REV4 2200      
-  
-    #define WHEEL_DIAMETER 0.09  
-    #define LR_WHEELS_DISTANCE 0.2  
+    #define COUNTS_PER_REV1 2200
+    #define COUNTS_PER_REV2 2200
+    #define COUNTS_PER_REV3 2200
+    #define COUNTS_PER_REV4 2200
+
+    #define WHEEL_DIAMETER 0.09
+    #define LR_WHEELS_DISTANCE 0.2
 
     #define PWM_BITS 10
     #define PWM_FREQUENCY 20000
@@ -381,9 +399,9 @@ Constants' Meaning:
 
 - **MAX_RPM_RATIO** - Percentage of the motor's maximum RPM that the robot is allowed to move. This parameter ensures that the user-defined velocity will not be more than or equal the motor's max RPM, allowing the PID to have ample space to add/subtract RPM values to reach the target velocity. For instance, if your motor's maximum velocity is 0.5 m/s with `MAX_RPM_RATIO` set to 0.85, and you asked the robot to move at 0.5 m/s, the robot's maximum velocity will be capped at 0.425 m/s (0.85 * 0.5m/s). You can set this parameter to 1.0 if your wheels can spin way more than your operational speed.
 
-    Wheel velocity can be computed as:  MAX_WHEEL_VELOCITY = (`MOTOR_MAX_RPM` / 60.0) * PI * `WHEEL_DIAMETER` 
+    Wheel velocity can be computed as:  MAX_WHEEL_VELOCITY = (`MOTOR_MAX_RPM` / 60.0) * PI * `WHEEL_DIAMETER`
 
-- **MOTOR_OPERATING_VOLTAGE** - Motor's operating voltage specified by the manufacturer (usually 5V/6V, 12V, 24V, 48V). This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant during calibration and actual maximum RPM of the motors. For instance, a robot with `MOTOR_OPERATING_VOLTAGE` of 24V with a `MOTOR_POWER_MAX_VOLTAGE` of 12V, will only have half of the manufacturer's specified maximum RPM ((`MOTOR_POWER_MAX_VOLTAGE` / `MOTOR_OPERATING_VOLTAGE`) * `MOTOR_MAX_RPM`). 
+- **MOTOR_OPERATING_VOLTAGE** - Motor's operating voltage specified by the manufacturer (usually 5V/6V, 12V, 24V, 48V). This parameter is used to calculate the motor encoder's `COUNTS_PER_REV` constant during calibration and actual maximum RPM of the motors. For instance, a robot with `MOTOR_OPERATING_VOLTAGE` of 24V with a `MOTOR_POWER_MAX_VOLTAGE` of 12V, will only have half of the manufacturer's specified maximum RPM ((`MOTOR_POWER_MAX_VOLTAGE` / `MOTOR_OPERATING_VOLTAGE`) * `MOTOR_MAX_RPM`).
 
 - **MOTOR_POWER_MAX_VOLTAGE** - Maximum voltage of the motor's power source. This parameter is used to calculate the actual maximum RPM of the motors.
 
@@ -405,10 +423,10 @@ Only modify the pin assignments under the motor driver constant that you are usi
 The pin assignments found in lino_base_config.h are based on Linorobot's PCB board. You can wire up your electronic components based on the default pin assignments but you're also free to modify it depending on your setup. Just ensure that you're connecting MOTORX_PWM pins to a PWM enabled pin on the microcontroller and reserve SCL and SDA pins for the IMU, and pin 13 (built-in LED) for debugging.
 
     // INVERT ENCODER COUNTS
-    #define MOTOR1_ENCODER_INV false 
-    #define MOTOR2_ENCODER_INV false 
-    #define MOTOR3_ENCODER_INV false 
-    #define MOTOR4_ENCODER_INV false 
+    #define MOTOR1_ENCODER_INV false
+    #define MOTOR2_ENCODER_INV false
+    #define MOTOR3_ENCODER_INV false
+    #define MOTOR4_ENCODER_INV false
 
     // INVERT MOTOR DIRECTIONS
     #define MOTOR1_INV false
@@ -418,13 +436,13 @@ The pin assignments found in lino_base_config.h are based on Linorobot's PCB boa
 
     // ENCODER PINS
     #define MOTOR1_ENCODER_A 14
-    #define MOTOR1_ENCODER_B 15 
+    #define MOTOR1_ENCODER_B 15
 
     #define MOTOR2_ENCODER_A 11
-    #define MOTOR2_ENCODER_B 12 
+    #define MOTOR2_ENCODER_B 12
 
     #define MOTOR3_ENCODER_A 17
-    #define MOTOR3_ENCODER_B 16 
+    #define MOTOR3_ENCODER_B 16
 
     #define MOTOR4_ENCODER_A 9
     #define MOTOR4_ENCODER_B 10
@@ -433,7 +451,7 @@ The pin assignments found in lino_base_config.h are based on Linorobot's PCB boa
     #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
         #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can swap it with pin no 1 instead.
         #define MOTOR1_IN_A 20
-        #define MOTOR1_IN_B 1 
+        #define MOTOR1_IN_B 1
 
         #define MOTOR2_PWM 5
         #define MOTOR2_IN_A 6
@@ -449,7 +467,7 @@ The pin assignments found in lino_base_config.h are based on Linorobot's PCB boa
 
         #define PWM_MAX pow(2, PWM_BITS) - 1
         #define PWM_MIN -PWM_MAX
-    #endif  
+    #endif
 
 Constants' Meaning:
 
@@ -459,7 +477,7 @@ Constants' Meaning:
 
 - **MOTORX_ENCODER_INV** - Flag used to change the sign of the encoder value. More on that later.
 
-- **MOTORX_PWM** - Microcontroller pin that is connected to the PWM pin of the motor driver. This pin is usually labelled as EN or ENABLE pin on the motor driver board. 
+- **MOTORX_PWM** - Microcontroller pin that is connected to the PWM pin of the motor driver. This pin is usually labelled as EN or ENABLE pin on the motor driver board.
 
 
 - **MOTORX_IN_A** - Microcontroller pin that is connected to one of the motor driver's direction pins. This pin is usually labelled as DIRA or DIR1 pin on the motor driver board. On BTS7960 driver, this is one of the two PWM pins connected to the driver (RPWM/LPWM).
@@ -500,7 +518,7 @@ MOTOR1 SPEED   0.45 m/s STOP  0.035 m
 ---
 
 ## Calibration
-Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
+Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**.
 5.1
 ### 1. Motor Check
 Go to calibration folder and upload the firmware:
@@ -520,7 +538,7 @@ Some Linux machines might encounter a problem related to libusb. If so, install 
     sudo apt install libusb-dev
 
 Start spinning the motors by running:
-    
+
     screen /dev/ttyACM0
 
 On the terminal type `spin` and press the enter key.
@@ -587,7 +605,7 @@ Or run the wifi transport agent:
 
 Run teleop_twist_keyboard package and follow the instructions on the terminal on how to drive the robot:
 
-    ros2 run teleop_twist_keyboard teleop_twist_keyboard 
+    ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 ### 3. Check the topics
 
@@ -643,12 +661,12 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 - Check if you're passing the correct serial port. Run:
 
         ls /dev/ttyACM*
-    
+
     and ensure that the available serial port matches the port you're passing to the screen app.
 
 - Check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_hardware#3-udev-rule):
 
-        ls /etc/udev/rules.d/00-teensy.rules 
+        ls /etc/udev/rules.d/00-teensy.rules
 
     Remember to restart your computer if you just copied the udev rule.
 
@@ -665,4 +683,4 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 #### Adding firmware compilation tests for a new ROS distro
 To add a new distro to the CI tests, modify the `rolling` (default) branch. Inside of `.github/workflows`, duplicate an existing distro workflow YAML file. For example, to add ROS2 Iron support, one could copy `humble-firmware-build.yml` to `iron-firmware-build.yml`. Assuming that an `iron` branch exists (if not one could create one using the `humble` branch as a base and modify as necessary), inside of `iron-firmware-build.yml`, rename all instances of the word `humble` with `iron`. It would be as simple as using 'find and replace' in many IDEs. Commit these changes to a feature branch, create a PR to merge into the `rolling` branch, and then backport the PR to other branches. It is only necessary to have `iron-firmware-build.yml` on the `rolling` and `iron` branch, however it may be simpler to keep the branches in sync by having every workflow file on all branches.
 
-Lastly, the new branch must be added to the CI table written in Markdown at the top of README.md that displays the status of each branch using badges. This table is organized with the most current ROS2 branch at the top, which is always `rolling`, and then in descending chronological order. Adding a new distro can be done by copying an existing row of the table, pasting in the appropriate position, and changing the titles and branch names in the relative paths. 
+Lastly, the new branch must be added to the CI table written in Markdown at the top of README.md that displays the status of each branch using badges. This table is organized with the most current ROS2 branch at the top, which is always `rolling`, and then in descending chronological order. Adding a new distro can be done by copying an existing row of the table, pasting in the appropriate position, and changing the titles and branch names in the relative paths.
