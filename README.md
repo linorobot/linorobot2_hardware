@@ -518,6 +518,19 @@ time to 0.9x max vel   0.24 sec
 distance to stop   0.04 m
 ```
 
+## ESP32 ADC Calibration Utility (`adc_calibrate`)
+
+The `adc_calibrate` standalone firmware utility characterizes the non-linear response of the ESP32 SAR ADC by sweeping internal DAC Channel 1 (GPIO 25) against `BATTERY_PIN` / `ADC_PIN` and generating an interpolated 4096-entry Look-Up Table (LUT) to linearize battery voltage telemetry.
+
+```bash
+cd linorobot2_hardware/adc_calibrate
+pio run -e <your_esp32_board> -t upload
+```
+
+Supported board environments: `esp32`, `esp32s2`, `esp32s3`, `gendrv`.
+
+When flashed, the firmware executes 500 DAC calibration sweeps, calculates linear interpolation values, and dumps the formatted C Look-Up Table array (`ADC_LUT[4096]`) to the serial console at `115200` baud.
+
 ---
 
 ## Calibration
