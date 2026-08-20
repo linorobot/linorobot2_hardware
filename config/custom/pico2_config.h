@@ -192,14 +192,25 @@ ROBOT ORIENTATION
 #define AGENT_IP { 192, 168, 1, 100 }  // eg IP of the desktop computer
 #define AGENT_PORT 8888
 // Enable WiFi with null terminated list of multiple APs SSID and password
-// #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
-#define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
-// #define USE_ARDUINO_OTA
-// #define USE_SYSLOG
-#define SYSLOG_SERVER { 192, 168, 1, 100 }  // eg IP of the desktop computer
-#define SYSLOG_PORT 514
-#define DEVICE_HOSTNAME "pico2"
-#define APP_NAME "hardware"
+#ifdef USE_WIFI
+  #define WIFI_AP_LIST {{"YOUR_WIFI_SSID", "YOUR_WIFI_PASSWORD"}, {NULL, NULL}}
+  #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
+  #define USE_ARDUINO_OTA
+  #define USE_SYSLOG
+  #define SYSLOG_SERVER "192.168.1.100"
+  #define SYSLOG_PORT 514
+  #define DEVICE_HOSTNAME "pico2w"
+  #define APP_NAME "hardware"
+#else
+  // #define WIFI_AP_LIST {{"WIFI_SSID", "WIFI_PASSWORD"}, {NULL}}
+  #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
+  // #define USE_ARDUINO_OTA
+  // #define USE_SYSLOG
+  #define SYSLOG_SERVER "192.168.1.100"
+  #define SYSLOG_PORT 514
+  #define DEVICE_HOSTNAME "pico2"
+  #define APP_NAME "hardware"
+#endif
 // #define USE_LIDAR_UDP
 #define LIDAR_RXD 1
 // #define LIDAR_PWM 0

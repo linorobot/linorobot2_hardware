@@ -7,6 +7,37 @@ ROS 2 Distro | Branch | Build status
 
 # linorobot2_hardware for ESP32 and Pico
 
+## 📶 Raspberry Pi Pico W & Pico 2 W Support (WiFi OTA & Syslog)
+
+Linorobot2 now supports **Raspberry Pi Pico W (`rpipicow` / RP2040)** and **Pico 2 W (`rpipico2w` / RP2350)** with Infineon CYW43439 wireless connectivity:
+
+* **High-Speed USB Serial micro-ROS**: Runs micro-ROS at full native bandwidth over USB Serial (`/dev/ttyACM0`) for deterministic, low-latency velocity control and odometry.
+* **Background WiFi Telemetry & Wireless OTA**: Simultaneously connects to WiFi in the background, allowing wireless ArduinoOTA firmware flashing (`pio run -e pico2w -t upload --upload-port <robot_ip>`) and real-time remote Syslog telemetry without burdening the micro-ROS transport.
+
+Build targets:
+* `pico2w` / `pico2w_wifi` (Raspberry Pi Pico 2 W - RP2350)
+* `picow` / `picow_wifi` (Raspberry Pi Pico W - RP2040)
+
+---
+
+## 🚀 AI Robot Configuration Engine & Interactive Web UI
+
+Linorobot2 includes an AI-assisted **Robot Configuration Engine** and client-side **Web UI** located in `tools/robot_config_engine/` that automates hardware rule validation, electrical safety pin checks, kinematics & physics calculations, and 1-click code generation for C++ headers (`config.h`), `platformio.ini`, and ROS 2 URDF Xacro files.
+
+### ⚡ 3-Step Quick Start with Web UI
+
+1. **Launch the Configuration Server**:
+   ```bash
+   cd tools/robot_config_engine/web
+   python3 server.py 8000
+   ```
+2. **Open the Web UI in your browser**:
+   Navigate to [http://localhost:8000](http://localhost:8000).
+3. **Configure & 1-Click Deploy**:
+   Select your reference build (e.g. Raspberry Pi Pico 2 W, ESP32, ESP32-S3), tune your wheel geometry and motor parameters with live kinematics HUD & electrical safety checks, and click **🚀 Run Full Deploy** to automatically merge configuration files, compile firmware, and flash your microcontroller!
+
+---
+
 ## Overview
 
 The linorobot2_hardware repo uses platformio to build microcontroller firmware for mobile robots based on micro-ROS.
@@ -517,6 +548,17 @@ IMU ACC   2.38  -2.41 m/s2
 time to 0.9x max vel   0.24 sec
 distance to stop   0.04 m
 ```
+
+## ESP32 ADC Calibration Utility (`adc_calibrate`)
+
+The `adc_calibrate` standalone utility measures hardware DAC output against ESP32 ADC inputs to construct an interpolated 4096-entry lookup table (`ADC_LUT`), correcting for non-linearities in ESP32 analog conversions:
+
+```bash
+cd linorobot2_hardware/adc_calibrate
+pio run -e esp32 -t upload
+```
+
+Connect the DAC pin (`GPIO 25`) to your battery ADC divider input (`BATTERY_PIN`). The utility generates a C++ array definition (`const int16_t ADC_LUT[4096] = { ... };`) on Serial output (`115200` baud) that can be copied directly into your configuration header.
 
 ---
 
