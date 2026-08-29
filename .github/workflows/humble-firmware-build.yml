@@ -1,10 +1,10 @@
-name: ROS Jazzy Firmware Build
+name: ROS Humble Firmware Build
 
 on:
   pull_request:
-    # Run on PRs to jazzy, main, devel, and upstream-pr branches
+    # Run on PRs to humble, main, devel, and upstream-pr branches
     branches:
-      - jazzy*
+      - humble*
       - main
       - devel
       - 'upstream-pr/**'
@@ -16,9 +16,9 @@ on:
       - README.md
   
   push:
-    # Run on pushes to jazzy, main, devel, and upstream-pr branches
+    # Run on pushes to humble, main, devel, and upstream-pr branches
     branches:
-      - jazzy*
+      - humble*
       - main
       - devel
       - 'upstream-pr/**'
@@ -42,7 +42,7 @@ jobs:
     # The current file calls the firmware workflow with the following parameters
     uses: ./.github/workflows/reusable-platformio-ci.yml
     with:
-      ros_distro: jazzy
-      os: ubuntu-24.04
-      # The reference field will be set to 'jazzy' only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
-      reference: ${{ github.event_name == 'schedule' && 'jazzy' || '' }}
+      ros_distro: humble
+      os: ubuntu-22.04
+      # The reference field will be set to 'humble' only if the event that triggered the workflow is schedule. Otherwise, it will be left blank.
+      reference: ${{ github.event_name == 'schedule' && 'humble' || '' }}
