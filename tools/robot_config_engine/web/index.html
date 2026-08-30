@@ -1,0 +1,1451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Linorobot2 | Robot Configuration Engine</title>
+  <meta name="description" content="Automated Hardware Rule Validator, Kinematics Physics Calculator, and Firmware / ROS 2 Code Generator for Linorobot2.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Background Glow Accents -->
+  <div class="bg-glow glow-1"></div>
+  <div class="bg-glow glow-2"></div>
+  <div class="bg-glow glow-3"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-logo">
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="9" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="10" r="1.5" fill="currentColor"/>
+          <circle cx="15" cy="10" r="1.5" fill="currentColor"/>
+          <path d="M8 15h8" stroke-linecap="round"/>
+          <path d="M12 3v-2" stroke-linecap="round"/>
+          <circle cx="12" cy="1" r="1" fill="currentColor"/>
+          <path d="M3 12H1M23 12h-2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1 class="brand-title">Linorobot2 <span class="badge-accent">Config Engine</span></h1>
+        <p class="brand-subtitle">AI Hardware Rule Validator & Code Generator</p>
+      </div>
+    </div>
+
+    <div class="header-actions">
+      <!-- Preset Quick Loader -->
+      <div class="preset-selector-group">
+        <label for="preset-select" class="preset-label">⚡ Reference Build:</label>
+        <select id="preset-select" class="preset-select">
+          <option value="esp32_bare">⚡ ESP32 Bare Module (Zero-Hang / Fake IMU Default)</option>
+          <option value="pico2_bare">⚡ Pico 2 Bare Module (Zero-Hang / Fake IMU Default)</option>
+          <option value="pico_bare">⚡ Pico Bare Module (RP2040 / Fake IMU)</option>
+          <option value="scout_pico2">Raspberry Pi Pico 2 (2WD Diff + TB6612 / L298N)</option>
+          <option value="mech_pico2">Raspberry Pi Pico 2 (4WD Mecanum + TB6612)</option>
+          <option value="mech_esp32">ESP32 (4WD Mecanum + WiFi UDP + BNO085)</option>
+          <option value="crawler_esp32s3">ESP32-S3 (4WD Skid + Sonar + ADC)</option>
+          <option value="waveshare_gendrv">Waveshare General Driver (ESP32 + TB6612)</option>
+        </select>
+      </div>
+
+      <!-- OS Quick Indicator -->
+      <div class="os-quick-badge" id="header-os-badge" title="Auto-Detected Client Environment">
+        <span class="os-badge-icon" id="header-os-icon">🐧</span>
+        <span class="os-badge-text" id="header-os-text">Detecting OS...</span>
+      </div>
+
+      <button id="btn-quick-deploy" class="btn btn-accent" title="Jump to Automation Hub">
+        <span class="tab-icon">🚀</span>
+        <span>Deploy & Flash</span>
+      </button>
+
+      <!-- Action Buttons -->
+      <label class="btn btn-secondary" for="import-file" title="Import C++ Config Header (.h) or JSON specification">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+        </svg>
+        <span>Import .h / JSON</span>
+        <input type="file" id="import-file" accept=".h,.hpp,.json" style="display: none;">
+      </label>
+
+      <button id="btn-export-json" class="btn btn-primary" title="Export complete JSON specification">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+        </svg>
+        <span>Export Spec</span>
+      </button>
+
+      <a href="https://github.com/linorobot/linorobot2_hardware" target="_blank" rel="noopener noreferrer" class="github-link" title="Linorobot2 Hardware on GitHub">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+      </a>
+    </div>
+  </header>
+
+  <!-- Main Grid App Container -->
+  <main class="app-container">
+
+    <!-- Left Column: Configurator Panels -->
+    <section class="config-panel">
+      <!-- Nav Tabs -->
+      <nav class="nav-tabs" role="tablist">
+        <button class="nav-tab active" data-tab="tab-base" id="btn-tab-base">
+          <span class="tab-icon">🤖</span>
+          <span>1. Base & MCU</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-drive" id="btn-tab-drive">
+          <span class="tab-icon">⚙️</span>
+          <span>2. Drive & Motors</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-sensors" id="btn-tab-sensors">
+          <span class="tab-icon">🧭</span>
+          <span>3. Sensors</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-pins" id="btn-tab-pins">
+          <span class="tab-icon">🔌</span>
+          <span>4. Pinout Matrix</span>
+        </button>
+        <button class="nav-tab" data-tab="tab-automation" id="btn-tab-automation">
+          <span class="tab-icon">🚀</span>
+          <span>5. Automation & Flash</span>
+        </button>
+      </nav>
+
+      <!-- Form Content Area -->
+      <div class="tab-content-wrapper">
+
+        <!-- Tab 1: Base & MCU -->
+        <div class="tab-pane active" id="tab-base">
+          <div class="form-section">
+            <h2 class="section-title">Robot Identity & Microcontroller</h2>
+
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cfg-robot-name" class="form-label">Robot Name (Identifier)</label>
+                <input type="text" id="cfg-robot-name" class="form-input" value="scout_pico2" placeholder="e.g. scout_pico2" pattern="^[a-z0-9_]+$">
+                <span class="input-hint">Lowercase alphanumeric & underscores only</span>
+              </div>
+
+              <div class="form-group">
+                <label for="cfg-kinematics" class="form-label">Kinematics Base Type</label>
+                <select id="cfg-kinematics" class="form-select">
+                  <option value="DIFFERENTIAL_DRIVE" selected>2WD Differential Drive (2 Motors)</option>
+                  <option value="SKID_STEER">4WD Skid Steer (4 Motors)</option>
+                  <option value="MECANUM">4WD Mecanum Drive (4 Motors)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="cfg-mcu" class="form-label">Microcontroller Unit (MCU)</label>
+                <select id="cfg-mcu" class="form-select">
+                  <option value="PICO2W" selected>Raspberry Pi Pico 2 W (RP2350 + WiFi for OTA/Syslog)</option>
+                  <option value="PICO2">Raspberry Pi Pico 2 (RP2350 - Native USB CDC)</option>
+                  <option value="PICOW">Raspberry Pi Pico W (RP2040 + WiFi for OTA/Syslog)</option>
+                  <option value="PICO">Raspberry Pi Pico (RP2040 - Native USB CDC)</option>
+                  <option value="ESP32">Espressif ESP32 (Dual Core / WiFi & Bluetooth)</option>
+                  <option value="ESP32S3">Espressif ESP32-S3 (SuperMini / Native USB CDC)</option>
+                  <option value="ESP32S2">Espressif ESP32-S2 (Single Core)</option>
+                  <option value="GENDRV">Waveshare ESP32 General Driver Board</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="cfg-transport" class="form-label">micro-ROS Transport</label>
+                <select id="cfg-transport" class="form-select">
+                  <option value="SERIAL" selected>USB Serial Transport (/dev/ttyACM0 or /dev/ttyUSB0)</option>
+                  <option value="WIFI_UDP">WiFi UDP (Micro-ROS Agent on Host)</option>
+                </select>
+              </div>
+
+              <div class="form-group" id="group-serial-baudrate">
+                <label for="cfg-baudrate" class="form-label">Serial Communication Baud Rate</label>
+                <select id="cfg-baudrate" class="form-select font-mono">
+                  <option value="1500000">1500000 (1.5M Baud — High-Throughput ESP32 / GenDrv CP2102N)</option>
+                  <option value="921600" selected>921600 (micro-ROS & Diagnostics Baseline)</option>
+                  <option value="460800">460800</option>
+                  <option value="230400">230400</option>
+                  <option value="115200">115200 (Legacy / Low Speed)</option>
+                </select>
+                <span class="input-hint">High-speed 1.5M / 921.6k baud ensures multi-topic 50.0 Hz telemetry throughput.</span>
+              </div>
+
+              <div class="form-group" id="group-serial-interface">
+                <label for="cfg-serial-interface" class="form-label">Serial Interface (ESP32-S2 / ESP32-S3)</label>
+                <select id="cfg-serial-interface" class="form-select">
+                  <option value="CDC" selected>Native USB CDC (/dev/ttyACM0) — Direct On-Chip USB</option>
+                  <option value="BRIDGE">USB-to-UART Bridge (/dev/ttyUSB0) — CP2102/CH340/FTDI</option>
+                </select>
+                <span class="input-hint">Select whether your S2/S3 board uses native USB CDC or an onboard USB-UART bridge.</span>
+              </div>
+
+              <div class="form-group" id="group-wifi-telemetry">
+                <label class="checkbox-label" style="margin-top: 10px;">
+                  <input type="checkbox" id="cfg-wifi-telemetry" checked>
+                  <span><strong>Enable Background WiFi for OTA & Syslog</strong> (Pico W / Pico 2 W / ESP32)</span>
+                </label>
+                <span class="input-hint">Keeps micro-ROS on USB Serial while enabling wireless OTA flashing & Syslog</span>
+              </div>
+
+              <div class="form-group" id="group-dual-core">
+                <label class="checkbox-label" style="margin-top: 10px;">
+                  <input type="checkbox" id="cfg-dual-core" checked>
+                  <span><strong>Enable Dual-Core Task Allocation (Strict 50Hz Real-Time PID on Core 1)</strong> (ESP32)</span>
+                </label>
+                <span class="input-hint">Pins high-priority motor PID and encoder loop to Core 1 via FreeRTOS vTaskDelayUntil (20ms), isolating motor control from I2C bus and communication latency</span>
+              </div>
+
+              <div class="form-group" id="group-wdt">
+                <label class="checkbox-label" style="margin-top: 10px;">
+                  <input type="checkbox" id="cfg-wdt-enable">
+                  <span><strong>Enable Hardware Task Watchdog (WDT)</strong> (ESP32 / Pico)</span>
+                </label>
+                <span class="input-hint">Automatically resets MCU if main control loop hangs or micro-ROS locks up</span>
+              </div>
+
+              <div class="form-group" id="group-wdt-timeout" style="display: none;">
+                <label for="cfg-wdt-timeout" class="form-label">Watchdog Timeout (Seconds)</label>
+                <input type="number" id="cfg-wdt-timeout" class="form-input" value="60" min="1" max="300" step="1">
+                <span class="input-hint">Timeout period (default: 60s, recommended: 30–60s)</span>
+              </div>
+            </div>
+
+            <!-- WiFi Details (Conditional) -->
+            <div id="wifi-config-box" class="sub-panel" style="display: none;">
+              <h3 class="sub-title">📶 WiFi & micro-ROS Agent Settings</h3>
+              <div class="form-grid">
+                <div class="form-group">
+                  <label for="cfg-wifi-ssid" class="form-label">WiFi SSID</label>
+                  <input type="text" id="cfg-wifi-ssid" class="form-input" value="YOUR_WIFI_SSID">
+                </div>
+                <div class="form-group">
+                  <label for="cfg-wifi-pass" class="form-label">WiFi Password</label>
+                  <input type="password" id="cfg-wifi-pass" class="form-input" value="YOUR_WIFI_PASSWORD">
+                </div>
+                <div class="form-group">
+                  <label for="cfg-agent-ip" class="form-label">Agent Host IP Address</label>
+                  <input type="text" id="cfg-agent-ip" class="form-input" value="192.168.1.100">
+                </div>
+                <div class="form-group">
+                  <label for="cfg-agent-port" class="form-label">Agent UDP Port</label>
+                  <input type="number" id="cfg-agent-port" class="form-input" value="8888">
+                </div>
+              </div>
+              <!-- UDP Syslog Server & Streamer Card -->
+              <div class="syslog-card" id="syslog-config-card">
+                <div class="syslog-header">
+                  <div class="syslog-title-wrap">
+                    <span class="syslog-icon">📡</span>
+                    <div>
+                      <h4 class="syslog-title">UDP Syslog Server & Telemetry Logger</h4>
+                      <span class="input-hint" style="margin:0;">Receives real-time wireless debug telemetry from robot MCU and saves to <code>logs/</code></span>
+                    </div>
+                  </div>
+                  <div class="syslog-status-badge stopped" id="syslog-status-badge">
+                    <span class="pulse-dot" id="syslog-status-dot"></span>
+                    <span id="syslog-status-text">Syslog: Offline</span>
+                  </div>
+                </div>
+
+                <div class="syslog-controls-grid">
+                  <div class="form-group" style="margin-bottom:0;">
+                    <label for="cfg-syslog-port" class="form-label">Syslog UDP Port</label>
+                    <input type="number" id="cfg-syslog-port" class="form-input font-mono" value="514" placeholder="514 or 5140">
+                  </div>
+                  <div class="btn-group-row" style="margin-top:0;">
+                    <button type="button" id="btn-syslog-start" class="btn btn-sm btn-primary flex-1" title="Launch background UDP Syslog receiver">
+                      <span>▶️ Launch Syslog Server</span>
+                    </button>
+                    <button type="button" id="btn-syslog-stop" class="btn btn-sm btn-danger flex-1" style="display:none;" title="Stop UDP Syslog receiver">
+                      <span>⏹️ Stop Server</span>
+                    </button>
+                    <button type="button" id="btn-syslog-view-logs" class="btn btn-sm btn-ghost" title="Inspect recent syslog files in logs/">
+                      <span>📂 Logs</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div class="syslog-stats-bar" id="syslog-stats-bar">
+                  <div class="syslog-stat-item">
+                    <span class="syslog-stat-label">Active Log:</span>
+                    <span class="syslog-stat-val" id="syslog-stat-file">logs/syslog_YYYYMMDD.log</span>
+                  </div>
+                  <div class="syslog-stat-item">
+                    <span class="syslog-stat-label">Packets:</span>
+                    <span class="syslog-stat-val" id="syslog-stat-packets">0</span>
+                  </div>
+                  <div class="syslog-stat-item">
+                    <span class="syslog-stat-label">Last Client:</span>
+                    <span class="syslog-stat-val" id="syslog-stat-client">--</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Drive & Motors -->
+        <div class="tab-pane" id="tab-drive">
+          <div class="form-section">
+            <h2 class="section-title">Chassis Geometry & Physics</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cfg-wheel-dia" class="form-label">Wheel Diameter (m)</label>
+                <input type="number" id="cfg-wheel-dia" class="form-input" value="0.08" step="0.005" min="0.01" max="1.0">
+                <span class="input-hint">e.g. 0.08m = 80mm</span>
+              </div>
+              <div class="form-group">
+                <label for="cfg-track-width" class="form-label">Track Width (LR Wheels Distance) (m)</label>
+                <input type="number" id="cfg-track-width" class="form-input" value="0.22" step="0.005" min="0.05" max="2.0">
+                <span class="input-hint">Center-to-center distance between Left and Right wheels</span>
+              </div>
+              <div class="form-group" id="group-wheelbase" style="display: none;">
+                <label for="cfg-wheelbase" class="form-label">Wheelbase (FR Wheels Distance) (m)</label>
+                <input type="number" id="cfg-wheelbase" class="form-input" value="0.20" step="0.005" min="0.05" max="2.0">
+                <span class="input-hint">Front-to-rear axle distance (for 4WD/Mecanum)</span>
+              </div>
+              <div class="form-group">
+                <label for="cfg-weight" class="form-label">Robot Total Weight (kg) <span class="badge-optional">Optional</span></label>
+                <input type="number" id="cfg-weight" class="form-input" value="3.5" step="0.1" min="0.1" max="200.0">
+                <span class="input-hint">Used to calculate max linear acceleration & inertia</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h2 class="section-title">Motor Driver & Encoder Specifications</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cfg-driver-type" class="form-label">Motor Driver Type</label>
+                <select id="cfg-driver-type" class="form-select">
+                  <option value="GENERIC_2_IN" selected>Generic 2-IN (L298N / TB6612) — Recommended</option>
+                  <option value="BTS7960">BTS7960 (High-Power Dual PWM)</option>
+                  <option value="GENERIC_1_IN">Generic 1-IN / Cytron MD10C (PWM + Direction)</option>
+                  <option value="ESC">ESC (Electronic Speed Controller / RC PWM)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="cfg-max-rpm" class="form-label">Rated Motor Max RPM</label>
+                <input type="number" id="cfg-max-rpm" class="form-input" value="400" min="10" max="5000">
+                <span class="input-hint">Max unloaded or rated RPM under operating voltage</span>
+              </div>
+              <div class="form-group">
+                <label for="cfg-cpr" class="form-label">Encoder Counts Per Revolution (CPR)</label>
+                <input type="number" id="cfg-cpr" class="form-input" value="1440" min="10" max="100000">
+                <span class="input-hint">Total quadrature ticks per full wheel turn</span>
+              </div>
+              <div class="form-group">
+                <label for="cfg-motor-voltage" class="form-label">Motor Operating Voltage (V)</label>
+                <input type="number" id="cfg-motor-voltage" class="form-input" value="12.0" step="0.5">
+              </div>
+              <div class="form-group">
+                <label for="cfg-motor-torque" class="form-label">Motor Rated Torque (kg·cm) <span class="badge-optional">Optional</span></label>
+                <input type="number" id="cfg-motor-torque" class="form-input" value="1.5" step="0.1" min="0.1" max="100.0">
+                <span class="input-hint">Rated / Stall torque per motor (1.5 kg·cm = 0.15 N·m)</span>
+              </div>
+            </div>
+
+            <!-- Inversion Checkboxes -->
+            <div class="sub-panel">
+              <h3 class="sub-title">🔄 Direction & Inversion Settings</h3>
+              <div class="checkbox-grid">
+                <label class="checkbox-label">
+                  <input type="checkbox" id="cfg-m1-inv"> Motor 1 Invert
+                </label>
+                <label class="checkbox-label">
+                  <input type="checkbox" id="cfg-m2-inv" checked> Motor 2 Invert (Right side)
+                </label>
+                <label class="checkbox-label" id="box-m3-inv" style="display: none;">
+                  <input type="checkbox" id="cfg-m3-inv"> Motor 3 Invert
+                </label>
+                <label class="checkbox-label" id="box-m4-inv" style="display: none;">
+                  <input type="checkbox" id="cfg-m4-inv" checked> Motor 4 Invert
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Sensors -->
+        <div class="tab-pane" id="tab-sensors">
+          <!-- AI I2C Sensor Auto-Detection Card -->
+          <div class="card p-3 mb-3 border-accent-glow" style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.7)); border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 8px; margin-bottom: 1.25rem;">
+            <div class="flex-between" style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
+              <div>
+                <h4 style="color:#38bdf8; font-size:1.05rem; margin-bottom:0.25rem; font-weight: 600;">🤖 AI I2C Sensor Auto-Detection</h4>
+                <p class="text-muted" style="font-size:0.85rem; margin:0;">Probe active I2C bus, identify IMU / Mag / Current sensor chips via WHO_AM_I registers, and auto-select matching drivers.</p>
+              </div>
+              <button type="button" id="btn-auto-detect-i2c" class="btn btn-accent" style="white-space:nowrap; padding:0.6rem 1.2rem; cursor: pointer;">
+                <span class="btn-icon">⚡</span>
+                <span><strong>Auto-Detect Sensors</strong></span>
+              </button>
+            </div>
+            <div id="i2c-detect-results" class="mt-2" style="display:none; padding:0.6rem; background:rgba(0,0,0,0.3); border-radius:6px; font-size:0.85rem; margin-top: 0.75rem;"></div>
+          </div>
+
+          <div class="form-section">
+            <h2 class="section-title">IMU, Magnetometer & Battery Peripherals</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="cfg-imu" class="form-label">Inertial Measurement Unit (IMU)</label>
+                <select id="cfg-imu" class="form-select">
+                  <option value="FAKE" selected>Fake IMU (Bare Module Default — Zero Drift / Zero Hang)</option>
+                  <option value="BNO085">BNO085 / BNO080 (State-machine recovery & onboard fusion)</option>
+                  <option value="MPU6050">MPU6050 (6-DOF Accelerometer & Gyroscope)</option>
+                  <option value="QMI8658">QMI8658 (Waveshare on-board IMU)</option>
+                  <option value="MPU9250">MPU9250 (9-DOF IMU + Compass)</option>
+                  <option value="NONE">None (Disabled)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="cfg-mag" class="form-label">Magnetometer (Digital Compass)</label>
+                <select id="cfg-mag" class="form-select">
+                  <option value="NONE" selected>Fake Magnetometer (Default / Estimated)</option>
+                  <option value="QMC5883L">QMC5883L (I2C Digital Compass)</option>
+                  <option value="AK09918">AK09918 (I2C Digital Compass)</option>
+                  <option value="HMC5883L">HMC5883L (Legacy Compass)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="cfg-battery" class="form-label">Battery Voltage Monitoring</label>
+                <select id="cfg-battery" class="form-select">
+                  <option value="NONE" selected>None (Bare Module Default)</option>
+                  <option value="ADC_DIVIDER">ADC Resistor Voltage Divider (R1: 30kΩ, R2: 7.5kΩ)</option>
+                  <option value="INA219">INA219 (I2C Current & Voltage Sensor)</option>
+                </select>
+              </div>
+
+              <!-- Battery Parameters Sub-Panel -->
+              <div id="battery-params-box" class="sub-panel">
+                <h3 class="sub-title">🔋 Battery Capacity & Voltage Specs</h3>
+                <div class="form-grid">
+                  <div class="form-group">
+                    <label for="cfg-bat-cap" class="form-label">Battery Capacity (Ah)</label>
+                    <input type="number" id="cfg-bat-cap" class="form-input" value="2.2" step="0.1" min="0.1" max="100.0">
+                    <span class="input-hint">Rated capacity (enables /battery remaining capacity)</span>
+                  </div>
+                  <div class="form-group">
+                    <label for="cfg-bat-nom" class="form-label">Nominal Voltage (V)</label>
+                    <input type="number" id="cfg-bat-nom" class="form-input" value="11.1" step="0.1" min="1.0" max="60.0">
+                    <span class="input-hint">e.g. 11.1V (3S LiPo), 12.0V, 24.0V</span>
+                  </div>
+                  <div class="form-group">
+                    <label for="cfg-bat-min" class="form-label">Min Cutoff Voltage (0% V)</label>
+                    <input type="number" id="cfg-bat-min" class="form-input" value="9.0" step="0.1" min="1.0" max="50.0">
+                    <span class="input-hint">Low-voltage cutoff threshold</span>
+                  </div>
+                  <div class="form-group">
+                    <label for="cfg-bat-max" class="form-label">Max Full Voltage (100% V)</label>
+                    <input type="number" id="cfg-bat-max" class="form-input" value="12.6" step="0.1" min="1.0" max="65.0">
+                    <span class="input-hint">Full charge voltage threshold</span>
+                  </div>
+                  <div class="form-group">
+                    <label for="cfg-bat-dip" class="form-label">Voltage Drop Alert (DIP Ratio)</label>
+                    <input type="number" id="cfg-bat-dip" class="form-input" value="0.98" step="0.01" min="0.5" max="1.0">
+                    <span class="input-hint">Alert threshold for transient sag</span>
+                  </div>
+                </div>
+
+                <!-- Voltage Divider Resistors & Filter Capacitor Config -->
+                <div id="adc-divider-config-box" class="mt-3">
+                  <h4 class="sub-title-sm">⚡ ADC Voltage Divider Resistors & Noise Filter</h4>
+                  <div class="form-grid">
+                    <div class="form-group">
+                      <label for="cfg-bat-r1" class="form-label">Upper Resistor R1 (Ω)</label>
+                      <input type="number" id="cfg-bat-r1" class="form-input" value="30000" step="100" min="100" max="1000000">
+                      <span class="input-hint">High-side resistor to +VBAT (e.g. 30kΩ, 33kΩ, 10kΩ)</span>
+                    </div>
+                    <div class="form-group">
+                      <label for="cfg-bat-r2" class="form-label">Lower Resistor R2 (Ω)</label>
+                      <input type="number" id="cfg-bat-r2" class="form-input" value="7500" step="100" min="100" max="1000000">
+                      <span class="input-hint">Low-side resistor to GND (e.g. 7.5kΩ, 10kΩ, 1kΩ)</span>
+                    </div>
+                    <div class="form-group">
+                      <label for="cfg-bat-cap" class="form-label">ADC Filter Capacitor C (pF)</label>
+                      <input type="number" id="cfg-bat-cap-val" class="form-input" value="1000" step="100" min="0" max="100000">
+                      <span class="input-hint">Parallel capacitor to GND (1000pF / 1nF recommended)</span>
+                    </div>
+                  </div>
+
+                  <!-- Real-time ADC Voltage & 3.0V Safety Warning Banner -->
+                  <div id="bat-adc-safety-banner" class="adc-safety-banner safe">
+                    <div class="safety-banner-icon" id="safety-banner-icon">🛡️</div>
+                    <div class="safety-banner-content">
+                      <div class="safety-banner-title" id="safety-banner-title">ADC Input Voltage: Safe (&le; 3.0V)</div>
+                      <div class="safety-banner-desc" id="safety-banner-desc">
+                        Divider Ratio: <code id="lbl-divider-ratio">0.2000 (1:5)</code> | Max ADC Pin Voltage: <code id="lbl-adc-max-v">2.52 V</code> at full charge (12.6V).
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="cfg-sonar" class="form-label">Ultrasonic Sonar Range Sensor</label>
+                <select id="cfg-sonar" class="form-select">
+                  <option value="false" selected>Disabled (Bare Module Default)</option>
+                  <option value="true">Enabled (HC-SR04 on /sonar)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 4: Pinout Matrix -->
+        <div class="tab-pane" id="tab-pins">
+          <div class="form-section">
+            <div class="section-header-flex">
+              <h2 class="section-title">Microcontroller Pin Allocation</h2>
+              <button id="btn-smart-alloc" class="btn btn-sm btn-accent" title="Auto-assign verified conflict-free pins">
+                <span>⚡ Smart Auto-Assign</span>
+              </button>
+            </div>
+
+            <!-- LED Pin -->
+            <div class="form-grid mb-3">
+              <div class="form-group">
+                <label for="pin-led" class="form-label">Status LED Pin (GPIO)</label>
+                <input type="number" id="pin-led" class="form-input pin-input" value="25">
+              </div>
+            </div>
+
+            <!-- Motor Pins -->
+            <h3 class="sub-title">🏎️ Motor Driver Pins</h3>
+            <div class="pin-table-wrapper">
+              <table class="pin-table">
+                <thead>
+                  <tr id="motor-pin-headers">
+                    <th>Motor</th>
+                    <th>PWM / PWM_R</th>
+                    <th>IN_A / PWM_L</th>
+                    <th>IN_B / EN</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Motor 1 (Left)</strong></td>
+                    <td><input type="number" id="pin-m1-p1" class="form-input pin-input" value="14"></td>
+                    <td><input type="number" id="pin-m1-p2" class="form-input pin-input" value="15"></td>
+                    <td><input type="number" id="pin-m1-p3" class="form-input pin-input" value="13"></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Motor 2 (Right)</strong></td>
+                    <td><input type="number" id="pin-m2-p1" class="form-input pin-input" value="16"></td>
+                    <td><input type="number" id="pin-m2-p2" class="form-input pin-input" value="17"></td>
+                    <td><input type="number" id="pin-m2-p3" class="form-input pin-input" value="12"></td>
+                  </tr>
+                  <tr id="row-motor-3" style="display: none;">
+                    <td><strong>Motor 3 (Rear L)</strong></td>
+                    <td><input type="number" id="pin-m3-p1" class="form-input pin-input" value="8"></td>
+                    <td><input type="number" id="pin-m3-p2" class="form-input pin-input" value="9"></td>
+                    <td><input type="number" id="pin-m3-p3" class="form-input pin-input" value="10"></td>
+                  </tr>
+                  <tr id="row-motor-4" style="display: none;">
+                    <td><strong>Motor 4 (Rear R)</strong></td>
+                    <td><input type="number" id="pin-m4-p1" class="form-input pin-input" value="11"></td>
+                    <td><input type="number" id="pin-m4-p2" class="form-input pin-input" value="18"></td>
+                    <td><input type="number" id="pin-m4-p3" class="form-input pin-input" value="19"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Encoder Pins -->
+            <h3 class="sub-title mt-4">📟 Encoder Quadrature Pins</h3>
+            <div class="pin-table-wrapper">
+              <table class="pin-table">
+                <thead>
+                  <tr>
+                    <th>Channel</th>
+                    <th>Encoder Pin A (Interrupt)</th>
+                    <th>Encoder Pin B (Direction)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Encoder 1 (Left)</strong></td>
+                    <td><input type="number" id="pin-enc-1a" class="form-input pin-input" value="2"></td>
+                    <td><input type="number" id="pin-enc-1b" class="form-input pin-input" value="3"></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Encoder 2 (Right)</strong></td>
+                    <td><input type="number" id="pin-enc-2a" class="form-input pin-input" value="4"></td>
+                    <td><input type="number" id="pin-enc-2b" class="form-input pin-input" value="5"></td>
+                  </tr>
+                  <tr id="row-enc-3" style="display: none;">
+                    <td><strong>Encoder 3 (Rear L)</strong></td>
+                    <td><input type="number" id="pin-enc-3a" class="form-input pin-input" value="6"></td>
+                    <td><input type="number" id="pin-enc-3b" class="form-input pin-input" value="7"></td>
+                  </tr>
+                  <tr id="row-enc-4" style="display: none;">
+                    <td><strong>Encoder 4 (Rear R)</strong></td>
+                    <td><input type="number" id="pin-enc-4a" class="form-input pin-input" value="20"></td>
+                    <td><input type="number" id="pin-enc-4b" class="form-input pin-input" value="21"></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Auxiliary & Bus Pins -->
+            <h3 class="sub-title mt-4">🛰️ I2C Bus & Sensor Pins</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="pin-i2c-sda" class="form-label">I2C SDA Pin</label>
+                <input type="number" id="pin-i2c-sda" class="form-input pin-input" value="8">
+              </div>
+              <div class="form-group">
+                <label for="pin-i2c-scl" class="form-label">I2C SCL Pin</label>
+                <input type="number" id="pin-i2c-scl" class="form-input pin-input" value="9">
+              </div>
+              <div class="form-group" id="box-battery-pin">
+                <label for="pin-battery" class="form-label">Battery ADC Pin</label>
+                <input type="number" id="pin-battery" class="form-input pin-input" value="26">
+                <span class="input-hint">Pico: GP26, GP27, GP28</span>
+              </div>
+              <div class="form-group" id="box-sonar-trig">
+                <label for="pin-sonar-trig" class="form-label">Sonar Trigger Pin</label>
+                <input type="number" id="pin-sonar-trig" class="form-input pin-input" value="18">
+              </div>
+              <div class="form-group" id="box-sonar-echo">
+                <label for="pin-sonar-echo" class="form-label">Sonar Echo Pin</label>
+                <input type="number" id="pin-sonar-echo" class="form-input pin-input" value="19">
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- Tab 5: Automation & Deployment -->
+        <div class="tab-pane" id="tab-automation">
+          <div class="form-section">
+            <h2 class="section-title">🚀 Robot SBC Host Automation & Flashing Hub</h2>
+            <p class="section-desc">Automate your entire workflow directly on the headless Robot Host Computer (e.g. Raspberry Pi 4/5, Jetson Orin, or x86 Mini-PC): detect robot SBC environment, install toolchains, configure ROS 2, merge generated C++ headers, flash connected microcontrollers, and run the micro-ROS agent.</p>
+
+            <!-- Robot Host Detection Banner -->
+            <div class="os-detect-banner" id="os-detect-banner">
+              <div class="os-detect-info">
+                <span class="os-icon-large" id="os-banner-icon">🤖</span>
+                <div>
+                  <div class="os-banner-title">
+                    <span id="os-banner-detected-text">Target Robot SBC: Auto-Detecting...</span>
+                    <span class="badge-pill badge-ok" id="os-banner-status">Robot Host Online</span>
+                  </div>
+                  <p class="os-banner-sub" id="os-banner-sub">Architecture: <strong id="os-banner-arch">aarch64</strong> | Connected MCU Ports: <span id="os-banner-ports" style="color:var(--accent); font-weight:600;">/dev/ttyACM0</span></p>
+                </div>
+              </div>
+              <button type="button" id="btn-redetect-os" class="btn btn-sm btn-ghost" title="Re-scan robot computer hardware and serial ports">
+                <span>🔄 Scan Robot SBC</span>
+              </button>
+            </div>
+
+            <!-- HERO ACTION: 1-Click Full Deploy & Flash Control (Top of Tab 5) -->
+            <div class="deploy-hero-card mt-3">
+              <div class="deploy-hero-header">
+                <div>
+                  <h3 class="deploy-hero-title">🚀 1-Click Full Deploy & Live Telemetry</h3>
+                  <p class="deploy-hero-desc">Build firmware, release serial port, flash microcontroller (or BOOTSEL), establish micro-ROS agent handshake, and stream live ROS 2 topics.</p>
+                </div>
+                <div class="deploy-hero-badge" id="hero-deploy-badge">
+                  <span class="pulse-dot" id="hero-deploy-dot"></span> <span id="hero-deploy-status-text">Ready to Deploy</span> <span id="hero-deploy-timer" style="display:none;"></span>
+                </div>
+              </div>
+
+              <div class="form-grid mt-3">
+                <div class="form-group">
+                  <label for="auto-flash-target" class="form-label">🎯 Target Firmware Binary</label>
+                  <select id="auto-flash-target" class="form-select">
+                    <option value="firmware" selected>🏎️ Robot Firmware (Main micro-ROS Motor Controller)</option>
+                    <option value="test_sensors">🧭 Sensor Diagnostics Utility (test_sensors/)</option>
+                    <option value="test_motors">⚙️ Motor & Encoder Diagnostics (test_motors/)</option>
+                    <option value="test_acc">📈 Dynamic Acceleration Profiler (test_acc/)</option>
+                    <option value="i2c_detect">🔍 I2C Hardware Scanner & Auto-Identifier (i2c_detect/)</option>
+                    <option value="adc_calibrate">🔋 ESP32 ADC Calibration & LUT Linearizer (adc_calibrate/)</option>
+                    <option value="bno085_cal">🧭 BNO085 IMU Calibration (bno085_cal/)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label for="auto-flash-port" class="form-label">🔌 Upload Serial Port / BOOTSEL Protocol</label>
+                  <input type="text" id="auto-flash-port" class="form-input font-mono" data-auto-managed="true" value="/dev/ttyACM0" placeholder="/dev/ttyACM0, /dev/ttyUSB0, BOOTSEL, or AUTO">
+                  <div id="flash-port-chips" class="port-chips-wrap mt-1"></div>
+                </div>
+              </div>
+
+              <div class="btn-group-row mt-3">
+                <button type="button" id="btn-exec-deploy-script" class="btn btn-accent btn-hero-deploy flex-2" title="Execute complete 9-phase deployment lifecycle on Robot SBC">
+                  <span class="btn-icon">🚀</span>
+                  <span class="btn-text"><strong>Run Full Deploy</strong> (Build, Flash & Discover Topics)</span>
+                </button>
+                <button type="button" id="btn-exec-build-cmd" class="btn btn-secondary flex-1" title="Compile selected target firmware on Robot SBC">
+                  <span>🔨 Run Build</span>
+                </button>
+                <button type="button" id="btn-exec-upload-cmd" class="btn btn-primary flex-1" title="Compile and upload firmware on Robot SBC">
+                  <span>⚡ Flash MCU</span>
+                </button>
+                <button type="button" id="btn-download-deploy-script" class="btn btn-ghost" title="Download deploy_robot.sh script">
+                  <span>📥 Script</span>
+                </button>
+                <button type="button" id="btn-tab5-launch-syslog" class="btn btn-ghost" title="Launch or stop UDP Syslog Telemetry Server">
+                  <span id="tab5-syslog-icon">📡</span> <span id="tab5-syslog-text">Syslog Server</span>
+                </button>
+              </div>
+              <div class="deploy-time-hint mt-2">
+                <span class="hint-icon">⏱️</span>
+                <span><strong>Note for lower-spec PCs / SBCs:</strong> First-time build compiles micro-ROS IDLs & C++ libraries (may take 2–4 min on Raspberry Pi or older CPUs). Subsequent builds are cached and take &lt;10s.</span>
+              </div>
+            </div>
+
+            <!-- 1. OS & Workspace Environment -->
+            <h3 class="sub-title mt-4">🖥️ 1. Robot Host OS & Workspace Environment</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="auto-os-select" class="form-label">Robot Host Operating System</label>
+                <select id="auto-os-select" class="form-select">
+                  <option value="ubuntu_2404">Ubuntu 24.04 LTS (Noble Numbat / Jazzy — RPi 5 / Jetson)</option>
+                  <option value="ubuntu_2604">Ubuntu 26.04 LTS (Resolute Raccoon / Lyrical)</option>
+                  <option value="ubuntu_2204">Ubuntu 22.04 LTS (Jammy Jellyfish / Humble — RPi 4 / Jetpack 5)</option>
+                  <option value="debian">Debian 12 / 13 (Bookworm / Raspberry Pi OS)</option>
+                  <option value="fedora">Fedora / Bluefin Linux</option>
+                  <option value="macos">macOS (Remote Workstation)</option>
+                  <option value="windows_wsl">Windows 10 / 11 (WSL2 Ubuntu)</option>
+                </select>
+                <span class="input-hint">Target environment where firmware builds and agent execute</span>
+              </div>
+
+              <div class="form-group">
+                <label for="auto-env-select" class="form-label">Runtime Environment Mode</label>
+                <select id="auto-env-select" class="form-select">
+                  <option value="native">Native Host System</option>
+                  <option value="distrobox">Distrobox Workspace Container (jazzy / resolute)</option>
+                  <option value="docker">Docker Container</option>
+                </select>
+                <span class="input-hint">Isolates build tools and compiler dependencies</span>
+              </div>
+
+              <div class="form-group">
+                <label for="auto-arch-select" class="form-label">Target CPU Architecture</label>
+                <select id="auto-arch-select" class="form-select">
+                  <option value="aarch64">aarch64 / arm64 (Raspberry Pi 4/5 / Jetson Orin / Apple Silicon)</option>
+                  <option value="x86_64">x86_64 (Intel NUC / AMD Mini-PC / PC)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 2. Toolchain & Permissions Installer -->
+            <h3 class="sub-title mt-4">🛠️ 2. Toolchain & Hardware Permissions Installer</h3>
+            <div class="automation-options-grid">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-pio" checked>
+                <span><strong>PlatformIO Core (<code>pio</code>)</strong> — Microcontroller compiler & flash engine</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-udev" checked>
+                <span><strong>Hardware udev Rules (<code>99-platformio-udev.rules</code>)</strong> — Grant non-root USB access</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-dialout" checked>
+                <span><strong>User Serial Groups</strong> — Add current user to <code>dialout</code> and <code>plugdev</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-install-buildtools" checked>
+                <span><strong>Build Essentials</strong> — <code>git</code>, <code>cmake</code>, <code>ninja-build</code>, <code>python3-pip</code></span>
+              </label>
+            </div>
+
+            <div class="quick-cmd-box">
+              <div class="quick-cmd-header">
+                <span class="quick-cmd-title">⚡ One-Click Toolchain Install Command</span>
+                <div class="quick-cmd-actions">
+                  <button type="button" id="btn-exec-tool-cmd" class="btn btn-xs btn-primary" title="Execute toolchain installer on Robot SBC">▶️ Run on Robot SBC</button>
+                  <button type="button" id="btn-copy-tool-cmd" class="btn btn-xs btn-ghost">📋 Copy</button>
+                </div>
+              </div>
+              <pre class="quick-cmd-code"><code id="preview-tool-cmd"># Updating...</code></pre>
+            </div>
+
+            <!-- 3. ROS 2 Distribution Selector & Setup -->
+            <h3 class="sub-title mt-4">🤖 3. ROS 2 Distribution Setup (Robot SBC)</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="auto-ros-distro" class="form-label">ROS 2 Distribution</label>
+                <select id="auto-ros-distro" class="form-select">
+                  <option value="jazzy" selected>ROS 2 Jazzy Jalisco (Ubuntu 24.04 LTS — Recommended)</option>
+                  <option value="lyrical">ROS 2 Lyrical (Ubuntu 26.04 LTS)</option>
+                  <option value="rolling">ROS 2 Rolling Ridley (Continuous Release)</option>
+                  <option value="humble">ROS 2 Humble Hawksbill (Ubuntu 22.04 LTS)</option>
+                  <option value="none">None / Standalone Firmware Only (Skip ROS 2)</option>
+                </select>
+                <span class="input-hint">Select your host ROS 2 distribution or skip for standalone MCU</span>
+              </div>
+
+              <div class="form-group" id="group-ros-install-type">
+                <label for="auto-ros-type" class="form-label">ROS 2 Package Bundle</label>
+                <select id="auto-ros-type" class="form-select">
+                  <option value="base" selected>Base Bundle (ros-distro-ros-base + Micro-ROS — Recommended for SBC)</option>
+                  <option value="desktop">Desktop Bundle (ros-distro-desktop + GUI Tools)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="automation-options-grid mt-2" id="group-microros-agent">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-build-microros-agent" checked>
+                <span><strong>Build micro-ROS Agent Workspace</strong> — Clone and compile <code>micro_ros_agent</code> for DDS bridging</span>
+              </label>
+            </div>
+
+            <div class="quick-cmd-box" id="box-ros-cmd">
+              <div class="quick-cmd-header">
+                <span class="quick-cmd-title">⚡ One-Click ROS 2 Setup Command</span>
+                <div class="quick-cmd-actions">
+                  <button type="button" id="btn-exec-ros-cmd" class="btn btn-xs btn-primary" title="Execute ROS 2 setup on Robot SBC">▶️ Run on Robot SBC</button>
+                  <button type="button" id="btn-copy-ros-cmd" class="btn btn-xs btn-ghost">📋 Copy</button>
+                </div>
+              </div>
+              <pre class="quick-cmd-code"><code id="preview-ros-cmd"># Updating...</code></pre>
+            </div>
+
+            <!-- 4. Merge Generated Headers & Git Commit -->
+            <h3 class="sub-title mt-4">🔀 4. Merge Generated Headers & Git Commit Automation</h3>
+            <div class="form-grid">
+              <div class="form-group">
+                <label for="auto-git-branch" class="form-label">Git Branch Name</label>
+                <input type="text" id="auto-git-branch" class="form-input" data-auto-managed="true" value="config/scout_pico2" placeholder="e.g. config/scout_pico2">
+                <span class="input-hint">Auto-created branch for isolated testing</span>
+              </div>
+
+              <div class="form-group">
+                <label for="auto-git-commit-msg" class="form-label">Git Commit Message</label>
+                <input type="text" id="auto-git-commit-msg" class="form-input" data-auto-managed="true" value="feat(config): add configuration for scout_pico2" placeholder="Commit message">
+              </div>
+            </div>
+
+            <div class="automation-options-grid mt-2">
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-header" checked>
+                <span>Write <code>config/custom/&lt;robot&gt;_config.h</code> and register in <code>config/config.h</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-pio-firmware" checked>
+                <span>Append <code>[env:&lt;robot&gt;]</code> to <code>firmware/platformio.ini</code> (automatically inherited by <code>test_motors</code> & <code>test_sensors</code>)</span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-merge-urdf" checked>
+                <span>Generate <code>urdf/&lt;robot&gt;_properties.urdf.xacro</code></span>
+              </label>
+              <label class="checkbox-label">
+                <input type="checkbox" id="chk-auto-commit" checked>
+                <span>Stage changes and create Git commit automatically</span>
+              </label>
+            </div>
+
+            <div class="quick-cmd-box">
+              <div class="quick-cmd-header">
+                <span class="quick-cmd-title">⚡ One-Click Merge & Git Commit Command</span>
+                <div class="quick-cmd-actions">
+                  <button type="button" id="btn-exec-merge-cmd" class="btn btn-xs btn-primary" title="Execute header merge and Git commit on Robot SBC">▶️ Run Merge & Commit</button>
+                  <button type="button" id="btn-copy-merge-cmd" class="btn btn-xs btn-ghost">📋 Copy</button>
+                </div>
+              </div>
+              <pre class="quick-cmd-code"><code id="preview-merge-cmd"># Updating...</code></pre>
+            </div>
+
+            <!-- 5. Standalone Diagnostics & Utilities -->
+            <h3 class="sub-title mt-4">⚡ 5. Standalone Diagnostics & Direct Microcontroller Uploads</h3>
+
+            <!-- Direct 1-Click Upload Action Grid -->
+            <div class="direct-upload-section mt-3">
+              <label class="form-label mb-2">🚀 Direct 1-Click Microcontroller Uploads</label>
+              <div class="direct-upload-grid">
+                <button type="button" id="btn-upload-sensors" class="btn-direct-upload btn-upload-sensors" title="Compile & Upload Sensor Diagnostics on Robot SBC">
+                  <span class="direct-upload-icon">🧭</span>
+                  <div class="direct-upload-info">
+                    <span class="direct-upload-title">Upload <code>test_sensors</code></span>
+                    <span class="direct-upload-desc">I2C Scanner & Sensor Telemetry</span>
+                  </div>
+                  <span class="direct-upload-badge">⚡ Upload</span>
+                </button>
+
+                <button type="button" id="btn-upload-motors" class="btn-direct-upload btn-upload-motors" title="Compile & Upload Motor Diagnostics on Robot SBC">
+                  <span class="direct-upload-icon">⚙️</span>
+                  <div class="direct-upload-info">
+                    <span class="direct-upload-title">Upload <code>test_motors</code></span>
+                    <span class="direct-upload-desc">Sequential Motor & CPR Test</span>
+                  </div>
+                  <span class="direct-upload-badge">⚡ Upload</span>
+                </button>
+
+                <button type="button" id="btn-upload-acc" class="btn-direct-upload btn-upload-acc" title="Compile & Upload Acceleration Profiler on Robot SBC">
+                  <span class="direct-upload-icon">📈</span>
+                  <div class="direct-upload-info">
+                    <span class="direct-upload-title">Upload <code>test_acc</code></span>
+                    <span class="direct-upload-desc">Dynamic Acceleration Profiler</span>
+                  </div>
+                  <span class="direct-upload-badge">⚡ Upload</span>
+                </button>
+
+                <button type="button" id="btn-upload-adc" class="btn-direct-upload btn-upload-adc" title="Compile & Upload ESP32 ADC Calibration on Robot SBC">
+                  <span class="direct-upload-icon">🔋</span>
+                  <div class="direct-upload-info">
+                    <span class="direct-upload-title">Upload <code>adc_calibrate</code></span>
+                    <span class="direct-upload-desc">Hardware DAC ADC Linearization</span>
+                  </div>
+                  <span class="direct-upload-badge">⚡ Upload</span>
+                </button>
+
+                <button type="button" id="btn-upload-firmware" class="btn-direct-upload btn-upload-firmware" title="Compile & Upload Main Robot Controller on Robot SBC">
+                  <span class="direct-upload-icon">🏎️</span>
+                  <div class="direct-upload-info">
+                    <span class="direct-upload-title">Upload <code>firmware</code></span>
+                    <span class="direct-upload-desc">Main micro-ROS Robot Controller</span>
+                  </div>
+                  <span class="direct-upload-badge">⚡ Upload</span>
+                </button>
+              </div>
+            </div>
+
+
+
+                                    <!-- 6. Live ROS 2 Topic Frequency (Hz) Monitor & Stream Inspector -->
+            <h3 class="sub-title mt-4">📡 6. Live ROS 2 Topic Monitor & Frequency (Hz) Table</h3>
+            <div class="ros2-inspector-card" id="ros2-inspector-card">
+              <div class="ros2-inspector-header">
+                <div class="ros2-inspector-title-wrap">
+                  <span class="ros2-inspector-icon">📡</span>
+                  <div>
+                    <h4 class="ros2-inspector-title">Active ROS 2 Graph & Real-Time Hz Table</h4>
+                    <p class="ros2-inspector-subtitle">Select any topic row in the table to stream live telemetry into the console and verify the 50.0 Hz control loop</p>
+                  </div>
+                </div>
+                <div class="ros2-inspector-actions">
+                  <span class="badge-pill badge-ok" id="ros2-graph-status">● micro-ROS Active</span>
+                  <button type="button" id="btn-measure-all-hz" class="btn btn-xs btn-success" title="Measure live Hz for all active topics">⚡ Measure All Hz</button>
+                  <button type="button" id="btn-ros2-inspector-refresh" class="btn btn-xs btn-ghost" title="Re-scan ROS 2 graph">🔄 Refresh Topics</button>
+                </div>
+              </div>
+
+              <!-- Interactive Topic Hz Table -->
+              <div class="ros2-table-wrapper mt-3">
+                <table class="ros2-topic-table" id="ros2-topic-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 45px; text-align: center;">Sel</th>
+                      <th>Topic Name</th>
+                      <th>Message Type</th>
+                      <th style="width: 130px; text-align: center;">Frequency (Hz)</th>
+                      <th style="width: 100px; text-align: center;">Status</th>
+                      <th style="width: 140px; text-align: right;">Live Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="ros2-topic-table-body">
+                    <tr class="topic-row active" data-topic="/odom/unfiltered">
+                      <td style="text-align: center;"><input type="radio" name="topic-select-radio" value="/odom/unfiltered" checked></td>
+                      <td><span class="topic-table-name font-mono">🏎️ /odom/unfiltered</span></td>
+                      <td><span class="topic-table-type font-mono text-muted">nav_msgs/msg/Odometry</span></td>
+                      <td style="text-align: center;"><span class="topic-hz-badge" id="hz-badge-odom">50.0 Hz</span></td>
+                      <td style="text-align: center;"><span class="badge-pill badge-ok">Active</span></td>
+                      <td style="text-align: right;">
+                        <button type="button" class="btn btn-xs btn-accent btn-table-stream" data-topic="/odom/unfiltered">▶️ Stream</button>
+                        <button type="button" class="btn btn-xs btn-ghost btn-table-hz" data-topic="/odom/unfiltered">⚡ Hz</button>
+                      </td>
+                    </tr>
+                    <tr class="topic-row" data-topic="/imu/data">
+                      <td style="text-align: center;"><input type="radio" name="topic-select-radio" value="/imu/data"></td>
+                      <td><span class="topic-table-name font-mono">🧭 /imu/data</span></td>
+                      <td><span class="topic-table-type font-mono text-muted">sensor_msgs/msg/Imu</span></td>
+                      <td style="text-align: center;"><span class="topic-hz-badge" id="hz-badge-imu">50.0 Hz</span></td>
+                      <td style="text-align: center;"><span class="badge-pill badge-ok">Active</span></td>
+                      <td style="text-align: right;">
+                        <button type="button" class="btn btn-xs btn-accent btn-table-stream" data-topic="/imu/data">▶️ Stream</button>
+                        <button type="button" class="btn btn-xs btn-ghost btn-table-hz" data-topic="/imu/data">⚡ Hz</button>
+                      </td>
+                    </tr>
+                    <tr class="topic-row" data-topic="/battery">
+                      <td style="text-align: center;"><input type="radio" name="topic-select-radio" value="/battery"></td>
+                      <td><span class="topic-table-name font-mono">🔋 /battery</span></td>
+                      <td><span class="topic-table-type font-mono text-muted">sensor_msgs/msg/BatteryState</span></td>
+                      <td style="text-align: center;"><span class="topic-hz-badge hz-low" id="hz-badge-battery">1.0 Hz</span></td>
+                      <td style="text-align: center;"><span class="badge-pill badge-ok">Active</span></td>
+                      <td style="text-align: right;">
+                        <button type="button" class="btn btn-xs btn-accent btn-table-stream" data-topic="/battery">▶️ Stream</button>
+                        <button type="button" class="btn btn-xs btn-ghost btn-table-hz" data-topic="/battery">⚡ Hz</button>
+                      </td>
+                    </tr>
+                    <tr class="topic-row" data-topic="/cmd_vel">
+                      <td style="text-align: center;"><input type="radio" name="topic-select-radio" value="/cmd_vel"></td>
+                      <td><span class="topic-table-name font-mono">🎮 /cmd_vel</span></td>
+                      <td><span class="topic-table-type font-mono text-muted">geometry_msgs/msg/Twist</span></td>
+                      <td style="text-align: center;"><span class="topic-hz-badge hz-sub">Subscribed</span></td>
+                      <td style="text-align: center;"><span class="badge-pill badge-info">Sub</span></td>
+                      <td style="text-align: right;">
+                        <button type="button" class="btn btn-xs btn-accent btn-table-stream" data-topic="/cmd_vel">▶️ Stream</button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Live Selected Topic Display HUD -->
+              <div class="ros2-live-hud-grid mt-3">
+                <div class="hud-metric-mini">
+                  <span class="hud-mini-label">Active Topic</span>
+                  <span class="hud-mini-val text-cyan font-mono" id="hud-topic-name">/odom/unfiltered</span>
+                </div>
+                <div class="hud-metric-mini">
+                  <span class="hud-mini-label">Loop Frequency (Hz)</span>
+                  <span class="hud-mini-val text-green font-mono" id="hud-topic-hz">50.0 Hz</span>
+                </div>
+                <div class="hud-metric-mini">
+                  <span class="hud-mini-label">Linear Vel X / Voltage</span>
+                  <span class="hud-mini-val text-purple font-mono" id="hud-topic-val1">0.00 m/s</span>
+                </div>
+                <div class="hud-metric-mini">
+                  <span class="hud-mini-label">Angular Vel Z / Accel</span>
+                  <span class="hud-mini-val text-accent font-mono" id="hud-topic-val2">0.00 rad/s</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6. micro-ROS Agent Host Runner -->
+            <h3 class="sub-title mt-4">📡 6. micro-ROS Agent Host Bridge (Robot SBC)</h3>
+            <div class="quick-cmd-box" id="box-agent-cmd">
+              <div class="quick-cmd-header">
+                <span class="quick-cmd-title">⚡ Live micro-ROS Agent Runner</span>
+                <div class="quick-cmd-actions">
+                  <button type="button" id="btn-exec-agent-serial" class="btn btn-xs btn-success" title="Launch Serial micro-ROS Agent for single MCU">▶️ Single Serial</button>
+                  <button type="button" id="btn-exec-agent-multiserial" class="btn btn-xs btn-accent" title="Launch Multi-Serial micro-ROS Agent for multiple MCUs simultaneously">▶️ Multi-Serial</button>
+                  <button type="button" id="btn-exec-agent-udp" class="btn btn-xs btn-primary" title="Launch UDP WiFi micro-ROS Agent on Robot SBC">▶️ UDP WiFi</button>
+                  <button type="button" id="btn-copy-agent-cmd" class="btn btn-xs btn-ghost">📋 Copy</button>
+                </div>
+              </div>
+              <div class="agent-config-row mt-2 mb-2">
+                <div class="form-group flex-1">
+                  <label for="auto-agent-multiserial-ports" class="form-label-xs">Multi-Serial Devices (space-separated for multi-MCU robots)</label>
+                  <input type="text" id="auto-agent-multiserial-ports" class="form-input form-input-sm font-mono" value="/dev/ttyACM0 /dev/ttyUSB0" placeholder="/dev/ttyACM0 /dev/ttyUSB0">
+                </div>
+                <div class="form-group" style="width: 140px;">
+                  <label for="auto-agent-baud" class="form-label-xs">Agent Baud Rate</label>
+                  <select id="auto-agent-baud" class="form-select form-select-sm font-mono">
+                    <option value="1500000">1500000 (1.5M)</option>
+                    <option value="921600" selected>921600</option>
+                    <option value="460800">460800</option>
+                    <option value="115200">115200</option>
+                    <option value="57600">57600</option>
+                  </select>
+                </div>
+              </div>
+              <pre class="quick-cmd-code"><code id="preview-agent-cmd">ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 921600</code></pre>
+            </div>
+
+            <!-- 7. ADC Calibration Studio & LUT Visualizer -->
+            <h3 class="sub-title mt-4">🔋 7. ESP32 ADC Calibration Studio & LUT Linearizer</h3>
+            <div class="adc-studio-card" id="adc-studio-card">
+              <div class="adc-studio-header">
+                <div class="adc-studio-title-wrap">
+                  <span class="adc-studio-icon">🔋</span>
+                  <div>
+                    <h4 class="adc-studio-title">Hardware DAC Sweep & 12-Bit Inverse Lookup Table (LUT)</h4>
+                    <p class="adc-studio-subtitle">Linearizes ESP32 ADC battery & sensor readings across the full 0–3.3V range</p>
+                  </div>
+                </div>
+                <div class="adc-studio-actions">
+                  <button type="button" id="btn-adc-run-cal" class="btn btn-sm btn-primary" title="Upload adc_calibrate & Run Live Sweep on Robot SBC">
+                    <span>⚡ Run Hardware Calibration</span>
+                  </button>
+                  <button type="button" id="btn-adc-sim-cal" class="btn btn-sm btn-secondary" title="Compute Theoretical/Empirical ESP32 ADC Linearization Model">
+                    <span>🧪 Generate Model LUT</span>
+                  </button>
+                  <button type="button" id="btn-adc-merge-lut" class="btn btn-sm btn-success" title="Merge generated ADC_LUT into custom robot configuration" disabled>
+                    <span>🔀 Merge LUT Table</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Setup Instruction & CAD Schematic Banner -->
+              <div class="adc-setup-banner">
+                <span class="adc-setup-badge">🔌 Hardware Wiring</span>
+                <span class="adc-setup-text">Connect <strong>DAC Output GPIO 25 (DAC1)</strong> to your <strong>Battery ADC Input Pin</strong> (e.g. GPIO 33) for calibration. Use a <strong>1000pF filter capacitor</strong> to ground for noise suppression.</span>
+              </div>
+
+              <!-- CAD Circuit Schematic Viewer -->
+              <div class="adc-cad-schematic-card mt-3 mb-3">
+                <div class="schematic-header">
+                  <div class="schematic-title-wrap">
+                    <span class="schematic-icon">📐</span>
+                    <div>
+                      <h4 class="schematic-title">Interactive CAD Circuit Schematic (ADC Voltage Divider, 1000pF Filter & DAC Calibration)</h4>
+                      <p class="schematic-subtitle">Hardware topology for battery sensing with transient noise filter & hardware DAC sweep</p>
+                    </div>
+                  </div>
+                  <div class="schematic-badges">
+                    <span class="schematic-badge" id="cad-badge-ratio">Ratio: 0.2000 (1:5)</span>
+                    <span class="schematic-badge badge-safe" id="cad-badge-safety">🛡️ V_ADC: 2.52V &le; 3.0V</span>
+                  </div>
+                </div>
+
+                <div class="schematic-svg-container">
+                  <svg id="adc-circuit-svg" viewBox="0 0 760 220" class="schematic-svg" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                      <linearGradient id="grad-wire" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#38bdf8"/>
+                        <stop offset="100%" stop-color="#818cf8"/>
+                      </linearGradient>
+                      <linearGradient id="grad-dac" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stop-color="#f59e0b"/>
+                        <stop offset="100%" stop-color="#10b981"/>
+                      </linearGradient>
+                    </defs>
+
+                    <!-- Battery / Power In -->
+                    <g class="cad-component" id="cad-comp-battery">
+                      <rect x="20" y="35" width="85" height="42" rx="6" fill="#1e293b" stroke="#38bdf8" stroke-width="2"/>
+                      <text x="62" y="55" fill="#f8fafc" font-size="12" font-weight="bold" text-anchor="middle">+VBAT</text>
+                      <text x="62" y="69" fill="#94a3b8" font-size="10" text-anchor="middle" id="cad-svg-vbat">12.6 V (Full)</text>
+                      <!-- Lead line -->
+                      <line x1="105" y1="56" x2="150" y2="56" stroke="#38bdf8" stroke-width="2.5"/>
+                    </g>
+
+                    <!-- Resistor R1 (Upper Divider) -->
+                    <g class="cad-component" id="cad-comp-r1">
+                      <!-- Resistor Box -->
+                      <rect x="150" y="44" width="90" height="24" rx="4" fill="#0f172a" stroke="#38bdf8" stroke-width="2"/>
+                      <text x="195" y="60" fill="#38bdf8" font-size="11" font-family="monospace" font-weight="bold" text-anchor="middle" id="cad-svg-r1">R1: 30.0 kΩ</text>
+                      <text x="195" y="36" fill="#94a3b8" font-size="9" text-anchor="middle">Upper Resistor</text>
+                      <!-- Wire to central node -->
+                      <line x1="240" y1="56" x2="340" y2="56" stroke="#38bdf8" stroke-width="2.5"/>
+                    </g>
+
+                    <!-- Central ADC Node -->
+                    <circle cx="340" cy="56" r="5" fill="#818cf8"/>
+                    <text x="340" y="36" fill="#c084fc" font-size="10" font-weight="bold" text-anchor="middle">ADC NODE</text>
+
+                    <!-- Resistor R2 (Lower Divider to GND) -->
+                    <g class="cad-component" id="cad-comp-r2">
+                      <line x1="300" y1="56" x2="300" y2="90" stroke="#818cf8" stroke-width="2.5"/>
+                      <rect x="270" y="90" width="60" height="36" rx="4" fill="#0f172a" stroke="#818cf8" stroke-width="2"/>
+                      <text x="300" y="108" fill="#818cf8" font-size="10" font-family="monospace" font-weight="bold" text-anchor="middle" id="cad-svg-r2">R2</text>
+                      <text x="300" y="120" fill="#94a3b8" font-size="9" font-family="monospace" text-anchor="middle" id="cad-svg-r2-val">7.5 kΩ</text>
+                      <line x1="300" y1="126" x2="300" y2="160" stroke="#64748b" stroke-width="2.5"/>
+                      <!-- GND Symbol -->
+                      <line x1="288" y1="160" x2="312" y2="160" stroke="#94a3b8" stroke-width="2"/>
+                      <line x1="292" y1="165" x2="308" y2="165" stroke="#94a3b8" stroke-width="2"/>
+                      <line x1="296" y1="170" x2="304" y2="170" stroke="#94a3b8" stroke-width="2"/>
+                    </g>
+
+                    <!-- Filter Capacitor (1000pF across ADC to GND) -->
+                    <g class="cad-component" id="cad-comp-cap">
+                      <line x1="380" y1="56" x2="380" y2="95" stroke="#818cf8" stroke-width="2.5"/>
+                      <!-- Capacitor Plates -->
+                      <line x1="365" y1="95" x2="395" y2="95" stroke="#10b981" stroke-width="3"/>
+                      <line x1="365" y1="105" x2="395" y2="105" stroke="#10b981" stroke-width="3"/>
+                      <text x="435" y="104" fill="#10b981" font-size="10" font-family="monospace" font-weight="bold" text-anchor="start" id="cad-svg-cap">C: 1000 pF (1nF)</text>
+                      <text x="435" y="117" fill="#6ee7b7" font-size="8" text-anchor="start">Noise Reduction Filter</text>
+                      <line x1="380" y1="105" x2="380" y2="160" stroke="#64748b" stroke-width="2.5"/>
+                      <!-- GND Symbol -->
+                      <line x1="368" y1="160" x2="392" y2="160" stroke="#94a3b8" stroke-width="2"/>
+                      <line x1="372" y1="165" x2="388" y2="165" stroke="#94a3b8" stroke-width="2"/>
+                      <line x1="376" y1="170" x2="384" y2="170" stroke="#94a3b8" stroke-width="2"/>
+                    </g>
+
+                    <!-- Horizontal Bus Connection to ADC Pin -->
+                    <line x1="340" y1="56" x2="570" y2="56" stroke="url(#grad-wire)" stroke-width="2.5"/>
+
+                    <!-- MCU ADC Input Pin -->
+                    <g class="cad-component" id="cad-comp-mcu">
+                      <rect x="570" y="32" width="165" height="48" rx="6" fill="#1e1b4b" stroke="#a855f7" stroke-width="2"/>
+                      <text x="652" y="52" fill="#e9d5ff" font-size="11" font-weight="bold" text-anchor="middle" id="cad-svg-adc-pin">ESP32 ADC (GPIO 33)</text>
+                      <text x="652" y="68" fill="#c084fc" font-size="10" font-family="monospace" text-anchor="middle" id="cad-svg-vadc-read">V_ADC = 2.52 V (Max)</text>
+                    </g>
+
+                    <!-- Hardware DAC Sweep Line (Calibration Mode) -->
+                    <g class="cad-component" id="cad-comp-dac">
+                      <!-- DAC Box on bottom left -->
+                      <rect x="20" y="130" width="135" height="45" rx="6" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+                      <text x="87" y="148" fill="#fcd34d" font-size="11" font-weight="bold" text-anchor="middle">ESP32 DAC (GPIO 25)</text>
+                      <text x="87" y="163" fill="#94a3b8" font-size="9" text-anchor="middle">Hardware Sweep 0–3.3V</text>
+                      <!-- Calibration Jumper Line to Node -->
+                      <path d="M 155 152 L 240 152 L 240 70 L 335 58" fill="none" stroke="url(#grad-dac)" stroke-width="2" stroke-dasharray="4,4"/>
+                      <circle cx="155" cy="152" r="3.5" fill="#f59e0b"/>
+                      <text x="200" y="145" fill="#f59e0b" font-size="8" font-family="monospace">CALIBRATION JUMPER</text>
+                    </g>
+
+                    <!-- 3.0V Safety Warning Box in SVG -->
+                    <g id="cad-svg-warning-box" style="display: none;">
+                      <rect x="490" y="130" width="245" height="45" rx="6" fill="#450a0a" stroke="#f43f5e" stroke-width="2"/>
+                      <text x="612" y="148" fill="#fca5a5" font-size="11" font-weight="bold" text-anchor="middle">⚠️ EXCEEDS 3.0V LIMIT!</text>
+                      <text x="612" y="163" fill="#fecdd3" font-size="9" text-anchor="middle" id="cad-svg-warning-text">V_ADC exceeds safe linear range</text>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+
+              <!-- ADC Studio Content Grid -->
+              <div class="adc-studio-grid">
+                <!-- Left: Interactive Canvas Chart -->
+                <div class="adc-chart-pane">
+                  <div class="adc-chart-toolbar">
+                    <span class="adc-chart-title">📊 ADC Transfer Function & Linearization Plot</span>
+                    <div class="adc-chart-legend">
+                      <span class="legend-item legend-raw"><span class="legend-dot" style="background:#f43f5e;"></span> Raw Non-Linear</span>
+                      <span class="legend-item legend-ideal"><span class="legend-dot" style="background:#38bdf8;"></span> Ideal (0-4095)</span>
+                      <span class="legend-item legend-calibrated"><span class="legend-dot" style="background:#10b981;"></span> Calibrated Output</span>
+                    </div>
+                  </div>
+                  <div class="adc-canvas-container">
+                    <canvas id="adc-chart-canvas" width="600" height="320"></canvas>
+                    <div id="adc-chart-tooltip" class="adc-chart-tooltip" style="display: none;"></div>
+                  </div>
+                  <div class="adc-metrics-row">
+                    <div class="adc-metric-box">
+                      <span class="metric-label">Resolution</span>
+                      <span class="metric-val">12-Bit (4096 pts)</span>
+                    </div>
+                    <div class="adc-metric-box">
+                      <span class="metric-label">Low Knee Deadband</span>
+                      <span class="metric-val" id="metric-knee-low">~0.15 V (0-180 ADC)</span>
+                    </div>
+                    <div class="adc-metric-box">
+                      <span class="metric-label">High Knee Compression</span>
+                      <span class="metric-val" id="metric-knee-high">~3.15 V (3920-4095)</span>
+                    </div>
+                    <div class="adc-metric-box">
+                      <span class="metric-label">Max Correction Δ</span>
+                      <span class="metric-val text-accent" id="metric-max-delta">±142 ADC</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: LUT Code / Stream Inspector -->
+                <div class="adc-lut-pane">
+                  <div class="adc-lut-header">
+                    <span class="adc-lut-title">📋 Generated <code>ADC_LUT[4096]</code></span>
+                    <button type="button" id="btn-copy-lut-code" class="btn btn-xs btn-ghost">📋 Copy LUT</button>
+                  </div>
+                  <div class="adc-lut-code-wrap">
+                    <pre class="adc-lut-code" id="adc-lut-code-display"><code>// Click "Run Hardware Calibration" or "Generate Model LUT" to build LUT table...
+const int16_t ADC_LUT[4096] = { /* insert adc_calibrate data here */ };</code></pre>
+                  </div>
+                  <div class="adc-status-bar" id="adc-status-bar">
+                    <span class="pulse-dot"></span>
+                    <span id="adc-status-text">Ready for calibration. Pin 25 (DAC1) -> Pin 33/34 (Battery ADC).</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 8. Live Interactive Terminal & Robot SBC Console -->
+            <h3 class="sub-title mt-4">📟 8. Live Interactive Terminal & Robot SBC Console</h3>
+            <div class="web-serial-console-card">
+              <div class="console-toolbar">
+                <div class="console-controls-left">
+                  <!-- Local Runner Status -->
+                  <span class="runner-status-pill pill-checking" id="runner-status-pill" title="Local Python Execution Server">
+                    <span class="pulse-dot"></span>
+                    <span id="runner-status-text">Checking Runner...</span>
+                  </span>
+
+                  <!-- Server / SBC Serial Monitor Stream Button -->
+                                    <!-- ROS 2 Live Topic Stream Controls -->
+                  <div class="ros2-stream-controls">
+                    <select id="ros2-topic-select" class="form-select form-select-sm font-mono" title="Select active ROS 2 topic to stream live in terminal">
+                      <option value="/odom/unfiltered" selected>/odom/unfiltered (Odometry @ 50Hz)</option>
+                      <option value="/imu/data">/imu/data (IMU @ 50Hz)</option>
+                      <option value="/battery">/battery (BatteryState)</option>
+                      <option value="/cmd_vel">/cmd_vel (Twist)</option>
+                    </select>
+                    <button type="button" id="btn-ros2-echo" class="btn btn-sm btn-accent" title="Stream live topic messages in terminal">
+                      <span id="ros2-echo-icon">📡</span> <span id="ros2-echo-text">Stream Topic</span>
+                    </button>
+                    <button type="button" id="btn-ros2-hz" class="btn btn-sm btn-success" title="Measure live publishing frequency (Hz)">
+                      <span>⚡ Hz Check</span>
+                    </button>
+                    <button type="button" id="btn-ros2-refresh" class="btn btn-sm btn-ghost" title="Re-scan active ROS 2 graph for new topics">
+                      <span>🔄 Scan</span>
+                    </button>
+                  </div>
+                  <button type="button" id="btn-sbc-monitor" class="btn btn-sm btn-primary" title="Stream live serial messages from Robot SBC (e.g. test_sensors, IMU, telemetry)">
+                    <span>📡 Stream SBC Serial</span>
+                  </button>
+
+                  <!-- Web Serial Port Controls (Direct Client USB) -->
+                  <button type="button" id="btn-serial-connect" class="btn btn-sm btn-secondary" title="Connect to USB Microcontroller via Web Serial (Client Browser USB)">
+                    <span id="serial-btn-icon">🔌</span>
+                    <span id="serial-btn-text">Browser USB</span>
+                  </button>
+                  <select id="serial-baud-select" class="form-select form-select-sm" title="Serial Baud Rate">
+                    <option value="1500000">1500000 Baud (1.5M High Speed)</option>
+                    <option value="921600" selected>921600 Baud (micro-ROS / Diagnostics)</option>
+                    <option value="460800">460800 Baud</option>
+                    <option value="115200">115200 Baud</option>
+                    <option value="57600">57600 Baud</option>
+                    <option value="9600">9600 Baud</option>
+                  </select>
+                  <span class="serial-status-pill pill-disconnected" id="serial-status-pill">
+                    <span id="serial-status-text">Serial: Off</span>
+                  </span>
+                </div>
+                <div class="console-controls-right">
+                  <button type="button" id="btn-cancel-exec" class="btn btn-xs btn-danger" style="display: none;" title="Abort running process">⏹️ Stop Process</button>
+                  <label class="checkbox-label-sm" title="Stream wireless UDP syslog messages into terminal">
+                    <input type="checkbox" id="chk-stream-syslog-terminal" checked>
+                    <span>📡 Syslog</span>
+                  </label>
+                  <label class="checkbox-label-sm">
+                    <input type="checkbox" id="chk-serial-autoscroll" checked>
+                    <span>Auto-scroll</span>
+                  </label>
+                  <button type="button" id="btn-serial-clear" class="btn btn-xs btn-ghost">🧹 Clear</button>
+                </div>
+              </div>
+
+              <!-- Terminal Output Display Screen -->
+              <div class="terminal-screen" id="serial-terminal-screen">
+                <div class="terminal-line terminal-dim">[Web Serial Console Initialized. Click 'Connect Serial Port' to stream live microcontroller logs.]</div>
+              </div>
+
+              <!-- Terminal Command Sender Input -->
+              <div class="terminal-input-bar">
+                <input type="text" id="serial-input-text" class="terminal-input" placeholder="Type serial command or character (e.g. 's' for I2C scan, 'r' for reset) and press Enter..." disabled>
+                <button type="button" id="btn-serial-send" class="btn btn-sm btn-secondary" disabled>Send</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+
+      </div>
+    </section>
+
+    <!-- Right Column: Live HUD, Safety Inspector & Code Artifacts -->
+    <section class="dashboard-panel">
+
+      <!-- Top Metrics HUD -->
+      <div class="hud-card">
+        <div class="hud-header">
+          <h2 class="hud-title">📊 Kinematics & Performance HUD</h2>
+          <span class="hud-badge" id="hud-base-tag">2WD Differential</span>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Max Linear Speed</span>
+            <div class="metric-val-wrap">
+              <span class="metric-val" id="val-speed-ms">1.42</span>
+              <span class="metric-unit">m/s</span>
+            </div>
+            <span class="metric-sub" id="val-speed-kmh">5.13 km/h (85% Headroom)</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Max Angular Speed</span>
+            <div class="metric-val-wrap">
+              <span class="metric-val" id="val-speed-rads">12.95</span>
+              <span class="metric-unit">rad/s</span>
+            </div>
+            <span class="metric-sub" id="val-speed-degs">741.8 deg/s</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Resolution</span>
+            <div class="metric-val-wrap">
+              <span class="metric-val" id="val-ticks-m">5,730</span>
+              <span class="metric-unit">ticks/m</span>
+            </div>
+            <span class="metric-sub" id="val-wheel-circ">Circumference: 0.251 m</span>
+          </div>
+
+          <div class="metric-card">
+            <span class="metric-label">Est. Max Acceleration</span>
+            <div class="metric-val-wrap">
+              <span class="metric-val" id="val-max-accel">2.64</span>
+              <span class="metric-unit">m/s²</span>
+            </div>
+            <span class="metric-sub" id="val-thrust-sub">Thrust: 9.24 N @ 3.5 kg</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Hardware & Electrical Safety Inspector -->
+      <div class="safety-card" id="safety-inspector-box">
+        <div class="safety-header">
+          <div class="safety-indicator-wrap">
+            <span class="status-dot status-ok" id="safety-status-dot"></span>
+            <h3 class="safety-title" id="safety-status-title">Hardware Safety Rules: PASSED</h3>
+          </div>
+          <span class="safety-badge badge-ok" id="safety-status-badge">0 Errors</span>
+        </div>
+        <div class="safety-messages" id="safety-messages-list">
+          <div class="safety-item item-ok">
+            <span class="item-icon">✅</span>
+            <span>All pin assignments and electrical limits are conflict-free.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-Artifact Code Generator Tabs -->
+      <div class="artifacts-card">
+        <div class="artifacts-header">
+          <div class="artifact-tabs">
+            <button class="artifact-tab active" data-artifact="tab-code-header" id="btn-art-header">
+              <span>📄 C++ Header</span>
+            </button>
+            <button class="artifact-tab" data-artifact="tab-code-pio" id="btn-art-pio">
+              <span>⚡ PlatformIO</span>
+            </button>
+            <button class="artifact-tab" data-artifact="tab-code-urdf" id="btn-art-urdf">
+              <span>🤖 ROS 2 URDF</span>
+            </button>
+            <button class="artifact-tab" data-artifact="tab-code-wiring" id="btn-art-wiring">
+              <span>🔌 Wiring Chart</span>
+            </button>
+            <button class="artifact-tab" data-artifact="tab-code-deploy" id="btn-art-deploy">
+              <span>🛠️ Deploy Script</span>
+            </button>
+            <button class="artifact-tab" data-artifact="tab-code-json" id="btn-art-json">
+              <span>📋 Spec JSON</span>
+            </button>
+          </div>
+
+          <div class="artifact-actions">
+            <button id="btn-merge-config" class="btn btn-sm btn-accent" title="Merge current modifications with existing base configuration">
+              <span>🔄 Merge & Diff</span>
+            </button>
+            <button id="btn-save-config" class="btn btn-sm btn-primary" title="Save configuration directly to config/custom/">
+              <span>💾 Save to Firmware</span>
+            </button>
+            <button id="btn-copy-code" class="btn btn-sm btn-ghost" title="Copy code to clipboard">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+              <span id="copy-btn-text">Copy</span>
+            </button>
+            <button id="btn-download-artifact" class="btn btn-sm btn-secondary" title="Download this file">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+              </svg>
+              <span>Download</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="code-viewer-wrap">
+          <pre class="code-viewer"><code id="code-display" class="language-cpp">// Generating...</code></pre>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast">Action completed!</div>
+
+  <script src="app.js?v=2.1.0"></script>
+</body>
+</html>

@@ -223,7 +223,13 @@ ROBOT ORIENTATION
 #define WIFI_MONITOR 2 // min. period to send wifi signal strength to syslog
 #define AGENT_PORT 8888
 #define SYSLOG_PORT 514
-#if defined(PICOW)
+#if defined(PICO2W)
+  #define DEVICE_HOSTNAME "pico2w"
+  #define NODE_NAME "pico2"
+#elif defined(PICO2)
+  #define DEVICE_HOSTNAME "pico2"
+  #define NODE_NAME "pico2"
+#elif defined(PICOW)
   #define DEVICE_HOSTNAME "picow"
 #else
   #define DEVICE_HOSTNAME "pico"

@@ -25,6 +25,24 @@ Supported targets:
 
 ---
 
+## 🚀 AI Robot Configuration Engine & Interactive Web UI
+
+Linorobot2 includes an AI-assisted **Robot Configuration Engine** and client-side **Web UI Studio** located in `tools/robot_config_engine/` that automates hardware rule validation, electrical safety pin checks, kinematics & physics calculations, and 1-click code generation for C++ headers (`config.h`), `platformio.ini`, and ROS 2 URDF Xacro files.
+
+### ⚡ 3-Step Quick Start with Web UI
+
+1. **Launch the Configuration Server**:
+   ```bash
+   cd tools/robot_config_engine/web
+   python3 server.py 8000
+   ```
+2. **Open the Web UI in your browser**:
+   Navigate to `http://localhost:8000`.
+3. **Configure & 1-Click Deploy**:
+   Select your reference build (e.g. Raspberry Pi Pico 2, ESP32, ESP32-S3), tune your wheel geometry and motor parameters with live kinematics HUD & electrical safety checks, and click **🚀 Run Full Deploy** to automatically merge configuration files, compile firmware, and flash your microcontroller!
+
+---
+
 ## Overview
 
 The linorobot2_hardware repo uses platformio to build microcontroller firmware for mobile robots based on micro-ROS.
@@ -508,7 +526,7 @@ pio run -e <your_board> -t upload
 
 Supported board environments: `pico`, `pico2`, `esp32`, `esp32s2`, `esp32s3`, `gendrv`.
 
-When flashed, the firmware spins each motor forward and in reverse for a controlled cycle, printing real-time RPM, max linear velocity, and calculated stopping distance via Serial (`115200` baud) and Syslog:
+When flashed, the firmware spins each motor forward and in reverse for a controlled cycle, printing real-time RPM, max linear velocity, and calculated stopping distance via Serial (`921600` baud) and Syslog:
 
 ```text
 MOTOR1 FWD RPM    280.5      0.0      0.0      0.0
@@ -526,7 +544,7 @@ pio run -e <your_board> -t upload
 
 Supported board environments: `pico`, `pico2`, `esp32`, `esp32s2`, `esp32s3`, `gendrv`.
 
-When flashed, the firmware measures kinematic linear/angular velocities, calculates discrete derivative accelerations ($m/s^2$, $rad/s^2$), correlates with IMU linear acceleration, and outputs time to reach 90% velocity along with stopping distance via Serial (`115200` baud) and Syslog:
+When flashed, the firmware measures kinematic linear/angular velocities, calculates discrete derivative accelerations ($m/s^2$, $rad/s^2$), correlates with IMU linear acceleration, and outputs time to reach 90% velocity along with stopping distance via Serial (`921600` baud) and Syslog:
 
 ```text
 MAX VEL   0.52   0.00 m/s    1.25 rad/s
@@ -535,6 +553,38 @@ IMU ACC   2.38  -2.41 m/s2
 time to 0.9x max vel   0.24 sec
 distance to stop   0.04 m
 ```
+
+## 🔍 1-Click AI I2C Sensor Auto-Detection & Driver Auto-Configuration (`i2c_detect`)
+
+The AI-maintained `i2c_detect` standalone utility scans the active I2C bus @ 400 kHz, probes `WHO_AM_I` and hardware identification registers across all major robotics sensors, and dumps machine-readable JSON over serial:
+
+```bash
+cd linorobot2_hardware/i2c_detect
+pio run -e <your_board> -t upload
+```
+
+Supported chip signatures:
+* **IMUs**: `QMI8658` (`0x6B`/`0x6A`), `MPU6050`/`MPU9250`/`MPU6500` (`0x68`/`0x69`), `BNO085`/`BNO080` (`0x4A`/`0x4B`), `BNO055` (`0x28`/`0x29`), `ADXL345`/`ITG3200` (`GY85`).
+* **Magnetometers**: `AK09918` (`0x0C`), `AK8963`/`AK8975` (`0x0C`), `QMC5883L` (`0x0D`), `HMC5883L` (`0x1E`).
+* **Power Monitors**: `INA219` / `INA226` (`0x40`..`0x45`, including Waveshare GenDrv @ `0x42`).
+* **Barometers**: `BMP280` / `BME280` (`0x76`/`0x77`).
+
+In the Web UI Studio (**Tab 3 Sensors**), clicking **`⚡ Auto-Detect Sensors`** executes this probe automatically in ~2 seconds and selects the matching drivers with live UI state synchronization.
+
+---
+
+### 📡 1-Click UDP Syslog Server & Live Telemetry Streamer
+
+For microcontrollers configured with wireless telemetry (e.g. Waveshare General Driver `GENDRV` or `ESP32`), the Web UI Studio provides a built-in multi-threaded UDP Syslog server and live stream receiver:
+* **Zero-Configuration Setup**: Automatically binds to standard UDP port `514` (with fallback to `5140` if unprivileged) and captures incoming MCU debug logs over WiFi.
+* **Live SSE Telemetry Streaming**: Streams syslog datagrams in real time directly to the Web UI terminal console with high-visibility cyan `[SYSLOG]` badges, timestamps, and client IP addresses.
+* **Persistent Disk Logging**: All received telemetry is automatically saved and rotated into `logs/syslog_YYYYMMDD.log` for offline diagnostics and post-run analysis.
+* **API Endpoints**:
+  - `POST /api/syslog/start`: Launch background UDP receiver on specified port (e.g. `{"port": 514}`).
+  - `POST /api/syslog/stop`: Gracefully terminate UDP receiver and report total captured packet count.
+  - `GET /api/syslog/status`: Retrieve live server state, packet counters, active log file, and last message.
+  - `GET /api/syslog/stream`: Real-time Server-Sent Events (SSE) stream for client consoles.
+  - `GET /api/syslog/logs`: List log files in `logs/` and inspect recent lines.
 
 ## ESP32 ADC Calibration Utility (`adc_calibrate`)
 
@@ -717,4 +767,4 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 #### Adding firmware compilation tests for a new ROS distro
 To add a new distro to the CI tests, modify the `rolling` (default) branch. Inside of `.github/workflows`, duplicate an existing distro workflow YAML file. For example, to add ROS2 Iron support, one could copy `humble-firmware-build.yml` to `iron-firmware-build.yml`. Assuming that an `iron` branch exists (if not one could create one using the `humble` branch as a base and modify as necessary), inside of `iron-firmware-build.yml`, rename all instances of the word `humble` with `iron`. It would be as simple as using 'find and replace' in many IDEs. Commit these changes to a feature branch, create a PR to merge into the `rolling` branch, and then backport the PR to other branches. It is only necessary to have `iron-firmware-build.yml` on the `rolling` and `iron` branch, however it may be simpler to keep the branches in sync by having every workflow file on all branches.
 
-Lastly, the new branch must be added to the CI table written in Markdown at the top of README.md that displays the status of each branch using badges. This table is organized with the most current ROS2 branch at the top, which is always `rolling`, and then in descending chronological order. Adding a new distro can be done by copying an existing row of the table, pasting in the appropriate position, and changing the titles and branch names in the relative paths. 
+Lastly, the new branch must be added to the CI table written in Markdown at the top of README.md that displays the status of each branch using badges. This table is organized with the most current ROS2 branch at the top, which is always `rolling`, and then in descending chronological order. Adding a new distro can be done by copying an existing row of the table, pasting in the appropriate position, and changing the titles and branch names in the relative paths.

@@ -47,7 +47,7 @@
 #include "ota.h"
 
 #ifndef BAUDRATE
-#define BAUDRATE 115200
+#define BAUDRATE 921600
 #endif
 
 BNO080 bno085;

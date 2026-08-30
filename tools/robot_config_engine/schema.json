@@ -1,0 +1,317 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Linorobot2 Hardware Specification",
+  "type": "object",
+  "required": [
+    "robot_name",
+    "kinematics",
+    "mcu",
+    "transport",
+    "geometry",
+    "motors",
+    "pins"
+  ],
+  "properties": {
+    "robot_name": {
+      "type": "string",
+      "pattern": "^[a-z0-9_]+$"
+    },
+    "kinematics": {
+      "type": "string",
+      "enum": [
+        "DIFFERENTIAL_DRIVE",
+        "SKID_STEER",
+        "MECANUM"
+      ]
+    },
+    "mcu": {
+      "type": "string",
+      "enum": [
+        "PICO",
+        "PICO2",
+        "PICOW",
+        "PICO2W",
+        "ESP32",
+        "ESP32S2",
+        "ESP32S3",
+        "GENDRV"
+      ]
+    },
+    "transport": {
+      "type": "string",
+      "enum": [
+        "SERIAL",
+        "WIFI_UDP"
+      ]
+    },
+    "serial_interface": {
+      "type": "string",
+      "enum": [
+        "CDC",
+        "BRIDGE"
+      ],
+      "default": "CDC"
+    },
+    "wifi_settings": {
+      "type": "object",
+      "properties": {
+        "ssid": {
+          "type": "string"
+        },
+        "password": {
+          "type": "string"
+        },
+        "agent_ip": {
+          "type": "string"
+        },
+        "agent_port": {
+          "type": "integer",
+          "default": 8888
+        },
+        "syslog_server": {
+          "type": "string"
+        }
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "required": [
+        "wheel_diameter",
+        "track_width"
+      ],
+      "properties": {
+        "wheel_diameter": {
+          "type": "number",
+          "minimum": 0.01
+        },
+        "track_width": {
+          "type": "number",
+          "minimum": 0.05
+        },
+        "wheelbase": {
+          "type": "number",
+          "minimum": 0.05
+        },
+        "weight": {
+          "type": "number",
+          "minimum": 0.05
+        }
+      }
+    },
+    "motors": {
+      "type": "object",
+      "required": [
+        "driver_type",
+        "max_rpm",
+        "cpr"
+      ],
+      "properties": {
+        "driver_type": {
+          "type": "string",
+          "enum": [
+            "BTS7960",
+            "GENERIC_2_IN",
+            "GENERIC_1_IN",
+            "ESC"
+          ]
+        },
+        "max_rpm": {
+          "type": "number",
+          "minimum": 1
+        },
+        "cpr": {
+          "type": "number",
+          "minimum": 1
+        },
+        "operating_voltage": {
+          "type": "number",
+          "default": 12.0
+        },
+        "max_voltage": {
+          "type": "number",
+          "default": 12.0
+        },
+        "rated_torque": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "rated_voltage": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "pwm_frequency": {
+          "type": "integer",
+          "default": 20000
+        },
+        "pwm_bits": {
+          "type": "integer",
+          "default": 10
+        },
+        "motor1_inv": {
+          "type": "boolean",
+          "default": false
+        },
+        "motor2_inv": {
+          "type": "boolean",
+          "default": true
+        },
+        "motor3_inv": {
+          "type": "boolean",
+          "default": false
+        },
+        "motor4_inv": {
+          "type": "boolean",
+          "default": true
+        }
+      }
+    },
+    "sensors": {
+      "type": "object",
+      "properties": {
+        "imu": {
+          "type": "string",
+          "enum": [
+            "MPU6050",
+            "BNO085",
+            "QMI8658",
+            "MPU9250",
+            "FAKE",
+            "FAKE_IMU",
+            "NONE"
+          ]
+        },
+        "mag": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "QMC5883L",
+            "AK09918",
+            "HMC5883L"
+          ]
+        },
+        "mag_bias": {
+          "type": "array",
+          "items": {
+            "type": "number"
+          },
+          "minItems": 3,
+          "maxItems": 3
+        },
+        "battery_monitor": {
+          "type": "string",
+          "enum": [
+            "NONE",
+            "ADC_DIVIDER",
+            "INA219"
+          ]
+        },
+        "battery_nominal_voltage": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "battery_capacity": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "battery_min_voltage": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "battery_max_voltage": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "battery_dip": {
+          "type": "number",
+          "minimum": 0.0
+        },
+        "battery_r1": {
+          "type": "number",
+          "minimum": 1.0,
+          "default": 30000.0
+        },
+        "battery_r2": {
+          "type": "number",
+          "minimum": 1.0,
+          "default": 7500.0
+        },
+        "battery_adc_cap": {
+          "type": "number",
+          "minimum": 0.0,
+          "default": 1000.0
+        },
+        "sonar": {
+          "type": "boolean",
+          "default": false
+        }
+      }
+    },
+    "pins": {
+      "type": "object",
+      "properties": {
+        "led": {
+          "type": "integer"
+        },
+        "motor1": {
+          "type": "object"
+        },
+        "motor2": {
+          "type": "object"
+        },
+        "motor3": {
+          "type": "object"
+        },
+        "motor4": {
+          "type": "object"
+        },
+        "encoders": {
+          "type": "object"
+        },
+        "i2c": {
+          "type": "object",
+          "properties": {
+            "sda": {
+              "type": "integer"
+            },
+            "scl": {
+              "type": "integer"
+            }
+          }
+        },
+        "battery_pin": {
+          "type": "integer"
+        },
+        "sonar": {
+          "type": "object",
+          "properties": {
+            "trig": {
+              "type": "integer"
+            },
+            "echo": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "wifi_telemetry": {
+      "type": "boolean",
+      "default": false
+    },
+    "watchdog": {
+      "type": "object",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "default": false
+        },
+        "timeout_sec": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 300,
+          "default": 60
+        }
+      }
+    }
+  }
+}

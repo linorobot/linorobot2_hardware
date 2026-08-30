@@ -1,3 +1,4 @@
 .pio
 .swp
 .vscode
+__pycache__/

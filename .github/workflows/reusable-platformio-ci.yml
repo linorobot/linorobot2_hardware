@@ -107,6 +107,25 @@ jobs:
             cd repo/adc_calibrate
             pio run -e esp32 -e gendrv
           fi
+      - name: Build Driver, Kinematics & LiDAR Matrix (Plan A Dynamic Build Flags)
+        shell: bash
+        run: |
+          source /opt/ros/${{ inputs.ros_distro }}/setup.bash
+          export PATH=$PATH:~/.platformio/penv/bin
+          cd repo/firmware
+          echo "== Matrix 1: ESP32 with MPU6050 + QMC5883L + Skid Steer + Generic 1-IN =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_MPU6050_IMU -D USE_QMC5883L_MAG -D LINO_BASE=SKID_STEER -D USE_GENERIC_1_IN_MOTOR_DRIVER" pio run -e esp32
+          echo "== Matrix 2: Pico with GY85 + HMC5883L + Differential Drive + Generic 2-IN =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_GY85_IMU -D USE_HMC5883L_MAG -D LINO_BASE=DIFFERENTIAL_DRIVE -D USE_GENERIC_2_IN_MOTOR_DRIVER" pio run -e pico
+          echo "== Matrix 3: Pico 2 with BNO085 + Mecanum + ESC Driver =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_BNO085_IMU -D LINO_BASE=MECANUM -D USE_ESC_MOTOR_DRIVER" pio run -e pico2
+          echo "== Matrix 4: ESP32-S2 with MPU9150 + AK8975 + Skid Steer + BTS7960 =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_MPU9150_IMU -D USE_AK8975_MAG -D LINO_BASE=SKID_STEER -D USE_BTS7960_MOTOR_DRIVER" pio run -e esp32s2
+          echo "== Matrix 5: ESP32-S3 with MPU9250 + AK8963 + Mecanum + Generic 2-IN =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_MPU9250_IMU -D USE_AK8963_MAG -D LINO_BASE=MECANUM -D USE_GENERIC_2_IN_MOTOR_DRIVER" pio run -e esp32s3
+          echo "== Matrix 6: ESP32 WiFi with LiDAR UDP Forwarding =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_LIDAR_UDP" pio run -e esp32_wifi
+
 
 
 

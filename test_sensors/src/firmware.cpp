@@ -35,7 +35,7 @@
 #include "ota.h"
 
 #ifndef BAUDRATE
-#define BAUDRATE 115200
+#define BAUDRATE 921600
 #endif
 
 #ifndef RAD_TO_DEG

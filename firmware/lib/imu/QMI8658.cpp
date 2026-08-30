@@ -132,25 +132,25 @@ uint8_t QMI8658::read_reg(uint8_t reg)
     Wire.beginTransmission(QMI8658_ADDR);
     Wire.write(reg);
     last_status = Wire.endTransmission();
-    Wire.requestFrom(QMI8658_ADDR, 1);
-    ret = Wire.read();
-    Wire.endTransmission();
+    if (Wire.requestFrom((uint8_t)QMI8658_ADDR, (uint8_t)1) > 0) {
+        ret = Wire.read();
+    }
 	}
 	return ret;
 }
 
 uint16_t QMI8658::readWord_reg(uint8_t reg)
 {
-	uint8_t retH=0;
+  uint8_t retH=0;
   uint8_t retL=0;
 
   Wire.beginTransmission(QMI8658_ADDR);
   Wire.write(reg);
   last_status = Wire.endTransmission();
-  Wire.requestFrom(QMI8658_ADDR, 2);
-  retL = Wire.read();
-  retH = Wire.read();
-  Wire.endTransmission();
+  if (Wire.requestFrom((uint8_t)QMI8658_ADDR, (uint8_t)2) >= 2) {
+      retL = Wire.read();
+      retH = Wire.read();
+  }
 
 	return ((retH << 8) | retL);
 }
@@ -173,36 +173,50 @@ bool QMI8658::GetEulerAngles(float *pitch,float *roll, float *yaw)
 
 void QMI8658::read_sensor_data(float acc[3], float gyro[3])
 {
-	unsigned char	buf_reg[12];
+	unsigned char	buf[12];
 	short 			raw_acc_xyz[3];
 	short 			raw_gyro_xyz[3];
 
-	raw_acc_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Ax_L) ));
-	raw_acc_xyz[1] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Ay_L) ));
-	raw_acc_xyz[2] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Az_L) ));
+	Wire.beginTransmission(QMI8658_ADDR);
+	Wire.write(Qmi8658Register_Ax_L);
+	last_status = Wire.endTransmission();
+	uint8_t read_bytes = Wire.requestFrom((uint8_t)QMI8658_ADDR, (uint8_t)12);
+	if (read_bytes == 12)
+	{
+		for (int i = 0; i < 12; i++)
+		{
+			buf[i] = Wire.read();
+		}
+	}
+	else
+	{
+		return;
+	}
 
-	raw_gyro_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gx_L) ));
-	raw_gyro_xyz[1] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gy_L) ));
-	raw_gyro_xyz[2] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gz_L) ));
+	raw_acc_xyz[0] = (short)((unsigned short)((buf[1] << 8) | buf[0]));
+	raw_acc_xyz[1] = (short)((unsigned short)((buf[3] << 8) | buf[2]));
+	raw_acc_xyz[2] = (short)((unsigned short)((buf[5] << 8) | buf[4]));
+
+	raw_gyro_xyz[0] = (short)((unsigned short)((buf[7] << 8) | buf[6]));
+	raw_gyro_xyz[1] = (short)((unsigned short)((buf[9] << 8) | buf[8]));
+	raw_gyro_xyz[2] = (short)((unsigned short)((buf[11] << 8) | buf[10]));
 
 #if defined(QMI8658_UINT_MG_DPS)
 	// mg
 	acc[0] = (float)(raw_acc_xyz[0]*1000.0f)/g_imu.ssvt_a;
 	acc[1] = (float)(raw_acc_xyz[1]*1000.0f)/g_imu.ssvt_a;
 	acc[2] = (float)(raw_acc_xyz[2]*1000.0f)/g_imu.ssvt_a;
-#else
-	// m/s2
-	acc[0] = (float)(raw_acc_xyz[0]*ONE_G)/g_imu.ssvt_a;
-	acc[1] = (float)(raw_acc_xyz[1]*ONE_G)/g_imu.ssvt_a;
-	acc[2] = (float)(raw_acc_xyz[2]*ONE_G)/g_imu.ssvt_a;
-#endif
 
-#if defined(QMI8658_UINT_MG_DPS)
 	// dps
 	gyro[0] = (float)(raw_gyro_xyz[0]*1.0f)/g_imu.ssvt_g;
 	gyro[1] = (float)(raw_gyro_xyz[1]*1.0f)/g_imu.ssvt_g;
 	gyro[2] = (float)(raw_gyro_xyz[2]*1.0f)/g_imu.ssvt_g;
 #else
+	// m/s2
+	acc[0] = (float)(raw_acc_xyz[0]*ONE_G)/g_imu.ssvt_a;
+	acc[1] = (float)(raw_acc_xyz[1]*ONE_G)/g_imu.ssvt_a;
+	acc[2] = (float)(raw_acc_xyz[2]*ONE_G)/g_imu.ssvt_a;
+
 	// rad/s
 	gyro[0] = (float)(raw_gyro_xyz[0]*M_PI)/(g_imu.ssvt_g*180);		// *pi/180
 	gyro[1] = (float)(raw_gyro_xyz[1]*M_PI)/(g_imu.ssvt_g*180);
@@ -212,12 +226,28 @@ void QMI8658::read_sensor_data(float acc[3], float gyro[3])
 
 void QMI8658::read_acc(float acc[3])
 {
-	unsigned char	buf_reg[12];
+	unsigned char	buf[6];
 	short 		raw_acc_xyz[3];
 
-	raw_acc_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Ax_L) ));
-	raw_acc_xyz[1] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Ay_L) ));
-	raw_acc_xyz[2] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Az_L) ));
+	Wire.beginTransmission(QMI8658_ADDR);
+	Wire.write(Qmi8658Register_Ax_L);
+	last_status = Wire.endTransmission();
+	uint8_t read_bytes = Wire.requestFrom((uint8_t)QMI8658_ADDR, (uint8_t)6);
+	if (read_bytes == 6)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			buf[i] = Wire.read();
+		}
+	}
+	else
+	{
+		return;
+	}
+
+	raw_acc_xyz[0] = (short)((unsigned short)((buf[1] << 8) | buf[0]));
+	raw_acc_xyz[1] = (short)((unsigned short)((buf[3] << 8) | buf[2]));
+	raw_acc_xyz[2] = (short)((unsigned short)((buf[5] << 8) | buf[4]));
 
 #if defined(QMI8658_UINT_MG_DPS)
 	// mg
@@ -234,12 +264,28 @@ void QMI8658::read_acc(float acc[3])
 
 void QMI8658::read_gyro(float gyro[3])
 {
-	unsigned char	buf_reg[12];
+	unsigned char	buf[6];
 	short 		raw_gyro_xyz[3];
 
-	raw_gyro_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gx_L) ));
-	raw_gyro_xyz[1] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gy_L) ));
-	raw_gyro_xyz[2] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gz_L) ));
+	Wire.beginTransmission(QMI8658_ADDR);
+	Wire.write(Qmi8658Register_Gx_L);
+	last_status = Wire.endTransmission();
+	uint8_t read_bytes = Wire.requestFrom((uint8_t)QMI8658_ADDR, (uint8_t)6);
+	if (read_bytes == 6)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			buf[i] = Wire.read();
+		}
+	}
+	else
+	{
+		return;
+	}
+
+	raw_gyro_xyz[0] = (short)((unsigned short)((buf[1] << 8) | buf[0]));
+	raw_gyro_xyz[1] = (short)((unsigned short)((buf[3] << 8) | buf[2]));
+	raw_gyro_xyz[2] = (short)((unsigned short)((buf[5] << 8) | buf[4]));
 
 #if defined(QMI8658_UINT_MG_DPS)
 	// dps

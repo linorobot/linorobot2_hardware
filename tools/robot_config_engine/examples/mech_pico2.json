@@ -1,0 +1,77 @@
+{
+  "robot_name": "mech_pico2",
+  "kinematics": "MECANUM",
+  "mcu": "PICO2",
+  "transport": "SERIAL",
+  "geometry": {
+    "wheel_diameter": 0.08,
+    "track_width": 0.26,
+    "wheelbase": 0.22,
+    "weight": 4.0
+  },
+  "motors": {
+    "driver_type": "GENERIC_2_IN",
+    "max_rpm": 330,
+    "cpr": 1440,
+    "operating_voltage": 12.0,
+    "rated_torque": 2.0,
+    "rated_voltage": 12.0,
+    "motor1_inv": false,
+    "motor2_inv": true,
+    "motor3_inv": false,
+    "motor4_inv": true
+  },
+  "sensors": {
+    "imu": "MPU6050",
+    "mag": "NONE",
+    "battery_monitor": "ADC_DIVIDER",
+    "battery_nominal_voltage": 11.1,
+    "battery_capacity": 3.0,
+    "battery_min_voltage": 9.0,
+    "battery_max_voltage": 12.6,
+    "battery_dip": 0.98,
+    "sonar": true
+  },
+  "pins": {
+    "led": 25,
+    "motor1": {
+      "pwm": 10,
+      "in_a": 11,
+      "in_b": 12
+    },
+    "motor2": {
+      "pwm": 13,
+      "in_a": 14,
+      "in_b": 15
+    },
+    "motor3": {
+      "pwm": 16,
+      "in_a": 17,
+      "in_b": 18
+    },
+    "motor4": {
+      "pwm": 19,
+      "in_a": 20,
+      "in_b": 21
+    },
+    "encoders": {
+      "m1_a": 2,
+      "m1_b": 3,
+      "m2_a": 4,
+      "m2_b": 5,
+      "m3_a": 6,
+      "m3_b": 7,
+      "m4_a": 8,
+      "m4_b": 9
+    },
+    "i2c": {
+      "sda": 0,
+      "scl": 1
+    },
+    "battery_pin": 26,
+    "sonar": {
+      "trig": 22,
+      "echo": 27
+    }
+  }
+}

@@ -1,0 +1,69 @@
+{
+  "robot_name": "scout_pico2w",
+  "kinematics": "DIFFERENTIAL_DRIVE",
+  "mcu": "PICO2W",
+  "transport": "SERIAL",
+  "wifi_telemetry": true,
+  "wifi_settings": {
+    "ssid": "YOUR_WIFI_SSID",
+    "password": "YOUR_WIFI_PASSWORD",
+    "agent_ip": "192.168.1.100",
+    "agent_port": 8888,
+    "syslog_server": "192.168.1.100"
+  },
+  "geometry": {
+    "wheel_diameter": 0.08,
+    "track_width": 0.22,
+    "weight": 3.5
+  },
+  "motors": {
+    "driver_type": "GENERIC_2_IN",
+    "max_rpm": 330,
+    "cpr": 1320,
+    "operating_voltage": 12.0,
+    "max_voltage": 12.0,
+    "rated_torque": 1.5,
+    "rated_voltage": 12.0,
+    "pwm_frequency": 20000,
+    "motor1_inv": false,
+    "motor2_inv": true
+  },
+  "sensors": {
+    "imu": "BNO085",
+    "mag": "NONE",
+    "battery_monitor": "ADC_DIVIDER",
+    "battery_capacity": 2.2,
+    "battery_nominal_voltage": 11.1,
+    "battery_min_voltage": 9.0,
+    "battery_max_voltage": 12.6,
+    "battery_dip": 0.98,
+    "sonar": true
+  },
+  "pins": {
+    "motor1": {
+      "pwm": 14,
+      "in_a": 15,
+      "in_b": 13
+    },
+    "motor2": {
+      "pwm": 16,
+      "in_a": 17,
+      "in_b": 12
+    },
+    "encoders": {
+      "m1_a": 2,
+      "m1_b": 3,
+      "m2_a": 4,
+      "m2_b": 5
+    },
+    "i2c": {
+      "sda": 8,
+      "scl": 9
+    },
+    "battery_pin": 26,
+    "sonar": {
+      "trig": 18,
+      "echo": 19
+    }
+  }
+}

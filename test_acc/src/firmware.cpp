@@ -42,7 +42,7 @@
 #include "ota.h"
 
 #ifndef BAUDRATE
-#define BAUDRATE 115200
+#define BAUDRATE 921600
 #endif
 
 nav_msgs__msg__Odometry odom_msg;

@@ -256,7 +256,6 @@ class QMI8658IMU: public IMUInterface
 
         bool startSensor() override
         {
-            Wire.begin();
 	    if (qmi8658_.begin() == 0){
 	        // Serial.println("qmi8658_init fail");
 	        return false;
@@ -282,6 +281,35 @@ class QMI8658IMU: public IMUInterface
             gyro_.y = gy[1];
             gyro_.z = gy[2];
             return gyro_;
+        }
+
+        sensor_msgs__msg__Imu getData()
+        {
+            float ac[3], gy[3];
+            qmi8658_.read_sensor_data(ac, gy);
+            accel_.x = ac[0];
+            accel_.y = ac[1];
+            accel_.z = ac[2];
+
+            gyro_.x = gy[0] - gyro_cal_.x;
+            gyro_.y = gy[1] - gyro_cal_.y;
+            gyro_.z = gy[2] - gyro_cal_.z;
+
+            if (gyro_.x > -0.01 && gyro_.x < 0.01) gyro_.x = 0;
+            if (gyro_.y > -0.01 && gyro_.y < 0.01) gyro_.y = 0;
+            if (gyro_.z > -0.01 && gyro_.z < 0.01) gyro_.z = 0;
+
+            imu_msg_.angular_velocity = gyro_;
+            imu_msg_.angular_velocity_covariance[0] = gyro_cov[0];
+            imu_msg_.angular_velocity_covariance[4] = gyro_cov[1];
+            imu_msg_.angular_velocity_covariance[8] = gyro_cov[2];
+
+            imu_msg_.linear_acceleration = accel_;
+            imu_msg_.linear_acceleration_covariance[0] = accel_cov[0];
+            imu_msg_.linear_acceleration_covariance[4] = accel_cov[1];
+            imu_msg_.linear_acceleration_covariance[8] = accel_cov[2];
+
+            return imu_msg_;
         }
 };
 

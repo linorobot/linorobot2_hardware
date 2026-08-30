@@ -1,15 +1,28 @@
 name: ROS Rolling Firmware Build
 
-# Get the default branch name from the repository and store it in a variable called DEFAULT_BRANCH
-env:
-  DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-
 on:
   pull_request:
-    # Run on PRs only to branches starting with 'rolling'
+    # Run on PRs to rolling, main, devel, and upstream-pr branches
     branches:
       - rolling*
-    # Don't run when the following files are changed which don't effect firmware.
+      - main
+      - devel
+      - 'upstream-pr/**'
+    # Don't run when the following files are changed which don't affect firmware.
+    paths-ignore:
+      - 'docs/**'
+      - .gitignore
+      - LICENSE
+      - README.md
+  
+  push:
+    # Run on pushes to rolling, main, devel, and upstream-pr branches
+    branches:
+      - rolling*
+      - main
+      - devel
+      - 'upstream-pr/**'
+    # Don't run when the following files are changed which don't affect firmware.
     paths-ignore:
       - 'docs/**'
       - .gitignore
@@ -32,5 +45,4 @@ jobs:
       ros_distro: rolling
       os: ubuntu-24.04
       # The reference field is which branch to build. It will be set to the current default branch of the repository.
-      # This is useful for scheduled builds to ensure that the latest code builds against the rolling ROS distro.
-      reference: ${{ github.event.repository.default_branch }}
+      reference: ${{ github.event_name == 'schedule' && 'rolling' || '' }}
