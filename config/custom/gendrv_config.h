@@ -1,11 +1,8 @@
 // Copyright (c) 2021 Juan Miguel Jimeno
-//
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
+// http://www.apache.org/licenses/LICENSE-2.0
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,11 +31,11 @@
 // #define USE_MPU6050_IMU
 // #define USE_MPU9150_IMU
 // #define USE_MPU9250_IMU
-// #define USE_QMI8658_IMU
+#define USE_QMI8658_IMU
 // #define USE_HMC5883L_MAG
 // #define USE_AK8963_MAG
 // #define USE_AK8975_MAG
-// #define USE_AK09918_MAG
+#define USE_AK09918_MAG
 // #define USE_QMC5883L_MAG
 // #define MAG_BIAS { 0, 0, 0 }
 // #define IMU_TWEAK {}
@@ -247,7 +244,7 @@ ROBOT ORIENTATION
 // ESP32 uses analogReadMilliVolts() which returns voltage in mV
 #define BATTERY_ADJUST(v) ((v) * ((10 + 1) / 1) / 1000.0)
 #define USE_INA219
-#define BATTERY_DIP 0.98  // battery voltage drop alert
+// #define BATTERY_DIP 0.98  // battery voltage drop alert
 // #define BATTERY_CAP 2.0  // battery capacity Ah
 // #define BATTERY_MIN 9.0  // battery minimal voltage
 // #define BATTERY_MAX 12.6 // battery maximum voltage
