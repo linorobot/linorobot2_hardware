@@ -336,13 +336,15 @@ bool createEntities()
         TOPIC_PREFIX "cmd_vel"
     ));
     // create timer for actuating the motors at 50 Hz (1000/20)
+    // Deprecation Note: rclc_timer_init_default is retained for multi-distro compatibility with ROS 2 Humble
+    // (rclc_timer_init_default2 was introduced in Jazzy). (rcl_timer_callback_t) cast satisfies stricter
+    // callback signatures in Rolling. This commit should be reverted on May 2027 upon Humble End-of-Life.
     const unsigned int control_timeout = 20;
-    RCCHECK(rclc_timer_init_default2( 
+    RCCHECK(rclc_timer_init_default( 
         &control_timer, 
         &support,
         RCL_MS_TO_NS(control_timeout),
-        controlCallback,
-        true
+        (rcl_timer_callback_t) controlCallback
     ));
     executor = rclc_executor_get_zero_initialized_executor();
     RCCHECK(rclc_executor_init(&executor, &support.context, 2, & allocator));
