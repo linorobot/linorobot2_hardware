@@ -45,6 +45,13 @@
 #define BAUDRATE 921600
 #endif
 
+// LED_ACTIVE is defined at most once (no #else branch): a board with an
+// addressable status LED sets LED_PIN >= 0; LED_PIN -1 (e.g. Waveshare GenDrv)
+// leaves it undefined and the LED writes below compile out.
+#if defined(LED_PIN) && (LED_PIN) >= 0
+#define LED_ACTIVE
+#endif
+
 nav_msgs__msg__Odometry odom_msg;
 sensor_msgs__msg__Imu imu_msg;
 sensor_msgs__msg__MagneticField mag_msg;
@@ -85,7 +92,7 @@ unsigned total_motors = 4;
 void setup()
 {
     Serial.begin(BAUDRATE);
-#ifdef LED_PIN
+#ifdef LED_ACTIVE
     pinMode(LED_PIN, OUTPUT);
 #endif
 #ifdef BOARD_INIT // board specific setup
@@ -211,7 +218,7 @@ void loop() {
         idx = 0;
         imu_max_acc_x = 0;
         imu_min_acc_x = 0;
-#ifdef LED_PIN
+#ifdef LED_ACTIVE
         digitalWrite(LED_PIN, HIGH);
 #endif
         motor1_controller.spin((runs & 1) ? current_pwm_max : current_pwm_min);
@@ -220,7 +227,7 @@ void loop() {
         motor4_controller.spin(current_pwm_max);
         record(run_time / ticks);
 
-#ifdef LED_PIN
+#ifdef LED_ACTIVE
         digitalWrite(LED_PIN, LOW);
 #endif
         motor1_controller.spin(0);
@@ -229,7 +236,7 @@ void loop() {
         motor4_controller.spin(0);
         record(run_time / ticks);
 
-#ifdef LED_PIN
+#ifdef LED_ACTIVE
         digitalWrite(LED_PIN, HIGH);
 #endif
         motor1_controller.spin((runs & 1) ? current_pwm_min : current_pwm_max);
@@ -238,7 +245,7 @@ void loop() {
         motor4_controller.spin(current_pwm_min);
         record(run_time / ticks);
 
-#ifdef LED_PIN
+#ifdef LED_ACTIVE
         digitalWrite(LED_PIN, LOW);
 #endif
         motor1_controller.spin(0);

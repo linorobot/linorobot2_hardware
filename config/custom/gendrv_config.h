@@ -12,7 +12,7 @@
 #ifndef GENDRV_CONFIG_H
 #define GENDRV_CONFIG_H
 
-#define LED_PIN LED_BUILTIN //used for debugging status
+#define LED_PIN -1 //no addressable status LED on the GenDrv board
 
 //uncomment the base you're building
 #define LINO_BASE DIFFERENTIAL_DRIVE       // 2WD and Tracked robot w/ 2 motors
