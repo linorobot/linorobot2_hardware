@@ -19,12 +19,16 @@
 #include <rcl/error_handling.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
+#include <micro_ros_utilities/string_utilities.h>
 
 #include <nav_msgs/msg/odometry.h>
 #include <sensor_msgs/msg/imu.h>
 #include <sensor_msgs/msg/magnetic_field.h>
 #include <sensor_msgs/msg/battery_state.h>
 #include <sensor_msgs/msg/range.h>
+#include <sensor_msgs/msg/fluid_pressure.h>
+#include <sensor_msgs/msg/temperature.h>
+#include <sensor_msgs/msg/relative_humidity.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 
@@ -41,6 +45,7 @@
 #include "encoder.h"
 #include "battery.h"
 #include "range.h"
+#include "env.h"
 #include "lidar.h"
 #include "wifis.h"
 #include "ota.h"
@@ -79,6 +84,9 @@ static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agen
 #ifndef RANGE_TIMER
 #define RANGE_TIMER 100 // 10Hz
 #endif
+#ifndef ENV_TIMER
+#define ENV_TIMER 1000 // 1Hz (BMP280/BME280 pressure/temperature/humidity)
+#endif
 
 #ifndef RCCHECK
 #define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){rclErrorLoop();}}
@@ -105,6 +113,16 @@ sensor_msgs__msg__MagneticField mag_msg;
 geometry_msgs__msg__Twist twist_msg;
 sensor_msgs__msg__BatteryState battery_msg;
 sensor_msgs__msg__Range range_msg;
+
+#if defined(USE_BMP280)
+rcl_publisher_t pressure_publisher;
+rcl_publisher_t temperature_publisher;
+rcl_publisher_t humidity_publisher;
+sensor_msgs__msg__FluidPressure pressure_msg;
+sensor_msgs__msg__Temperature temperature_msg;
+sensor_msgs__msg__RelativeHumidity humidity_msg;
+static bool env_present = false;
+#endif
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -200,6 +218,26 @@ void setup()
     }
     initBattery();
     initRange();
+#if defined(USE_BMP280)
+    env_present = initEnv();
+    if (env_present)
+    {
+        pressure_msg.header.frame_id = micro_ros_string_utilities_set(pressure_msg.header.frame_id, "base_link");
+        temperature_msg.header.frame_id = micro_ros_string_utilities_set(temperature_msg.header.frame_id, "base_link");
+        humidity_msg.header.frame_id = micro_ros_string_utilities_set(humidity_msg.header.frame_id, "base_link");
+#ifdef ENV_COV
+        const double env_cov[3] = ENV_COV;   // { pressure Pa^2, temperature C^2, humidity (0..1)^2 }
+        pressure_msg.variance = env_cov[0];
+        temperature_msg.variance = env_cov[1];
+        humidity_msg.variance = env_cov[2];
+#endif
+        syslog(LOG_INFO, "%s %s ready @ 1Hz %lu", __FUNCTION__, envHasHumidity() ? "BME280" : "BMP280", millis());
+    }
+    else
+    {
+        syslog(LOG_WARNING, "%s BMP280/BME280 not found (0x76/0x77) %lu", __FUNCTION__, millis());
+    }
+#endif
     initLidar(); // after wifi connected
     battery_msg = getBattery();
     prev_voltage = battery_msg.voltage;
@@ -328,6 +366,24 @@ bool createEntities()
     TOPIC_PREFIX "sonar"
     ));
 #endif
+#if defined(USE_BMP280)
+    if (env_present)
+    {
+        RCCHECK(rclc_publisher_init_default(
+            &pressure_publisher, &node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, FluidPressure),
+            TOPIC_PREFIX "pressure"));
+        RCCHECK(rclc_publisher_init_default(
+            &temperature_publisher, &node,
+            ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Temperature),
+            TOPIC_PREFIX "temperature"));
+        if (envHasHumidity())
+            RCCHECK(rclc_publisher_init_default(
+                &humidity_publisher, &node,
+                ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, RelativeHumidity),
+                TOPIC_PREFIX "humidity"));
+    }
+#endif
     // create twist command subscriber
     RCCHECK(rclc_subscription_init_default( 
         &twist_subscriber, 
@@ -378,6 +434,15 @@ bool destroyEntities()
 #endif
 #ifdef ECHO_PIN
     RCSOFTCHECK(rcl_publisher_fini(&range_publisher, &node));
+#endif
+#if defined(USE_BMP280)
+    if (env_present)
+    {
+        RCSOFTCHECK(rcl_publisher_fini(&pressure_publisher, &node));
+        RCSOFTCHECK(rcl_publisher_fini(&temperature_publisher, &node));
+        if (envHasHumidity())
+            RCSOFTCHECK(rcl_publisher_fini(&humidity_publisher, &node));
+    }
 #endif
     RCSOFTCHECK(rcl_subscription_fini(&twist_subscriber, &node));
     RCSOFTCHECK(rcl_timer_fini(&control_timer));
@@ -508,6 +573,28 @@ void publishData()
         range_msg.header.stamp.sec = time_stamp.tv_sec;
         range_msg.header.stamp.nanosec = time_stamp.tv_nsec;
         RCSOFTCHECK(rcl_publish(&range_publisher, &range_msg, NULL)) });
+#endif
+#if defined(USE_BMP280)
+    if (env_present)
+        EXECUTE_EVERY_N_MS(ENV_TIMER, {
+            EnvData e = readEnv();
+            if (e.valid)
+            {
+                pressure_msg.header.stamp.sec = time_stamp.tv_sec;
+                pressure_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+                pressure_msg.fluid_pressure = e.pressure;
+                temperature_msg.header.stamp = pressure_msg.header.stamp;
+                temperature_msg.temperature = e.temperature;
+                RCSOFTCHECK(rcl_publish(&pressure_publisher, &pressure_msg, NULL));
+                RCSOFTCHECK(rcl_publish(&temperature_publisher, &temperature_msg, NULL));
+                if (envHasHumidity())
+                {
+                    humidity_msg.header.stamp = pressure_msg.header.stamp;
+                    humidity_msg.relative_humidity = e.humidity;
+                    RCSOFTCHECK(rcl_publish(&humidity_publisher, &humidity_msg, NULL));
+                }
+            }
+        });
 #endif
 }
 
