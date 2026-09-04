@@ -100,6 +100,18 @@ static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agen
   if (uxr_millis() - init > MS) { X; init = uxr_millis();} \
 } while (0)
 
+// Same as EXECUTE_EVERY_N_MS but the FIRST fire is delayed by PHASE ms. All
+// plain EXECUTE_EVERY_N_MS blocks seed their timer on the same publishData()
+// call, so low-rate publishers (battery, sonar, barometer) keep landing on the
+// same 50 Hz control cycle and burst into one serialization window together
+// with imu/odom/mag. Giving each a distinct PHASE (a multiple of CONTROL_TIMER,
+// and not a common divisor of the periods) spreads them onto different cycles.
+#define EXECUTE_EVERY_N_MS_PHASED(MS, PHASE, X)  do { \
+  static volatile int64_t init = -1; \
+  if (init == -1) { init = uxr_millis() - (int64_t)(MS) + (int64_t)(PHASE);} \
+  if (uxr_millis() - init > MS) { X; init = uxr_millis();} \
+} while (0)
+
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
 rcl_publisher_t mag_publisher;
@@ -563,7 +575,8 @@ void publishData()
     if (skip_dip) skip_dip--;
 #endif
     battery_msg.voltage = prev_voltage = battery_msg.voltage * 0.01 + prev_voltage * 0.99;
-    EXECUTE_EVERY_N_MS(BATTERY_TIMER, {
+    // PHASE 40 ms — keep /battery off the cycle /sonar and /pressure ride on.
+    EXECUTE_EVERY_N_MS_PHASED(BATTERY_TIMER, 40, {
         getBatteryPercentage(&battery_msg);
         RCSOFTCHECK(rcl_publish(&battery_publisher, &battery_msg, NULL)) });
 #endif
@@ -575,8 +588,10 @@ void publishData()
         RCSOFTCHECK(rcl_publish(&range_publisher, &range_msg, NULL)) });
 #endif
 #if defined(USE_BMP280)
+    // PHASE 60 ms — the barometer's 1 Hz burst lands between the /sonar (≈20 ms)
+    // and /battery (40 ms) cycles, not on top of them.
     if (env_present)
-        EXECUTE_EVERY_N_MS(ENV_TIMER, {
+        EXECUTE_EVERY_N_MS_PHASED(ENV_TIMER, 60, {
             EnvData e = readEnv();
             if (e.valid)
             {
