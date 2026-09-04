@@ -156,6 +156,10 @@ jobs:
           PLATFORMIO_BUILD_FLAGS="-D USE_MPU9250_IMU -D USE_AK8963_MAG -D LINO_BASE=MECANUM -D USE_GENERIC_2_IN_MOTOR_DRIVER" pio run -e esp32s3
           echo "== Matrix 6: ESP32 WiFi with LiDAR UDP Forwarding =="
           PLATFORMIO_BUILD_FLAGS="-D USE_LIDAR_UDP" pio run -e esp32_wifi
+          echo "== Matrix 7: ESP32 with BMP280 / BME280 Barometer =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_BMP280" pio run -e esp32
+          echo "== Matrix 8: Pico 2 with BMP280 / BME280 Barometer =="
+          PLATFORMIO_BUILD_FLAGS="-D USE_BMP280" pio run -e pico2
 
 
 
