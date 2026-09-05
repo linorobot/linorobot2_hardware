@@ -4,7 +4,7 @@ on:
   pull_request:
     # Run on PRs to rolling, main, devel, and upstream-pr branches
     branches:
-      - rolling*
+      - rolling
       - main
       - devel
       - 'upstream-pr/**'
@@ -18,7 +18,7 @@ on:
   push:
     # Run on pushes to rolling, main, devel, and upstream-pr branches
     branches:
-      - rolling*
+      - rolling
       - main
       - devel
       - 'upstream-pr/**'
@@ -36,6 +36,10 @@ on:
   # Allow manual triggering
   workflow_dispatch:
 
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   firmware:
