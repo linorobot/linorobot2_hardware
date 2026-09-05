@@ -50,6 +50,13 @@ jobs:
 
       - name: Setup ROS
         uses: ros-tooling/setup-ros@v0.7
+        env:
+          # setup-ros looks up the latest ros-apt-source release via an
+          # unauthenticated GitHub API call (60 req/hr, shared across every
+          # public runner). Passing a token here raises that to 5000/hr and
+          # avoids the intermittent "curl: (22) The requested URL returned
+          # error: 404" failure this step otherwise hits at random.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           required-ros-distributions: ${{ inputs.ros_distro }}
 
@@ -190,6 +197,13 @@ jobs:
 
       - name: Setup ROS
         uses: ros-tooling/setup-ros@v0.7
+        env:
+          # setup-ros looks up the latest ros-apt-source release via an
+          # unauthenticated GitHub API call (60 req/hr, shared across every
+          # public runner). Passing a token here raises that to 5000/hr and
+          # avoids the intermittent "curl: (22) The requested URL returned
+          # error: 404" failure this step otherwise hits at random.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           required-ros-distributions: ${{ inputs.ros_distro }}
 
