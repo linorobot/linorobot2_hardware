@@ -21,8 +21,12 @@
 
 #include <Arduino.h>
 
-#if defined(ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32C3) && !defined(CONFIG_IDF_TARGET_ESP32C6)
-#include <driver/dac.h>
+// Only the classic ESP32 and the ESP32-S2 carry a true hardware DAC.
+// ESP32-S3 / C3 / C6 / H2 (and every non-ESP32 MCU: RP2040/RP2350, Teensy…)
+// have none, so this calibration cannot run there.
+#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32S2) || \
+    (defined(ESP32) && !defined(CONFIG_IDF_TARGET_ESP32S3) && !defined(CONFIG_IDF_TARGET_ESP32C3) && \
+     !defined(CONFIG_IDF_TARGET_ESP32C6) && !defined(CONFIG_IDF_TARGET_ESP32C2) && !defined(CONFIG_IDF_TARGET_ESP32H2))
 #define HAS_HARDWARE_DAC 1
 #endif
 
@@ -37,6 +41,18 @@
 #endif
 
 #define ADC_PIN BATTERY_PIN
+
+// GPIO wired to the ADC input for the sweep. Selectable from the config engine
+// (config/custom/<robot>_config.h). Hardware DAC pins:
+//   ESP32     -> GPIO25 (DAC1, default) or GPIO26 (DAC2)
+//   ESP32-S2  -> GPIO17 (DAC1) or GPIO18 (DAC2)
+#ifndef DAC_PIN
+#if defined(CONFIG_IDF_TARGET_ESP32S2)
+#define DAC_PIN 17
+#else
+#define DAC_PIN 25
+#endif
+#endif
 
 float Results[4097];
 float Res2[4096 * 5];
@@ -70,12 +86,17 @@ void dumpRes2() {
 
 void setup() {
 #ifdef HAS_HARDWARE_DAC
-    dac_output_enable(DAC_CHANNEL_1); // pin 25
-    dac_output_voltage(DAC_CHANNEL_1, 0);
+    dacWrite(DAC_PIN, 0);   // Arduino-core pin-based DAC (ESP32 / ESP32-S2)
     analogReadResolution(12);
 #endif
     Serial.begin(BAUDRATE);
     delay(1000);
+#ifdef HAS_HARDWARE_DAC
+    Serial.print(F("DAC output pin: GPIO"));
+    Serial.print(DAC_PIN);
+    Serial.print(F("  ADC input pin: GPIO"));
+    Serial.println(ADC_PIN);
+#endif
 }
 
 void loop() {
@@ -84,7 +105,7 @@ void loop() {
     for (int j = 0; j < 500; j++) {
         if (j % 100 == 0) Serial.print(".");
         for (int i = 0; i < 256; i++) {
-            dac_output_voltage(DAC_CHANNEL_1, (i & 0xff));
+            dacWrite(DAC_PIN, (i & 0xff));
             delayMicroseconds(100);
             Results[i * 16] = 0.9 * Results[i * 16] + 0.1 * analogRead(ADC_PIN);
         }
@@ -138,7 +159,7 @@ void loop() {
     Serial.println((int)Results[4095]);
     Serial.println("};");
 #else
-    Serial.println(F("ADC calibration LUT generation is only supported on ESP32 MCUs with hardware DAC."));
+    Serial.println(F("ADC calibration LUT generation needs a hardware DAC - only the ESP32 and ESP32-S2 have one."));
 #endif
 
     while (1) {
