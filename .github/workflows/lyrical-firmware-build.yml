@@ -3,7 +3,7 @@ name: ROS Lyrical Firmware Build
 on:
   pull_request:
     branches:
-      - lyrical*
+      - lyrical
       - main
       - devel
       - 'upstream-pr/**'
@@ -15,7 +15,7 @@ on:
   
   push:
     branches:
-      - lyrical*
+      - lyrical
       - main
       - devel
       - 'upstream-pr/**'
