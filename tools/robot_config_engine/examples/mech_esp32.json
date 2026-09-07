@@ -1,0 +1,78 @@
+{
+  "robot_name": "mech_esp32",
+  "kinematics": "MECANUM",
+  "mcu": "ESP32",
+  "transport": "WIFI_UDP",
+  "wifi_settings": {
+    "ssid": "YOUR_WIFI_SSID",
+    "password": "YOUR_WIFI_PASSWORD",
+    "agent_ip": "192.168.1.100",
+    "agent_port": 8888
+  },
+  "geometry": {
+    "wheel_diameter": 0.08,
+    "track_width": 0.28,
+    "wheelbase": 0.24,
+    "weight": 5.0
+  },
+  "motors": {
+    "driver_type": "GENERIC_2_IN",
+    "max_rpm": 300,
+    "cpr": 1500,
+    "operating_voltage": 12.0,
+    "rated_torque": 2.5,
+    "rated_voltage": 12.0
+  },
+  "sensors": {
+    "imu": "BNO085",
+    "mag": "NONE",
+    "battery_monitor": "INA219",
+    "battery_nominal_voltage": 11.1,
+    "battery_capacity": 5.0,
+    "battery_min_voltage": 9.0,
+    "battery_max_voltage": 12.6,
+    "battery_dip": 0.98
+  },
+  "pins": {
+    "led": 2,
+    "motor1": {
+      "pwm": 13,
+      "in_a": 14,
+      "in_b": 27
+    },
+    "motor2": {
+      "pwm": 25,
+      "in_a": 26,
+      "in_b": 33
+    },
+    "motor3": {
+      "pwm": 18,
+      "in_a": 19,
+      "in_b": 23
+    },
+    "motor4": {
+      "pwm": 15,
+      "in_a": 16,
+      "in_b": 17
+    },
+    "encoders": {
+      "m1_a": 34,
+      "m1_b": 35,
+      "m2_a": 36,
+      "m2_b": 39,
+      "m3_a": 4,
+      "m3_b": 32,
+      "m4_a": 5,
+      "m4_b": 12
+    },
+    "i2c": {
+      "sda": 21,
+      "scl": 22
+    },
+    "battery_pin": 36,
+    "sonar": {
+      "trig": 0,
+      "echo": 0
+    }
+  }
+}

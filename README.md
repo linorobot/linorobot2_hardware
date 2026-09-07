@@ -74,6 +74,91 @@ Micro-ROS over wifi is supported by the downstream hippo5329
 and [linorobot2_hardware](https://github.com/hippo5329/linorobot2_hardware)
 repos.
 
+---
+
+## Robot Configuration Engine & Web UI Studio
+
+`tools/robot_config_engine/` contains a browser-based configuration studio and a
+Python engine that generate a `linorobot2_hardware` setup from a guided form:
+hardware-rule validation, ADC divider / voltage safety checks, kinematics
+figures, and code generation for the C++ config header, the `[env:<robot>]`
+`platformio.ini` section, and the ROS 2 URDF xacro.
+
+### 3-step quick start
+
+1. **Start the server** (stdlib only, ~30-40 MB RAM):
+   ```bash
+   cd tools/robot_config_engine/web
+   python3 server.py 8000
+   ```
+2. **Open the studio** at `http://localhost:8000` (or `http://<robot-ip>:8000`
+   from another machine on the network).
+3. **Configure and deploy.** Pick a board or let it auto-detect from the USB
+   VID:PID, set wheel geometry, driver, sensors and pins with a live preview of
+   the generated code, then **Run Full Deploy** to merge the config, build the
+   firmware, flash the MCU and start `micro_ros_agent`.
+
+The generated `config/custom/<robot>_config.h` remains the single source of
+truth; WiFi credentials are written only to the git-ignored
+`config/custom/wifi_config.h`.
+
+### Start with a simulated robot, before you wire anything
+
+You do not need motors, encoders or a LiDAR to get a robot driving and mapping.
+Every reference build starts in **simulation mode**, and two designs are set up
+for a board sitting on a desk with nothing attached to it:
+
+| Reference build | Transport | Gives you |
+| :--- | :--- | :--- |
+| **Simulated Robot · Waveshare GenDrv** | USB serial | Simulated wheels + simulated LD19 scan over the LiDAR UART |
+| **Simulated Robot · ESP32** | WiFi + LiDAR UDP | The same, with the scan delivered over WiFi UDP — no LiDAR pin or cable at all |
+
+The firmware simulates the drivetrain (`USE_FAKE_WHEEL`) and the LiDAR
+(`USE_FAKE_LD19`): `cmd_vel` drives modelled wheels whose encoders report back
+through the real PID, and a raycaster produces a `/scan` of a simple room. So
+`/odom/unfiltered`, `/imu/data` and `/scan` all behave like a real robot.
+
+The simulated scan reaches ROS 2 one of two ways. Over **WiFi UDP** it needs no
+wiring at all. Over **serial** it is transmitted as ordinary LD19 packets from
+the `LIDAR_RXD` pin — the same line a real LD19 would feed in on — so read it
+with a USB-TTL adapter on that pin. The studio warns you if fake LD19 is on with
+neither route configured, because the firmware would run happily and never
+publish a scan.
+
+Flash one of these, then open the **[Linorobot2
+Console](https://github.com/linorobot/linorobot2)** on the robot computer and go
+straight to **teleop, SLAM and Nav2** — drive it with the on-screen virtual
+gamepad, watch it in the Teleop RViz view, build a map and save it. Nothing is
+wired, and the whole ROS 2 stack is exercised end to end.
+
+That gives you a working baseline before hardware is involved, so when a real
+motor later misbehaves you already know the software side is sound.
+
+> [!WARNING]
+> **Turn simulation off before flashing a real robot.** A simulated config looks
+> completely normal from the outside and publishes plausible topics, so a wired
+> robot flashed with it will sit still while `/odom` insists it is driving.
+> Untick **Fake wheel mode** and **Fake LD19 LiDAR Mode** in *Robot Geometry →
+> Simulation* (or press **Turn off simulation** in the orange banner) once the
+> drivetrain and LiDAR are actually connected. The generated header also carries
+> a `SIMULATION MODE IS ENABLED` warning while either is on.
+
+A newly detected module defaults to fake wheel mode for the same reason — a
+board that was just plugged in is rarely a wired robot yet. Your own choice is
+never overridden once you touch either simulation control.
+
+There is also a CLI:
+
+```bash
+python3 tools/robot_config_engine/generate_config.py spec.json --out-dir ./out/
+python3 tools/robot_config_engine/generate_config.py spec.json --merge
+```
+
+See `tools/robot_config_engine/README.md` and `schema.json` for the spec format,
+and `examples/` for sample specs.
+
+---
+
 ## Installation
 All software mentioned in this guide must be installed on the robot computer.
 
@@ -417,6 +502,100 @@ Constants' Meaning:
 
 - **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
+### FAKE WHEEL MODE (SIMULATED DRIVETRAIN)
+
+- **USE_FAKE_WHEEL** - Simulate the drivetrain on the board itself, so a bare module with no
+motors, drivers or encoders attached behaves like a robot. `cmd_vel` drives simulated wheels
+whose encoders report back to the PID, so `/odom/unfiltered` and `/imu/data` move as they would
+on real hardware and you can run teleop, SLAM or navigation against the board alone. Undefined by
+default; the motor drivers still receive their PWM, and the kinematics, PID and odometry are all
+still exercised.
+
+Each wheel is modelled as a DC motor driving a share of the robot's mass: driving torque falls
+off as back-EMF rises, acceleration is limited, friction opposes motion, and a stall band keeps a
+weak duty from creeping. So the wheels accelerate from rest, tail off near top speed, and coast
+down when power is cut, more slowly on a heavier robot. The reported RPM carries noise, which
+gives the PID real error to correct and makes the odometry drift as it does on hardware. The
+simulated IMU is derived from the same motion, so the accelerometer and gyroscope agree with the
+wheel encoders.
+
+        #define USE_FAKE_WHEEL
+
+Optional tuning, all with defaults:
+
+- **FAKE_ROBOT_MASS** - Simulated mass in kg. Defaults to `ROBOT_WEIGHT` when defined, so a
+heavier robot accelerates more slowly.
+- **FAKE_WHEEL_TAU_MS** - Spin-up time constant in milliseconds at the reference mass.
+- **FAKE_WHEEL_MAX_ACCEL_RPM** - Traction and current limit, in RPM per second.
+- **FAKE_WHEEL_FRICTION** - Viscous drag, as a fraction of the current RPM per second.
+- **FAKE_WHEEL_NOISE_RPM** - Peak encoder noise in RPM.
+- **FAKE_IMU_ACCEL_NOISE** / **FAKE_IMU_GYRO_NOISE** - Peak simulated IMU noise.
+
+Encoder pins still select which wheels exist: a motor whose encoder pins are unset stays at zero
+RPM, so a 2WD configuration simulates two wheels and not four.
+
+### FAKE LD19 LIDAR MODE (SIMULATED LASER)
+
+- **USE_FAKE_LD19** - Embeds a real-time, 2D geometric raycasting LiDAR emulator in the
+firmware. Raycasts against a configurable rectangular room and optional interior obstacle
+wall, outputting authentic 47-byte LDROBOT LD19 binary packets (`0x54 0x2C` header, 12 distance
+points, start/end angles, CRC8 checksum) at 10 Hz / 230,400 baud over `LIDAR_RXD` (or over Wi-Fi
+UDP port 8889 if `USE_LIDAR_UDP` is defined).
+
+When combined with `USE_FAKE_WHEEL`, the laser scan updates dynamically as the robot navigates
+in response to `cmd_vel`, allowing complete SLAM mapping, map saving, and Nav2 navigation on a
+bare module without physical motors, drivers or LiDAR.
+
+        #define USE_FAKE_LD19
+
+Optional room and obstacle parameters, all with defaults:
+
+- **FAKE_MAP_WIDTH** / **FAKE_MAP_HEIGHT** - Dimensions of the simulated boundary room in meters
+  (defaults: 6.0m x 4.0m, centered at origin).
+- **FAKE_WALL_OBSTACLE** - Set to 1 to enable the interior obstacle wall, 0 to disable (default: 1).
+- **FAKE_WALL_X1**, **FAKE_WALL_Y1**, **FAKE_WALL_X2**, **FAKE_WALL_Y2** - Coordinates of the obstacle
+  wall in meters (defaults: from (1.0, -0.8) to (1.0, 0.8), a 1.6m barrier positioned 1.0m ahead).
+- **LIDAR_RXD** - Microcontroller pin used to emit the packet stream (defaults to board LiDAR RXD pin).
+- **LIDAR_BAUDRATE** - Serial baud rate (default: 230400).
+
+#### Application: Waveshare GenDrv as a Self-Contained Fake Robot
+
+The Waveshare General Driver Board (`gendrv` ESP32) is ideal for fake robot bench testing because
+it includes two onboard USB serial bridges:
+- **Port 1 (`/dev/ttyUSB0`)**: micro-ROS high-speed serial transport @ 1.5M baud (`-D BAUDRATE=1500000`).
+- **Port 2 (`/dev/ttyUSB1`)**: LD19 LiDAR serial stream @ 230,400 baud (`LIDAR_BAUDRATE 230400`).
+
+With the same physical wiring as LiDAR UDP forwarding (GPIO 4 connected to the onboard second USB
+bridge RX, or streamed over Wi-Fi UDP), a bare GenDrv board acts as a complete simulated robot:
+
+1. **Dual-Channel Serial Mode (1.5M Baud)**:
+   - micro-ROS agent runs over USB serial at 1.5M baud:
+     ```bash
+     ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 1500000
+     ```
+   - Standard `ldlidar_stl_ros2` node connects to `/dev/ttyUSB1` @ 230,400 baud:
+     ```bash
+     ros2 run ldlidar_stl_ros2 ldlidar_stl_ros2_node --ros-args \
+       -p product_name:=LDLiDAR_LD19 -p port_name:=/dev/ttyUSB1 -p port_baudrate:=230400 \
+       -p frame_id:=laser -p topic_name:=scan
+     ```
+
+2. **Wireless Wi-Fi UDP Transport Mode**:
+   - micro-ROS bridges over Wi-Fi UDP to port 8888:
+     ```bash
+     ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+     ```
+   - Fake LD19 streams batched UDP packets (141 bytes = 3 packets/frame) to port 8889:
+     ```bash
+     ros2 run ldlidar_stl_ros2 ldlidar_stl_ros2_node --ros-args \
+       -p product_name:=LDLiDAR_LD19 -p comm_mode:=udp_server \
+       -p server_ip:=0.0.0.0 -p server_port:=8889 \
+       -p frame_id:=laser -p topic_name:=scan
+     ```
+
+3. **Autonomous Navigation**:
+   Launch `slam_toolbox` or Nav2 directly on your workstation or robot SBC. Driving the fake robot via `/cmd_vel` advances odometry and updates the simulated laser scan against the room walls and barrier obstacle in real time.
+
 ### 2. Hardware Pin Assignments
 Only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
 
@@ -535,6 +714,34 @@ IMU ACC   2.38  -2.41 m/s2
 time to 0.9x max vel   0.24 sec
 distance to stop   0.04 m
 ```
+
+## I2C Sensor Scanner (`tools/i2c_detect`)
+
+`tools/i2c_detect/` is a small PlatformIO sketch that scans the I2C bus at
+400 kHz, probes `WHO_AM_I` / ID registers for the common robotics sensors, and
+prints the result (human-readable and as JSON) over serial. Use it to bring up a
+bare board before any sensor is configured.
+
+```bash
+cd tools/i2c_detect
+pio run -e <your_board> -t upload   # pico2 / pico / esp32 / esp32s3 / gendrv
+```
+
+Recognised signatures include: IMUs `QMI8658`, `MPU6050/9250/6500`,
+`BNO085/BNO080`, `BNO055`, `ADXL345`+`ITG3200` (GY-85); magnetometers `AK09918`,
+`AK8963/AK8975`, `QMC5883L`, `HMC5883L`; power monitors `INA219`/`INA226`
+(incl. the Waveshare GenDrv at `0x42`); barometers `BMP280`/`BME280`.
+
+In the Web UI studio, **Tab 3 → Auto-Detect Sensors** runs this probe and
+selects the matching drivers automatically.
+
+### UDP syslog server
+
+The studio server can also run a UDP syslog receiver for boards configured with
+wireless telemetry: `POST /api/syslog/start` (default port 514, falls back to
+5140 when unprivileged), `POST /api/syslog/stop`, `GET /api/syslog/status`,
+`GET /api/syslog/stream` (SSE), `GET /api/syslog/logs`. Received datagrams are
+streamed to the console and written to `logs/syslog_YYYYMMDD.log`.
 
 ## ESP32 ADC Calibration Utility (`adc_calibrate`)
 

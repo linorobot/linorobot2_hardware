@@ -1,0 +1,79 @@
+name: Robot Config Engine & i2c_detect CI
+
+# Standalone CI for the browser Robot Configuration Engine and the i2c_detect
+# scanner. Deliberately independent of the firmware / diagnostics build matrix:
+# it only runs the config-engine unit tests and a PlatformIO compile of
+# tools/i2c_detect, and only when files under tools/ (or this workflow) change.
+
+on:
+  pull_request:
+    paths:
+      - 'tools/robot_config_engine/**'
+      - 'tools/i2c_detect/**'
+      - '.github/workflows/config-engine-ci.yml'
+  push:
+    paths:
+      - 'tools/robot_config_engine/**'
+      - 'tools/i2c_detect/**'
+      - '.github/workflows/config-engine-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  config-engine-tests:
+    name: Robot Config Engine unit tests
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run unit tests (stdlib only)
+        working-directory: tools/robot_config_engine
+        run: python3 -m unittest discover -v
+
+      - name: Generator / validator CLI smoke test
+        working-directory: tools/robot_config_engine
+        run: |
+          for spec in examples/*.json; do
+            echo "== $spec =="
+            python3 generate_config.py "$spec" > /dev/null
+          done
+
+      - name: Byte-compile all engine + server sources
+        working-directory: tools/robot_config_engine
+        run: python3 -m compileall -q .
+
+      - name: Web UI static asset sanity
+        working-directory: tools/robot_config_engine/web
+        run: |
+          test -f index.html && test -f app.js && test -f style.css && test -f server.py
+          # server.py must import cleanly without starting the listener
+          python3 -c "import ast; ast.parse(open('server.py').read())"
+          node --check app.js
+
+  i2c-detect-build:
+    name: Build tools/i2c_detect (PlatformIO)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          path: repo
+
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ~/.cache/pip
+            ~/.platformio/.cache
+          key: ${{ runner.os }}-pio-i2c-detect
+
+      - name: Install PlatformIO
+        uses: ./repo/.github/actions/platformio-env
+
+      - name: Compile i2c_detect for pico2 / esp32 / gendrv
+        shell: bash
+        working-directory: repo/tools/i2c_detect
+        run: |
+          export PATH=$PATH:~/.platformio/penv/bin
+          pio run -e pico2 -e esp32 -e gendrv
