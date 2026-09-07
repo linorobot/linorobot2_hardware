@@ -48,14 +48,38 @@ jobs:
         run: |
           pip install osrf_pycommon pyyaml
 
+      # Work around ros-tooling/setup-ros issue #892: setup-ros queries api.github.com
+      # without authentication, hitting 60 req/hr IP rate limits across public runners
+      # and causing intermittent 404 download failures. Pre-installing ros2-apt-source
+      # with GITHUB_TOKEN (and fallback) lets setup-ros detect the repo and skip that step.
+      - name: Pre-install ROS apt source
+        shell: bash
+        run: |
+          CODENAME=$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})
+          PKG="ros2-apt-source"
+          if [ "$CODENAME" = "focal" ]; then
+            PKG="ros-apt-source"
+          fi
+          if ! dpkg -l "$PKG" >/dev/null 2>&1; then
+            AUTH_HEADER=()
+            if [ -n "$GITHUB_TOKEN" ]; then
+              AUTH_HEADER=(-H "Authorization: Bearer $GITHUB_TOKEN")
+            fi
+            VER=$(curl -s "${AUTH_HEADER[@]}" https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | { grep -F "tag_name" || true; } | awk -F'"' '{print $4}')
+            VER=${VER:-1.2.0}
+            DEB="${PKG}_${VER}.${CODENAME}_all.deb"
+            URL="https://github.com/ros-infrastructure/ros-apt-source/releases/download/${VER}/${DEB}"
+            echo "Pre-installing ${PKG} (${VER}) for ${CODENAME}..."
+            curl --fail --location --retry 3 --retry-delay 2 -o "/tmp/${PKG}.deb" "${URL}"
+            sudo dpkg -i "/tmp/${PKG}.deb"
+            rm -f "/tmp/${PKG}.deb"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup ROS
         uses: ros-tooling/setup-ros@v0.7
         env:
-          # setup-ros looks up the latest ros-apt-source release via an
-          # unauthenticated GitHub API call (60 req/hr, shared across every
-          # public runner). Passing a token here raises that to 5000/hr and
-          # avoids the intermittent "curl: (22) The requested URL returned
-          # error: 404" failure this step otherwise hits at random.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           required-ros-distributions: ${{ inputs.ros_distro }}
@@ -195,14 +219,38 @@ jobs:
         run: |
           pip install osrf_pycommon pyyaml
 
+      # Work around ros-tooling/setup-ros issue #892: setup-ros queries api.github.com
+      # without authentication, hitting 60 req/hr IP rate limits across public runners
+      # and causing intermittent 404 download failures. Pre-installing ros2-apt-source
+      # with GITHUB_TOKEN (and fallback) lets setup-ros detect the repo and skip that step.
+      - name: Pre-install ROS apt source
+        shell: bash
+        run: |
+          CODENAME=$(. /etc/os-release && echo ${UBUNTU_CODENAME:-${VERSION_CODENAME}})
+          PKG="ros2-apt-source"
+          if [ "$CODENAME" = "focal" ]; then
+            PKG="ros-apt-source"
+          fi
+          if ! dpkg -l "$PKG" >/dev/null 2>&1; then
+            AUTH_HEADER=()
+            if [ -n "$GITHUB_TOKEN" ]; then
+              AUTH_HEADER=(-H "Authorization: Bearer $GITHUB_TOKEN")
+            fi
+            VER=$(curl -s "${AUTH_HEADER[@]}" https://api.github.com/repos/ros-infrastructure/ros-apt-source/releases/latest | { grep -F "tag_name" || true; } | awk -F'"' '{print $4}')
+            VER=${VER:-1.2.0}
+            DEB="${PKG}_${VER}.${CODENAME}_all.deb"
+            URL="https://github.com/ros-infrastructure/ros-apt-source/releases/download/${VER}/${DEB}"
+            echo "Pre-installing ${PKG} (${VER}) for ${CODENAME}..."
+            curl --fail --location --retry 3 --retry-delay 2 -o "/tmp/${PKG}.deb" "${URL}"
+            sudo dpkg -i "/tmp/${PKG}.deb"
+            rm -f "/tmp/${PKG}.deb"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Setup ROS
         uses: ros-tooling/setup-ros@v0.7
         env:
-          # setup-ros looks up the latest ros-apt-source release via an
-          # unauthenticated GitHub API call (60 req/hr, shared across every
-          # public runner). Passing a token here raises that to 5000/hr and
-          # avoids the intermittent "curl: (22) The requested URL returned
-          # error: 404" failure this step otherwise hits at random.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           required-ros-distributions: ${{ inputs.ros_distro }}
