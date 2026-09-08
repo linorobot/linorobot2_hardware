@@ -25,6 +25,7 @@
 #include <sensor_msgs/msg/magnetic_field.h>
 #include <sensor_msgs/msg/battery_state.h>
 #include <sensor_msgs/msg/range.h>
+#include <std_msgs/msg/bool.h>
 #include <geometry_msgs/msg/twist.h>
 #include <geometry_msgs/msg/vector3.h>
 
@@ -39,6 +40,10 @@
 #define ENCODER_USE_INTERRUPTS
 #define ENCODER_OPTIMIZE_INTERRUPTS
 #include "encoder.h"
+#include "fake_wheel.h"
+#ifdef USE_FAKE_LD19
+#include "fake_ld19.h"
+#endif
 #include "battery.h"
 #include "range.h"
 #include "lidar.h"
@@ -92,11 +97,25 @@ static inline void set_microros_net_transports(IPAddress agent_ip, uint16_t agen
   if (uxr_millis() - init > MS) { X; init = uxr_millis();} \
 } while (0)
 
+// mag.h falls back to FakeMAG and defines USE_FAKE_MAG whenever no magnetometer
+// chip is configured, and the topic is then left out entirely. But fake wheel
+// mode synthesises a real field from the simulated heading, hard-iron bias and
+// all, which is exactly what a calibration run needs -- so publish it there
+// even though no chip is present.
+#if !defined(USE_FAKE_MAG) || defined(USE_FAKE_WHEEL)
+#define PUBLISH_MAG
+#endif
+
 rcl_publisher_t odom_publisher;
 rcl_publisher_t imu_publisher;
 rcl_publisher_t mag_publisher;
 rcl_subscription_t twist_subscriber;
 rcl_publisher_t battery_publisher;
+#ifdef USE_SAFETY_STOP
+rcl_publisher_t safety_stop_publisher;
+std_msgs__msg__Bool safety_stop_msg;
+bool safety_stopped = false;
+#endif
 rcl_publisher_t range_publisher;
 
 nav_msgs__msg__Odometry odom_msg;
@@ -125,10 +144,17 @@ enum states
   AGENT_DISCONNECTED
 } state;
 
-Encoder motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
-Encoder motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
-Encoder motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, COUNTS_PER_REV3, MOTOR3_ENCODER_INV);
-Encoder motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, COUNTS_PER_REV4, MOTOR4_ENCODER_INV);
+#ifdef USE_FAKE_WHEEL
+FakeIMUFromWheels fake_imu;
+#endif
+#ifdef USE_FAKE_LD19
+FakeLD19 fake_ld19;
+#endif
+
+ENCODER motor1_encoder(MOTOR1_ENCODER_A, MOTOR1_ENCODER_B, COUNTS_PER_REV1, MOTOR1_ENCODER_INV);
+ENCODER motor2_encoder(MOTOR2_ENCODER_A, MOTOR2_ENCODER_B, COUNTS_PER_REV2, MOTOR2_ENCODER_INV);
+ENCODER motor3_encoder(MOTOR3_ENCODER_A, MOTOR3_ENCODER_B, COUNTS_PER_REV3, MOTOR3_ENCODER_INV);
+ENCODER motor4_encoder(MOTOR4_ENCODER_A, MOTOR4_ENCODER_B, COUNTS_PER_REV4, MOTOR4_ENCODER_INV);
 
 Motor motor1_controller(PWM_FREQUENCY, PWM_BITS, MOTOR1_INV, MOTOR1_PWM, MOTOR1_IN_A, MOTOR1_IN_B);
 Motor motor2_controller(PWM_FREQUENCY, PWM_BITS, MOTOR2_INV, MOTOR2_PWM, MOTOR2_IN_A, MOTOR2_IN_B);
@@ -174,6 +200,14 @@ void setup()
 
     initWifis();
     initOta();
+#ifdef USE_FAKE_WHEEL
+    // A bare module has nothing on the I2C bus, so probing it would fail and
+    // the fatal loops below would trap the board before it ever connects. The
+    // simulated IMU and magnetometer are computed from the simulated wheels
+    // anyway, and would overwrite whatever a real sensor returned -- so skip
+    // the hardware entirely and just prepare the two messages.
+    fake_imu.initMsgs(imu_msg, mag_msg);
+#else
     bool imu_ok = imu.init();
     if (!imu_ok) // take IMU failure as fatal
     {
@@ -198,9 +232,22 @@ void setup()
             runOta();
         }
     }
+#endif
     initBattery();
     initRange();
+#if defined(USE_FAKE_SONAR) && defined(USE_FAKE_LD19)
+    // initRange() only sets this up when a real sensor is compiled in
+    range_msg.header.frame_id =
+        micro_ros_string_utilities_set(range_msg.header.frame_id, "sonar_link");
+#endif
     initLidar(); // after wifi connected
+#ifdef USE_FAKE_LD19
+#ifdef LIDAR_RXD
+    fake_ld19.begin(LIDAR_RXD, LIDAR_BAUDRATE);
+#else
+    fake_ld19.begin();
+#endif
+#endif
     battery_msg = getBattery();
     prev_voltage = battery_msg.voltage;
 
@@ -216,7 +263,45 @@ void setup()
     syslog(LOG_INFO, "%s Ready %lu", __FUNCTION__, millis());
 }
 
+#ifdef USE_FAKE_LD19
+// Simulated wall contact indicator.
+//
+// LED_PIN may be -1 on boards with no addressable status LED, or LED_BUILTIN,
+// which is a non-macro identifier the preprocessor evaluates as 0 -- so the
+// guard is "defined and >= 0" and LED_BUILTIN boards stay enabled.
+//
+// The flash is timed rather than delayed: this runs inside the 50 Hz control
+// path, and a delay() here would stall the whole loop.
+#if defined(LED_PIN) && (LED_PIN) >= 0
+#define FAKE_WALL_LED
+#endif
+
+static unsigned long fake_wall_led_off_at = 0;
+
+static inline void fakeWallLedOn()
+{
+#ifdef FAKE_WALL_LED
+    digitalWrite(LED_PIN, HIGH);
+    fake_wall_led_off_at = millis() + 120;
+#endif
+}
+
+static inline void fakeWallLedService()
+{
+#ifdef FAKE_WALL_LED
+    if (fake_wall_led_off_at != 0 && (long)(millis() - fake_wall_led_off_at) >= 0)
+    {
+        digitalWrite(LED_PIN, LOW);
+        fake_wall_led_off_at = 0;
+    }
+#endif
+}
+#endif
+
 void loop() {
+#ifdef USE_FAKE_LD19
+    fakeWallLedService();
+#endif
     switch (state) 
     {
         case WAITING_AGENT:
@@ -255,6 +340,9 @@ void loop() {
 #endif
 #ifdef BOARD_LOOP // board specific loop
     BOARD_LOOP
+#endif
+#ifdef USE_FAKE_LD19
+    fake_ld19.step();
 #endif
 }
 
@@ -296,13 +384,13 @@ bool createEntities()
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu),
     // if we have magnetomter, use imu/data_raw for madgwick filter
-#ifndef USE_FAKE_MAG
+#ifdef PUBLISH_MAG
         TOPIC_PREFIX "imu/data_raw"
 #else
         TOPIC_PREFIX "imu/data"
 #endif
     ));
-#ifndef USE_FAKE_MAG
+#ifdef PUBLISH_MAG
     RCCHECK(rclc_publisher_init_default(
         &mag_publisher,
         &node,
@@ -319,7 +407,18 @@ bool createEntities()
     TOPIC_PREFIX "battery"
     ));
 #endif
-#ifdef ECHO_PIN
+#ifdef USE_SAFETY_STOP
+    // Tells ROS the robot stopped itself. The stop is a firmware reflex -- it
+    // has to keep working when the ROS side is busy, wedged or disconnected --
+    // so this publisher only reports the state, it never decides it.
+    RCCHECK(rclc_publisher_init_default(
+    &safety_stop_publisher,
+    &node,
+    ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Bool),
+    TOPIC_PREFIX "safety_stop"
+    ));
+#endif
+#if defined(ECHO_PIN) || (defined(USE_FAKE_SONAR) && defined(USE_FAKE_LD19))
     // create range pyblisher
     RCCHECK(rclc_publisher_init_default(
     &range_publisher,
@@ -370,13 +469,16 @@ bool destroyEntities()
 
     RCSOFTCHECK(rcl_publisher_fini(&odom_publisher, &node));
     RCSOFTCHECK(rcl_publisher_fini(&imu_publisher, &node));
-#ifndef USE_FAKE_MAG
+#ifdef PUBLISH_MAG
     RCSOFTCHECK(rcl_publisher_fini(&mag_publisher, &node));
 #endif
 #if defined(BATTERY_PIN) || defined(USE_INA219)
     RCSOFTCHECK(rcl_publisher_fini(&battery_publisher, &node));
 #endif
-#ifdef ECHO_PIN
+#ifdef USE_SAFETY_STOP
+    RCSOFTCHECK(rcl_publisher_fini(&safety_stop_publisher, &node));
+#endif
+#if defined(ECHO_PIN) || (defined(USE_FAKE_SONAR) && defined(USE_FAKE_LD19))
     RCSOFTCHECK(rcl_publisher_fini(&range_publisher, &node));
 #endif
     RCSOFTCHECK(rcl_subscription_fini(&twist_subscriber, &node));
@@ -402,6 +504,27 @@ void fullStop()
     motor4_controller.brake();
 }
 
+#ifdef USE_SAFETY_STOP
+#ifndef SAFETY_STOP_RANGE
+#define SAFETY_STOP_RANGE 0.25f     // metres ahead before forward motion is cut
+#endif
+
+// Forward range from whichever sensor is compiled in, or -1 when there is none
+// to consult -- in which case nothing is blocked, because a missing sensor must
+// not brake the robot.
+static inline float rangeAheadOrNegative()
+{
+#if defined(USE_FAKE_SONAR) && defined(USE_FAKE_LD19)
+    return fake_ld19.rangeAheadM();
+#elif defined(ECHO_PIN)
+    const float r = getRange().range;
+    return isfinite(r) ? r : -1.0f;
+#else
+    return -1.0f;
+#endif
+}
+#endif
+
 void moveBase()
 {
     // brake if there's no command received, or when it's only the first command sent
@@ -413,6 +536,32 @@ void moveBase()
 
         digitalWrite(LED_PIN, HIGH);
     }
+
+#ifdef USE_SAFETY_STOP
+    // Forward hazard stop, decided here rather than in ROS. A stop that has to
+    // travel out on a topic, be reasoned about, and come back as cmd_vel is one
+    // network round trip too slow, and does nothing at all if the ROS side is
+    // wedged or the link drops. This runs every control cycle regardless.
+    //
+    // Only forward motion is blocked: reverse and rotation stay available, or
+    // the robot would be stuck against the obstacle with no way to back off.
+    {
+        const float range = rangeAheadOrNegative();
+        const bool blocked = (range >= 0.0f) && (range < (float)SAFETY_STOP_RANGE);
+        if (blocked && twist_msg.linear.x > 0.0)
+        {
+            twist_msg.linear.x = 0.0;
+            twist_msg.linear.y = 0.0;
+        }
+        if (blocked != safety_stopped)
+        {
+            safety_stopped = blocked;
+            syslog(LOG_INFO, "%s safety stop %s at %.2f m %lu", __FUNCTION__,
+                   blocked ? "engaged" : "cleared", range, millis());
+        }
+    }
+#endif
+
     // get the required rpm for each motor based on required velocities, and base used
     Kinematics::rpm req_rpm = kinematics.getRPM(
         twist_msg.linear.x, 
@@ -428,10 +577,21 @@ void moveBase()
 
     // the required rpm is capped at -/+ MAX_RPM to prevent the PID from having too much error
     // the PWM value sent to the motor driver is the calculated PID based on required RPM vs measured RPM
-    motor1_controller.spin(motor1_pid.compute(req_rpm.motor1, current_rpm1));
-    motor2_controller.spin(motor2_pid.compute(req_rpm.motor2, current_rpm2));
-    motor3_controller.spin(motor3_pid.compute(req_rpm.motor3, current_rpm3));
-    motor4_controller.spin(motor4_pid.compute(req_rpm.motor4, current_rpm4));
+    int pwm1 = motor1_pid.compute(req_rpm.motor1, current_rpm1);
+    int pwm2 = motor2_pid.compute(req_rpm.motor2, current_rpm2);
+    int pwm3 = motor3_pid.compute(req_rpm.motor3, current_rpm3);
+    int pwm4 = motor4_pid.compute(req_rpm.motor4, current_rpm4);
+    motor1_controller.spin(pwm1);
+    motor2_controller.spin(pwm2);
+    motor3_controller.spin(pwm3);
+    motor4_controller.spin(pwm4);
+#ifdef USE_FAKE_WHEEL
+    // close the loop in software: the simulated wheels follow the commanded PWM
+    motor1_encoder.feed(pwm1);
+    motor2_encoder.feed(pwm2);
+    motor3_encoder.feed(pwm3);
+    motor4_encoder.feed(pwm4);
+#endif
 
     Kinematics::velocities current_vel = kinematics.getVelocities(
         current_rpm1, 
@@ -449,17 +609,68 @@ void moveBase()
         current_vel.linear_y, 
         current_vel.angular_z
     );
+#ifdef USE_FAKE_LD19
+    // Stop the simulated robot at the simulated walls, and correct the
+    // odometry to match, so /odom and /scan never disagree about where it is.
+    float fake_x = odometry.getX();
+    float fake_y = odometry.getY();
+    bool hit_wall = fake_ld19.clampToRoom(fake_x, fake_y);
+    if (hit_wall)
+        odometry.setPosition(fake_x, fake_y);
+    fake_ld19.updatePose(fake_x, fake_y, odometry.getHeading());
+#else
+    const bool hit_wall = false;
+#endif
+#ifdef USE_FAKE_WHEEL
+    // The IMU rides on how the body actually moved, which is not what the
+    // wheels claim once the robot is against a wall. Real hardware behaves the
+    // same way: the wheels slip and keep reporting speed, while the IMU feels
+    // no acceleration and the robot goes nowhere. Keeping that disagreement is
+    // the only feedback there is that something was hit -- there is no bump
+    // sensor, and odometry velocity alone never reveals it. Rotation survives,
+    // since a robot pinned against a wall can still turn on the spot.
+    fake_imu.update(
+        hit_wall ? 0.0f : current_vel.linear_x,
+        hit_wall ? 0.0f : current_vel.linear_y,
+        current_vel.angular_z,
+        vel_dt
+    );
+    fake_imu.setHeading(odometry.getHeading());
+#endif
+#ifdef USE_FAKE_LD19
+    // Announce the contact once, on the way in. Driving into a wall holds the
+    // clamp active for as long as the command lasts, so logging every 20 ms
+    // cycle would bury the syslog in identical lines.
+    static bool was_clamped = false;
+    if (hit_wall && !was_clamped)
+    {
+        syslog(LOG_INFO, "%s fake wall contact at x %.2f y %.2f %lu",
+               __FUNCTION__, fake_x, fake_y, millis());
+        fakeWallLedOn();
+    }
+    was_clamped = hit_wall;
+#endif
 }
 
 void publishData()
 {
     static unsigned skip_dip = 0;
     odom_msg = odometry.getData();
+#ifdef USE_FAKE_WHEEL
+    // Every field these would return is overwritten just below, and on a bare
+    // module the reads are two failing I2C transactions per publish, each one
+    // stalling the loop for the bus timeout. Skip them.
+    fake_imu.apply(imu_msg);
+    // Simulated wheels mean a simulated heading, so the magnetometer has to
+    // follow it: a real one left in the loop here would fight the fused yaw.
+    fake_imu.applyMag(mag_msg);
+#else
     imu_msg = imu.getData();
 #ifdef USE_FAKE_IMU
     imu_msg.angular_velocity.z = odom_msg.twist.twist.angular.z;
 #endif
     mag_msg = mag.getData();
+#endif
 #ifdef MAG_BIAS
     const float mag_bias[3] = MAG_BIAS;
     mag_msg.magnetic_field.x -= mag_bias[0];
@@ -475,13 +686,13 @@ void publishData()
     imu_msg.header.stamp.sec = time_stamp.tv_sec;
     imu_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 
-#ifndef USE_FAKE_MAG
+#ifdef PUBLISH_MAG
     mag_msg.header.stamp.sec = time_stamp.tv_sec;
     mag_msg.header.stamp.nanosec = time_stamp.tv_nsec;
 #endif
 
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
-#ifndef USE_FAKE_MAG
+#ifdef PUBLISH_MAG
     RCSOFTCHECK(rcl_publish(&mag_publisher, &mag_msg, NULL));
 #endif
     RCSOFTCHECK(rcl_publish(&odom_publisher, &odom_msg, NULL));
@@ -502,7 +713,25 @@ void publishData()
         getBatteryPercentage(&battery_msg);
         RCSOFTCHECK(rcl_publish(&battery_publisher, &battery_msg, NULL)) });
 #endif
-#ifdef ECHO_PIN
+#ifdef USE_SAFETY_STOP
+    safety_stop_msg.data = safety_stopped;
+    RCSOFTCHECK(rcl_publish(&safety_stop_publisher, &safety_stop_msg, NULL));
+#endif
+#if defined(USE_FAKE_SONAR) && defined(USE_FAKE_LD19)
+    // A simulated ultrasonic sensor, raycast from the same room the simulated
+    // LiDAR uses. This is the robot's own feedback that something is ahead --
+    // wheel odometry cannot provide it, because the wheels keep turning when
+    // the robot is stopped against something.
+    EXECUTE_EVERY_N_MS(RANGE_TIMER, {
+        range_msg.range = fake_ld19.rangeAheadM();
+        range_msg.field_of_view = (float)FAKE_SONAR_CONE_DEG * (float)DEG_TO_RAD;
+        range_msg.min_range = 0.02;
+        range_msg.max_range = 4.0;
+        range_msg.radiation_type = sensor_msgs__msg__Range__ULTRASOUND;
+        range_msg.header.stamp.sec = time_stamp.tv_sec;
+        range_msg.header.stamp.nanosec = time_stamp.tv_nsec;
+        RCSOFTCHECK(rcl_publish(&range_publisher, &range_msg, NULL)) });
+#elif defined(ECHO_PIN)
     EXECUTE_EVERY_N_MS(RANGE_TIMER, {
         range_msg = getRange();
         range_msg.header.stamp.sec = time_stamp.tv_sec;

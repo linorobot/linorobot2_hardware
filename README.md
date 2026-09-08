@@ -417,6 +417,100 @@ Constants' Meaning:
 
 - **PWM_FREQUENCY** - Frequency of the PWM signals used to control the motor drivers. You can use the default value if you're unsure what to put here. More info [here](https://www.pjrc.com/teensy/td_pulse.html).
 
+### FAKE WHEEL MODE (SIMULATED DRIVETRAIN)
+
+- **USE_FAKE_WHEEL** - Simulate the drivetrain on the board itself, so a bare module with no
+motors, drivers or encoders attached behaves like a robot. `cmd_vel` drives simulated wheels
+whose encoders report back to the PID, so `/odom/unfiltered` and `/imu/data` move as they would
+on real hardware and you can run teleop, SLAM or navigation against the board alone. Undefined by
+default; the motor drivers still receive their PWM, and the kinematics, PID and odometry are all
+still exercised.
+
+Each wheel is modelled as a DC motor driving a share of the robot's mass: driving torque falls
+off as back-EMF rises, acceleration is limited, friction opposes motion, and a stall band keeps a
+weak duty from creeping. So the wheels accelerate from rest, tail off near top speed, and coast
+down when power is cut, more slowly on a heavier robot. The reported RPM carries noise, which
+gives the PID real error to correct and makes the odometry drift as it does on hardware. The
+simulated IMU is derived from the same motion, so the accelerometer and gyroscope agree with the
+wheel encoders.
+
+        #define USE_FAKE_WHEEL
+
+Optional tuning, all with defaults:
+
+- **FAKE_ROBOT_MASS** - Simulated mass in kg. Defaults to `ROBOT_WEIGHT` when defined, so a
+heavier robot accelerates more slowly.
+- **FAKE_WHEEL_TAU_MS** - Spin-up time constant in milliseconds at the reference mass.
+- **FAKE_WHEEL_MAX_ACCEL_RPM** - Traction and current limit, in RPM per second.
+- **FAKE_WHEEL_FRICTION** - Viscous drag, as a fraction of the current RPM per second.
+- **FAKE_WHEEL_NOISE_RPM** - Peak encoder noise in RPM.
+- **FAKE_IMU_ACCEL_NOISE** / **FAKE_IMU_GYRO_NOISE** - Peak simulated IMU noise.
+
+Encoder pins still select which wheels exist: a motor whose encoder pins are unset stays at zero
+RPM, so a 2WD configuration simulates two wheels and not four.
+
+### FAKE LD19 LIDAR MODE (SIMULATED LASER)
+
+- **USE_FAKE_LD19** - Embeds a real-time, 2D geometric raycasting LiDAR emulator in the
+firmware. Raycasts against a configurable rectangular room and optional interior obstacle
+wall, outputting authentic 47-byte LDROBOT LD19 binary packets (`0x54 0x2C` header, 12 distance
+points, start/end angles, CRC8 checksum) at 10 Hz / 230,400 baud over `LIDAR_RXD` (or over Wi-Fi
+UDP port 8889 if `USE_LIDAR_UDP` is defined).
+
+When combined with `USE_FAKE_WHEEL`, the laser scan updates dynamically as the robot navigates
+in response to `cmd_vel`, allowing complete SLAM mapping, map saving, and Nav2 navigation on a
+bare module without physical motors, drivers or LiDAR.
+
+        #define USE_FAKE_LD19
+
+Optional room and obstacle parameters, all with defaults:
+
+- **FAKE_MAP_WIDTH** / **FAKE_MAP_HEIGHT** - Dimensions of the simulated boundary room in meters
+  (defaults: 6.0m x 4.0m, centered at origin).
+- **FAKE_WALL_OBSTACLE** - Set to 1 to enable the interior obstacle wall, 0 to disable (default: 1).
+- **FAKE_WALL_X1**, **FAKE_WALL_Y1**, **FAKE_WALL_X2**, **FAKE_WALL_Y2** - Coordinates of the obstacle
+  wall in meters (defaults: from (1.0, -0.8) to (1.0, 0.8), a 1.6m barrier positioned 1.0m ahead).
+- **LIDAR_RXD** - Microcontroller pin used to emit the packet stream (defaults to board LiDAR RXD pin).
+- **LIDAR_BAUDRATE** - Serial baud rate (default: 230400).
+
+#### Application: Waveshare GenDrv as a Self-Contained Fake Robot
+
+The Waveshare General Driver Board (`gendrv` ESP32) is ideal for fake robot bench testing because
+it includes two onboard USB serial bridges:
+- **Port 1 (`/dev/ttyUSB0`)**: micro-ROS high-speed serial transport @ 1.5M baud (`-D BAUDRATE=1500000`).
+- **Port 2 (`/dev/ttyUSB1`)**: LD19 LiDAR serial stream @ 230,400 baud (`LIDAR_BAUDRATE 230400`).
+
+With the same physical wiring as LiDAR UDP forwarding (GPIO 4 connected to the onboard second USB
+bridge RX, or streamed over Wi-Fi UDP), a bare GenDrv board acts as a complete simulated robot:
+
+1. **Dual-Channel Serial Mode (1.5M Baud)**:
+   - micro-ROS agent runs over USB serial at 1.5M baud:
+     ```bash
+     ros2 run micro_ros_agent micro_ros_agent serial --dev /dev/ttyUSB0 -b 1500000
+     ```
+   - Standard `ldlidar_stl_ros2` node connects to `/dev/ttyUSB1` @ 230,400 baud:
+     ```bash
+     ros2 run ldlidar_stl_ros2 ldlidar_stl_ros2_node --ros-args \
+       -p product_name:=LDLiDAR_LD19 -p port_name:=/dev/ttyUSB1 -p port_baudrate:=230400 \
+       -p frame_id:=laser -p topic_name:=scan
+     ```
+
+2. **Wireless Wi-Fi UDP Transport Mode**:
+   - micro-ROS bridges over Wi-Fi UDP to port 8888:
+     ```bash
+     ros2 run micro_ros_agent micro_ros_agent udp4 --port 8888
+     ```
+   - Fake LD19 streams batched UDP packets (141 bytes = 3 packets/frame) to port 8889:
+     ```bash
+     ros2 run ldlidar_stl_ros2 ldlidar_stl_ros2_node --ros-args \
+       -p product_name:=LDLiDAR_LD19 -p comm_mode:=udp_server \
+       -p server_ip:=0.0.0.0 -p server_port:=8889 \
+       -p frame_id:=laser -p topic_name:=scan
+     ```
+
+3. **Autonomous Navigation**:
+   Launch `slam_toolbox` or Nav2 directly on your workstation or robot SBC. Driving the fake robot via `/cmd_vel` advances odometry and updates the simulated laser scan against the room walls and barrier obstacle in real time.
+
 ### 2. Hardware Pin Assignments
 Only modify the pin assignments under the motor driver constant that you are using ie. `#ifdef USE_GENERIC_2_IN_MOTOR_DRIVER`. You can check out PJRC's [pinout page](https://www.pjrc.com/teensy/pinout.html) for each board's pin layout.
 

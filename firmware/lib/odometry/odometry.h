@@ -34,6 +34,12 @@ class Odometry
         Odometry();
         void update(float vel_dt, float linear_vel_x, float linear_vel_y, float angular_vel_z);
         nav_msgs__msg__Odometry getData();
+        inline float getX() const { return x_pos_; }
+        inline float getY() const { return y_pos_; }
+        inline float getHeading() const { return heading_; }
+        // Used by simulation modes to hold the robot inside a simulated room,
+        // so the published odometry matches what the simulated LiDAR sees.
+        inline void setPosition(float x, float y) { x_pos_ = x; y_pos_ = y; }
 
     private:
         const void euler_to_quat(float x, float y, float z, float* q);

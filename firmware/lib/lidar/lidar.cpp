@@ -20,7 +20,7 @@
 #include "config.h"
 #include "syslog.h"
 
-#ifdef USE_LIDAR_UDP
+#if defined(USE_LIDAR_UDP) && !defined(USE_FAKE_LD19)
 #include <HardwareSerial.h>
 #include <WiFiUdp.h>
 #define BUFSIZE 512
