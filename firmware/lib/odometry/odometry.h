@@ -40,6 +40,11 @@ class Odometry
         // Used by simulation modes to hold the robot inside a simulated room,
         // so the published odometry matches what the simulated LiDAR sees.
         inline void setPosition(float x, float y) { x_pos_ = x; y_pos_ = y; }
+        // Return the robot to the origin. Simulation modes call this when a new
+        // agent session starts, so that a fresh run gets a fresh robot; a real
+        // robot must not use it, because odometry has to stay continuous across
+        // a reconnect or the transform tree jumps under whatever is localising.
+        inline void reset() { x_pos_ = 0.0f; y_pos_ = 0.0f; heading_ = 0.0f; }
 
     private:
         const void euler_to_quat(float x, float y, float z, float* q);

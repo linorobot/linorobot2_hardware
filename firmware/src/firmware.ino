@@ -458,6 +458,26 @@ bool createEntities()
     syncTime();
     digitalWrite(LED_PIN, HIGH);
 
+#ifdef USE_FAKE_WHEEL
+    // A simulated robot has no way to be picked up and put back at the start,
+    // and its pose is board state: it survives the host container, the agent
+    // and the whole ROS stack being torn down and rebuilt. So a second test run
+    // silently begins wherever the first one parked the robot -- and once that
+    // is against a simulated wall, USE_SAFETY_STOP zeroes forward velocity and
+    // navigation fails as "goal outside map" or "failed to make progress",
+    // neither of which points at inherited state. A new agent session means a
+    // new run, so start it from the origin.
+    //
+    // Real robots deliberately do not do this: odometry must stay continuous
+    // across a reconnect, or the transform tree jumps under whatever is
+    // localising against it.
+    odometry.reset();
+#ifdef USE_FAKE_LD19
+    fake_ld19.updatePose(0.0f, 0.0f, 0.0f);
+#endif
+    syslog(LOG_INFO, "%s simulated pose reset to origin %lu", __FUNCTION__, millis());
+#endif
+
     return true;
 }
 
