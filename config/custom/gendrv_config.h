@@ -41,6 +41,9 @@
 // #define IMU_TWEAK {}
 // #define MAG_TWEAK {}
 
+// uncomment the environment sensor you're using
+// #define USE_BMP280
+
 #define ACCEL_COV { 0.01, 0.01, 0.01 }
 #define GYRO_COV { 0.001, 0.001, 0.001 }
 #define ORI_COV { 0.01, 0.01, 0.01 }

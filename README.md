@@ -174,6 +174,10 @@ Supported battery voltage sensors
 - **INA219**
 - **Resistive divider to analog input**
 
+Supported environmental sensors
+
+- **BMP280**
+
 ### 6. Teensy Connection Diagram
 Below are connection diagrams you can follow for each supported motor driver and IMU. For simplicity, only one motor connection is provided but the same diagram can be used to connect the rest of the motors. You are free to decide which microcontroller pin to use just ensure that the following are met:
 
