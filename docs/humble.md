@@ -18,6 +18,13 @@ and copy the file to /etc/udev/rules.d :
 
     sudo cp 00-teensy.rules /etc/udev/rules.d/
 
+If you run diagnostic firmware and don't see any output, check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_hardware#3-udev-rule):
+
+        ls /etc/udev/rules.d/00-teensy.rules 
+
+    Remember to restart your computer if you just copied the udev rule.
+
+
 ### Install Screen Terminal
 
     sudo apt install screen
@@ -48,3 +55,9 @@ All diagrams below are based on Teensy 4.0 microcontroller and GY85 IMU. Click t
 #### IMU
 
 ![imu_connection](imu_connection.png)
+
+## Troubleshooting
+
+* Nothing happens when you run the firmware. Check you are using the correct firmware
+for your Teensy.
+If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).

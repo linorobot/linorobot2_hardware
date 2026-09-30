@@ -8,6 +8,25 @@ ROS 2 Distro | Branch | Build status
 
 # linorobot2_hardware for ESP32 and Pico
 
+## Documentation
+
+* [Top level linorobot2 documentation](https://linorobot.github.io/linorobot2)
+* This README.md provides mid-level documentation which gives a quick start, but
+may not be all you want for designing and bringing up your own robot. It contains
+these sections:
+  * Recent improvements
+  * Overview of this firmware
+  * Build and install the firmware
+  * Building the robot: supported hardware
+  * Configurating the firmware for your hardware
+  * Diagnostic firmware loads
+  * Testing your robot using ROS clients
+  * Troubleshooting
+* The wiki in this repo contains detailed guidance on building and debugging your
+own robot that runs firmware from this repo.
+
+---
+
 ## Recent Improvements
 
 linorobot2_hardware has received many upgrades since the jazzy branch was
@@ -41,7 +60,7 @@ which does not have an appropriate amount of bandwidth.
 The following new sensors support has been added. They can be configured to publish
 their data on new topics using the config files:
 
-* **Ultrasonic Ranging**: Measure range with SR-HC04-style ultrasonic range sensors
+* **Ultrasonic Ranging**: Measure range with HC-SR04-style ultrasonic range sensors
 * **Battery Status**: Measures battery voltage with a resisitive divider or INA219
 voltage and current sensor
 * **BNO085 IMU**: The BNO085 is a modern, low-drift IMU. 6-DOF mode (no magnetometer)
@@ -70,13 +89,6 @@ The ROS release support matrix for linorobot2_hardware is:
 | jazzy (Ubuntu 24.04) | jazzy | Supported |
 | humble (Ubuntu 22.04) | humble | Branch exists but is unsupported |
 
-### Wiki
-
-The excellent wiki in this repo has lots of very detailed information about
-building a robot that runs firmware from linorobot2_hardware.
-The wiki is a copy of the hippo5329 wiki that was previously the best
-source of detailed information.
-
 #### Humble and Teensy deprecated
 
 The humble branch still exists to enable older robots but is unsupported.
@@ -85,9 +97,16 @@ Teensy MCU - Teensy has been removed from jazzy and lyrical.
 Legacy Humble and Teensy documentation from the README are
 [here](docs/humble.md)
 
+### Wiki
+
+The excellent wiki in this repo has lots of very detailed information about
+building a robot that runs firmware from linorobot2_hardware.
+The wiki is a copy of the hippo5329 wiki that was previously the best
+source of detailed information.
+
 ---
 
-## Overview
+## Linorobot2_hardware Overview
 
 The linorobot2_hardware repo uses platformio to build microcontroller firmware for mobile robots based on micro-ROS.
 It is extremely parameterized and easily customizable for varied hardware configurations.
@@ -109,7 +128,8 @@ On the robot computer, an EKF filter fuses /odom/unfiltered and /imu/data to pub
 Robot state, joint state and transforms are published.
 
 ## Installation
-All software mentioned in this guide must be installed on the robot computer.
+All software mentioned in this guide must be installed on the Workstation that will
+be used to program firmware from this repo into the MCU.
 
 ### 1. ROS2 and linorobot2 installation
 It is assumed that you already have ROS2 and linorobot2 package installed. If you haven't, go to [linorobot2](https://github.com/linorobot/linorobot2) package for installation guide.
@@ -200,6 +220,8 @@ Supported battery voltage sensors
 
 - **INA219**
 - **Resistive divider to analog input**
+
+### 6. Environment
 
 Supported environmental sensors
 
@@ -447,7 +469,7 @@ The pin assignments found in lino_base_config.h are based on Linorobot's PCB boa
 
     // MOTOR PINS
     #ifdef USE_GENERIC_2_IN_MOTOR_DRIVER
-        #define MOTOR1_PWM 21 //Pin no 21 is not a PWM pin on Teensy 4.x, you can swap it with pin no 1 instead.
+        #define MOTOR1_PWM 21
         #define MOTOR1_IN_A 20
         #define MOTOR1_IN_B 1 
 
@@ -494,6 +516,12 @@ Constants' Meaning:
 The micro-ROS wifi transport is selected with a setting in firmare/platformio.ini.
 
     board_microros_transport = wifi
+
+---
+
+# Diagnostic and Calibration Utilities
+
+These utility firmware loads help diagnose and calibrate the firmware to the robot.
 
 ## Motor Diagnostics Utility (`test_motors`)
 
@@ -550,24 +578,17 @@ When flashed, the firmware executes 500 DAC calibration sweeps, calculates linea
 ---
 
 ## Calibration
+
+The calibration folder contains another motor and encoder test firmware, similar
+to the test_motors firmware. Use either one.
+
 Before proceeding, **ensure that your robot is elevated and the wheels aren't touching the ground**. 
 5.1
 ### 1. Motor Check
 Go to calibration folder and upload the firmware:
 
     cd linorobot2_hardware/calibration
-    pio run --target upload -e <your_teensy_board>
-
-Available Teensy boards:
-- teensy31
-- teensy35
-- teensy36
-- teensy40
-- teensy41
-
-Some Linux machines might encounter a problem related to libusb. If so, install libusb-dev:
-
-    sudo apt install libusb-dev
+    pio run --target upload -e <your_config>
 
 Start spinning the motors by running:
     
@@ -599,6 +620,8 @@ Type `sample` and press the enter key. Verify if all encoder values are now **po
 ### 3. Counts Per Revolution
 
 On the previous instruction where you check the encoder reads for each motor, you'll see that there's also COUNTS PER REVOLUTION values printed on the screen. If you have defined `MOTOR_OPERATING_VOLTAGE` and `MOTOR_POWER_MEASURED_VOLTAGE`, you can assign these values to `COUNTS_PER_REVX` constants in [lino_base_config.h](https://github.com/linorobot/linorobot2_hardware/blob/master/config/lino_base_config.h#L55-L58) to have a more accurate model of the encoder.
+
+---
 
 ## Upload the firmware
 Ensure that the robot pass all the requirements before uploading the firmware:
@@ -661,6 +684,7 @@ Echo IMU data:
 
     ros2 topic echo /imu/data
 
+---
 
 ## URDF
 Once the hardware is done, you can go back to [linorobot2](https://github.com/linorobot/linorobot2#urdf) package and start defining the robot's URDF.
@@ -684,10 +708,10 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
 - Check if you have misconfigured the encoder's pin assignment in lino_base_config.h.
 
 ### 4. The wheels only spin in one direction
-- Check if the Teensy's GND pin is connected to the motor driver's GND pin.
+- Check if the MCU's GND pin is connected to the motor driver's GND pin.
 
 ### 5. The motor doesn't change it's direction after setting the INV to true.
-- Check if the Teensy's GND pin is connected to the motor driver's GND pin.
+- Check if the MCU's GND pin is connected to the motor driver's GND pin.
 
 ### 6. Nothing's printing when I run the screen app.
 - Check if you're passing the correct serial port. Run:
@@ -696,14 +720,8 @@ Once the hardware is done, you can go back to [linorobot2](https://github.com/li
     
     and ensure that the available serial port matches the port you're passing to the screen app.
 
-- Check if you forgot to [copy the udev rule](https://github.com/linorobot/linorobot2_hardware#3-udev-rule):
-
-        ls /etc/udev/rules.d/00-teensy.rules 
-
-    Remember to restart your computer if you just copied the udev rule.
-
 ### 7. The firmware was uploaded but nothing's happening.
-- Check if you're assigning the correct Teensy board when uploading the firmware. If you're unsure which Teensy board you're using, take a look at the label on the biggest chip found in your Teensy board and compare it with the boards shown on PJRC's [website](https://www.pjrc.com/teensy/).
+- Check if you're assigning the correct MCU type when uploading the firmware.
 
 ### 8. The robot's forward motion is not straight
 - This happens when the target velocity is more than or equal the motor's RPM (usually happens on low RPM motors). To fix this, set the `MAX_RPM_RATIO` lower to allow the PID controller to compensate for errors.
