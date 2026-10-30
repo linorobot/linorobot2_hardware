@@ -73,7 +73,7 @@ void setup()
     Wire.begin();
     Wire.setClock(400000);
 
-    if (bno085.begin() == false) {
+    if (bno085.begin(BNO085_I2C_ADDR) == false) {
         Serial.println(F("[ERROR] BNO085 hardware not found."));
         while (1);
     }
