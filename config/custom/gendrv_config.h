@@ -28,6 +28,7 @@
 //uncomment the IMU you're using
 // #define USE_GY85_IMU
 // #define USE_BNO085_IMU
+// #define BNO085_I2C_ADDR 0x4A               // BNO085 library default I2C address is 0x4B but can be overridden here, e.g. for Adafruit BNO085 breakout board
 // #define USE_MPU6050_IMU
 // #define USE_MPU9150_IMU
 // #define USE_MPU9250_IMU

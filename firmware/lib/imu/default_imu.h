@@ -291,6 +291,10 @@ class QMI8658IMU: public IMUInterface
 #endif
 #include <SparkFun_BNO080_Arduino_Library.h>
 
+#ifndef BNO085_I2C_ADDR
+#define BNO085_I2C_ADDR BNO080_DEFAULT_ADDRESS
+#endif
+
 class BNO085IMU: public IMUInterface 
 {
     private:
@@ -329,7 +333,7 @@ class BNO085IMU: public IMUInterface
         bool startSensor() override
         {
             Wire.begin();
-            if (bno085_.begin() == 0){
+            if (bno085_.begin(BNO085_I2C_ADDR) == 0){
                 // Serial.println("bno085_init fail");
                 syslog(LOG_ERR, "%s BNO085 IMU init fail %lu", __FUNCTION__, millis());
                 imuState = STATE_DISCONNECTED;
@@ -404,7 +408,7 @@ class BNO085IMU: public IMUInterface
           case STATE_DISCONNECTED:
             if (millis() - stateTimer >= 500) {
                 stateTimer = millis();
-                if (bno085_.begin() == true) {
+                if (bno085_.begin(BNO085_I2C_ADDR) == true) {
                 syslog(LOG_INFO, "%s [I2C] Link achieved. Moving to configuration step.", __FUNCTION__);
                 imuState = STATE_SEND_CONFIG;
                 }
