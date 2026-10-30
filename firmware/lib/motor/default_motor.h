@@ -22,7 +22,7 @@
 #include <Servo.h>
 #endif
 #include "config.h"
-#ifdef ESP32
+#if defined(ESP32) && ESP_ARDUINO_VERSION_MAJOR < 3
 inline void analogWriteFrequency(uint8_t pin, double frequency)
 {
   analogWriteFrequency(frequency);
@@ -35,6 +35,13 @@ inline void analogWriteFrequency(double frequency)
 inline void analogWriteFrequency(uint8_t pin, double frequency)
 {
   analogWriteFreq(frequency);
+}
+#endif
+#if !defined(ESP32) || ESP_ARDUINO_VERSION_MAJOR < 3
+// ESP32 Arduino core 3.x sets the resolution per pin; elsewhere it is global
+inline void analogWriteResolution(uint8_t pin, uint8_t bits)
+{
+  analogWriteResolution(bits);
 }
 #endif
 
@@ -80,7 +87,7 @@ class Generic2: public MotorInterface
             {
                 analogWriteFrequency(pwm_pin_, pwm_frequency);
             }
-            analogWriteResolution(pwm_bits);
+            analogWriteResolution(pwm_pin_, pwm_bits);
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(pwm_pin_, abs(0));
@@ -132,7 +139,7 @@ class Generic1: public MotorInterface
             {
                 analogWriteFrequency(pwm_pin_, pwm_frequency);
             }
-            analogWriteResolution(pwm_bits);
+            analogWriteResolution(pwm_pin_, pwm_bits);
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(pwm_pin_, abs(0));
@@ -194,7 +201,8 @@ class BTS7960: public MotorInterface
                 analogWriteFrequency(in_b_pin_, pwm_frequency);
 
             }
-            analogWriteResolution(pwm_bits);
+            analogWriteResolution(in_a_pin_, pwm_bits);
+            analogWriteResolution(in_b_pin_, pwm_bits);
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(in_a_pin_, 0);
@@ -217,7 +225,8 @@ class BTS7960: public MotorInterface
                 analogWriteFrequency(in_b_pin_, pwm_frequency);
 
             }
-            analogWriteResolution(pwm_bits);
+            analogWriteResolution(in_a_pin_, pwm_bits);
+            analogWriteResolution(in_b_pin_, pwm_bits);
 
             //ensure that the motor is in neutral state during bootup
             analogWrite(in_a_pin_, 0);
