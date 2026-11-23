@@ -355,9 +355,11 @@ class BNO085IMU: public IMUInterface
 
         geometry_msgs__msg__Vector3 readGyroscope() override
         {
-            gyro_.x = bno085_.getGyroX() * DEG_TO_RAD;
-            gyro_.y = bno085_.getGyroY() * DEG_TO_RAD;
-            gyro_.z = bno085_.getGyroZ() * DEG_TO_RAD;
+            // The SparkFun BNO080 library already returns calibrated gyro in rad/s
+            // (SH-2 gyro report, Q point 9), so no DEG_TO_RAD conversion here.
+            gyro_.x = bno085_.getGyroX();
+            gyro_.y = bno085_.getGyroY();
+            gyro_.z = bno085_.getGyroZ();
             return gyro_;
         }
 
@@ -367,16 +369,9 @@ class BNO085IMU: public IMUInterface
                 logImuDataUnavailable();
                 return imu_msg_;
             }
+            // No deadband: the BNO085 runs its own dynamic gyro bias calibration, and
+            // forcing small rates to exactly 0 tells the EKF "not rotating" with high confidence.
             imu_msg_.angular_velocity = readGyroscope();
-
-            if(imu_msg_.angular_velocity.x > -0.01 && imu_msg_.angular_velocity.x < 0.01 )
-                imu_msg_.angular_velocity.x = 0;
-
-            if(imu_msg_.angular_velocity.y > -0.01 && imu_msg_.angular_velocity.y < 0.01 )
-                imu_msg_.angular_velocity.y = 0;
-
-            if(imu_msg_.angular_velocity.z > -0.01 && imu_msg_.angular_velocity.z < 0.01 )
-                imu_msg_.angular_velocity.z = 0;
 
             imu_msg_.angular_velocity_covariance[0] = gyro_cov_;
             imu_msg_.angular_velocity_covariance[4] = gyro_cov_;
