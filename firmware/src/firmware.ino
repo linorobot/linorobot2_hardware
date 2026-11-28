@@ -191,10 +191,13 @@ MAG mag;
 void setup() 
 {
     pinMode(LED_PIN, OUTPUT);
-    Serial.begin(BAUDRATE);
 #ifdef ESP32
     Serial.setRxBufferSize(1024);
+#if !ARDUINO_USB_CDC_ON_BOOT
+    Serial.setTxBufferSize(1024);
 #endif
+#endif
+    Serial.begin(BAUDRATE);
 
 #ifdef BOARD_INIT // board specific setup, must include Wire.begin
     BOARD_INIT
@@ -530,7 +533,9 @@ void moveBase()
 
 void publishData()
 {
+#ifdef BATTERY_DIP
     static unsigned skip_dip = 0;
+#endif
     odom_msg = odometry.getData();
     imu_msg = imu.getData();
 #ifdef USE_FAKE_IMU

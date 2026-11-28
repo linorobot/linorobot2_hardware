@@ -17,103 +17,6 @@
 
 static qmi8658_state g_imu;
 
-
-#define Kp 10.0f
-#define Ki 0.008f
-/* #define pi 3.14159265f */
-#define halfT 0.002127f        /*half the sample period*/
-/* 参与计算的加速度单位g 陀螺仪单位是弧度/s()【度*pi/180=弧度】*/
-
-
-/* 魔法函数InvSqrt()相当于1.0/sqrt() */
-static float invSqrt(float number)
-{
-    volatile long i;
-    volatile float x, y;
-    volatile const float f = 1.5F;
-
-    x = number * 0.5F;
-    y = number;
-    i = * (( long * ) &y);
-    i = 0x5f375a86 - ( i >> 1 );
-    y = * (( float * ) &i);
-    y = y * ( f - ( x * y * y ) );
-    return y;
-}
-
-EulerAngles get_euler_angles(float gx, float gy, float gz, float ax, float ay, float az)
-{
-  EulerAngles eulaer;
-  float roll, pitch,yaw ;
-  float exInt, eyInt, ezInt;
-  float q0 = 1.0f, q1 = 0.0f, q2 = 0.0f, q3 = 0.0f;	/** quaternion of sensor frame relative to auxiliary frame */
-
-    float recipNorm;
-    float vx, vy, vz;
-    float ex, ey, ez;
-
-    float q0q0 = q0*q0;
-    float q0q1 = q0*q1;
-    float q0q2 = q0*q2;
-
-    float q1q1 = q1*q1;
-    float q1q3 = q1*q3;
-
-    float q2q2 = q2*q2;
-    float q2q3 = q2*q3;
-
-    float q3q3 = q3*q3;
-
-
-    if( ax*ay*az==0)
-        return eulaer;
-    /* 对加速度数据进行归一化处理 */
-    recipNorm = invSqrt( ax* ax +ay*ay + az*az);
-    ax = ax *recipNorm;
-    ay = ay *recipNorm;
-    az = az *recipNorm;
-    /* DCM矩阵旋转 */
-    vx = 2*(q1q3 - q0q2);
-    vy = 2*(q0q1 + q2q3);
-    vz = q0q0 - q1q1 - q2q2 + q3q3 ;
-    /* 在机体坐标系下做向量叉积得到补偿数据 */
-    ex = ay*vz - az*vy ;
-    ey = az*vx - ax*vz ;
-    ez = ax*vy - ay*vx ;
-    /* 对误差进行PI计算，补偿角速度 */
-    exInt = exInt + ex * Ki;
-    eyInt = eyInt + ey * Ki;
-    ezInt = ezInt + ez * Ki;
-
-    gx = gx + Kp*ex + exInt;
-    gy = gy + Kp*ey + eyInt;
-    gz = gz + Kp*ez + ezInt;
-    /* 按照四元素微分公式进行四元素更新 */
-    q0 = q0 + (-q1*gx - q2*gy - q3*gz)*halfT;
-    q1 = q1 + (q0*gx + q2*gz - q3*gy)*halfT;
-    q2 = q2 + (q0*gy - q1*gz + q3*gx)*halfT;
-    q3 = q3 + (q0*gz + q1*gy - q2*gx)*halfT;
-
-    recipNorm = invSqrt(q0*q0 + q1*q1 + q2*q2 + q3*q3);
-
-    q0 = q0*recipNorm;
-    q1 = q1*recipNorm;
-    q2 = q2*recipNorm;
-    q3 = q3*recipNorm;
-
-    roll =  atan2f(2*q2*q3 + 2*q0*q1, -2*q1*q1 - 2*q2*q2 + 1)*57.3f;
-    pitch =  asinf(2*q1*q3 - 2*q0*q2)*57.3f;
-    yaw  =  -atan2f(2*q1*q2 + 2*q0*q3, -2*q2*q2 -2*q3*q3 + 1)*57.3f;
-
-    eulaer.pitch = pitch;
-    eulaer.roll = roll;
-    eulaer.yaw = yaw;
-
-    // printf("pitch:%.2f roll:%.2f yaw:%.2f\r\n",pitch,roll,yaw);
-    return eulaer;
-}
-
-
 void QMI8658::write_reg(uint8_t reg,uint8_t value)
 {
   Wire.beginTransmission(QMI8658_ADDR);
@@ -156,24 +59,8 @@ uint16_t QMI8658::readWord_reg(uint8_t reg)
 }
 
 
-bool QMI8658::GetEulerAngles(float *pitch,float *roll, float *yaw)
-{
-  float acc[3];
-  float gyro[3];
-  read_xyz(acc,gyro);
-
-  EulerAngles ea = get_euler_angles(gyro[0], gyro[1],gyro[2], acc[0], acc[1], acc[2]);
-  *pitch = ea.pitch;
-  *roll = ea.roll;
-  *yaw = ea.yaw;
-  return true;
-}
-
-
-
 void QMI8658::read_sensor_data(float acc[3], float gyro[3])
 {
-	unsigned char	buf_reg[12];
 	short 			raw_acc_xyz[3];
 	short 			raw_gyro_xyz[3];
 
@@ -212,7 +99,6 @@ void QMI8658::read_sensor_data(float acc[3], float gyro[3])
 
 void QMI8658::read_acc(float acc[3])
 {
-	unsigned char	buf_reg[12];
 	short 		raw_acc_xyz[3];
 
 	raw_acc_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Ax_L) ));
@@ -234,7 +120,6 @@ void QMI8658::read_acc(float acc[3])
 
 void QMI8658::read_gyro(float gyro[3])
 {
-	unsigned char	buf_reg[12];
 	short 		raw_gyro_xyz[3];
 
 	raw_gyro_xyz[0] = (short)((unsigned short)( readWord_reg(Qmi8658Register_Gx_L) ));
@@ -510,13 +395,10 @@ void QMI8658::config_reg(unsigned char low_power)
 unsigned char QMI8658::get_id(void)
 {
 	unsigned char qmi8658_chip_id = 0x00;
-	unsigned char qmi8658_revision_id = 0x00;
+	// unsigned char qmi8658_revision_id = 0x00;
 	unsigned char qmi8658_slave[2] = {QMI8658_SLAVE_ADDR_L, QMI8658_SLAVE_ADDR_H};
 	int retry = 0;
 	unsigned char iCount = 0;
-	unsigned char firmware_id[3];
-	unsigned char uuid[6];
-	unsigned int uuid_low, uuid_high;
 
 	while(iCount<2)
 	{
@@ -534,7 +416,7 @@ unsigned char QMI8658::get_id(void)
 			g_imu.cfg.ctrl8_value = 0xc0;
 			//QMI8658_INT1_ENABLE, QMI8658_INT2_ENABLE
 			write_reg(Qmi8658Register_Ctrl1, 0x60|QMI8658_INT2_ENABLE|QMI8658_INT1_ENABLE);
-			qmi8658_revision_id = read_reg(Qmi8658Register_Revision);
+			// qmi8658_revision_id = read_reg(Qmi8658Register_Revision);
 			// qmi8658_read_reg(Qmi8658Register_firmware_id, firmware_id, 3);
 			// qmi8658_read_reg(Qmi8658Register_uuid, uuid, 6);
 			write_reg(Qmi8658Register_Ctrl7, 0x00);
