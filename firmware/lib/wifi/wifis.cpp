@@ -46,7 +46,9 @@ void runWifis(void)
 {
     static uint8_t dis_bssid[6]; // check previous disconnected bssid to avoid repeated disconnection
     uint8_t *bssid;
+#ifdef PICO
     uint8_t bssidv[6];
+#endif
 
 #ifdef WIFI_MONITOR
     EXECUTE_EVERY_N_MS(WIFI_MONITOR * 60 * 1000, syslog(LOG_INFO, "%s ssid %s rssi %d", \

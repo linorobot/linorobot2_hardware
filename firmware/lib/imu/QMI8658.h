@@ -12,13 +12,6 @@
 #include <Arduino.h>
 #include "QMI8658reg.h"
 
-typedef struct
-{
-	float roll;
-  float pitch;
-  float yaw ;
-} EulerAngles;
-
 class QMI8658
 {
   uint8_t last_status; // status of last I2C transmission
@@ -28,9 +21,6 @@ class QMI8658
 
 public:
   uint16_t readWord_reg(uint8_t reg);
-  // bool init(void);
-  bool GetEulerAngles(float *pitch,float *roll, float *yaw);
-
   void config_acc(enum qmi8658_AccRange range, enum qmi8658_AccOdr odr,
                       enum qmi8658_LpfConfig lpfEnable, enum qmi8658_StConfig stEnable);
   void config_gyro(enum qmi8658_GyrRange range, enum qmi8658_GyrOdr odr,

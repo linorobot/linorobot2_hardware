@@ -36,7 +36,7 @@ class Odometry
         nav_msgs__msg__Odometry getData();
 
     private:
-        const void euler_to_quat(float x, float y, float z, float* q);
+        void euler_to_quat(float x, float y, float z, float* q);
 
         nav_msgs__msg__Odometry odom_msg_;
         float x_pos_;

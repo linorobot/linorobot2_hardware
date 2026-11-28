@@ -84,7 +84,7 @@ nav_msgs__msg__Odometry Odometry::getData()
     return odom_msg_;
 }
 
-const void Odometry::euler_to_quat(float roll, float pitch, float yaw, float* q) 
+void Odometry::euler_to_quat(float roll, float pitch, float yaw, float* q) 
 {
     float cy = cos(yaw * 0.5);
     float sy = sin(yaw * 0.5);
